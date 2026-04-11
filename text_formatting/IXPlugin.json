@@ -1,0 +1,12 @@
+{
+    "id": "text-formatting",
+    "name": "Text Formatting",
+    "version": "release.1.0.0",
+    "main": "entrance.py",
+    "description": "文本格式化插件提供常用的文本处理工具，包括：文本大小写转换（大写、小写）、支持批量文本处理等。适用于数据处理、内容编辑等场景。",
+    "author": "InstructionX Team",
+    "author_email": "support@instructionx.dev",
+    "homepage": "https://github.com/KKPIP-Tech/InstructionX",
+    "keywords": ["instructionx", "plugin", "text", "formatting", "utility"],
+    "dependencies": {}
+}

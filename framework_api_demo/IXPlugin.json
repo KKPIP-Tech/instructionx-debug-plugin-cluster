@@ -1,0 +1,12 @@
+{
+    "id": "framework-api-demo",
+    "name": "Framework API Demo",
+    "version": "release.1.0.0",
+    "main": "entrance.py",
+    "description": "Framework API Demo 插件用于演示 InstructionX 框架提供的所有核心 API 接口。演示的接口包括：DataProvider、BackgroundTaskManager、LLM 等。",
+    "author": "InstructionX Team",
+    "author_email": "support@instructionx.dev",
+    "homepage": "https://github.com/KKPIP-Tech/InstructionX",
+    "keywords": ["instructionx", "plugin", "framework", "api", "demo"],
+    "dependencies": {}
+}

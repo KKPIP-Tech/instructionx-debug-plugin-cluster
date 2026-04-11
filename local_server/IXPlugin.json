@@ -1,0 +1,12 @@
+{
+    "id": "local-server",
+    "name": "Local Server",
+    "version": "release.1.0.0",
+    "main": "entrance.py",
+    "description": "提供本地HTTP服务器功能，可用于测试 Webhook、API 等场景。支持配置端口、路由管理、请求日志等功能。",
+    "author": "InstructionX Team",
+    "author_email": "support@instructionx.dev",
+    "homepage": "https://github.com/KKPIP-Tech/InstructionX",
+    "keywords": ["instructionx", "plugin", "server", "http", "local"],
+    "dependencies": {}
+}
