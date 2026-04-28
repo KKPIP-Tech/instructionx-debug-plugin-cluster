@@ -1,0 +1,16 @@
+{
+  "plugin": {
+    "name": "image_compressor",
+    "version": "1.0.0"
+  },
+  "ui": {
+    "content_margins": [16, 16, 16, 16],
+    "content_spacing": 16,
+    "group_spacing": 12
+  },
+  "compression": {
+    "default_quality": 85,
+    "min_quality": 1,
+    "max_quality": 100
+  }
+}
