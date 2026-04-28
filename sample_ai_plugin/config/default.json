@@ -1,0 +1,30 @@
+{
+    "plugin": {
+        "name": "sample_ai_plugin",
+        "version": "1.0.0"
+    },
+    "ui": {
+        "content_margins_top": 16,
+        "content_margins_bottom": 16,
+        "content_margins_left": 16,
+        "content_margins_right": 16,
+        "content_spacing": 16,
+        "btn_padding_v": 6,
+        "btn_padding_h": 12,
+        "btn_min_height": 28,
+        "combo_padding_v": 4,
+        "combo_padding_h": 8,
+        "combo_min_height": 24,
+        "output_padding": 8,
+        "output_border_radius": 4,
+        "title_font_size": 16
+    },
+    "chat": {
+        "system_prompt": "你是一个友好的助手，用简洁的语言回答。",
+        "demo_messages": {
+            "sync": "请用三句话解释量子计算",
+            "stream": "解释什么是深度学习",
+            "tool": "计算 (2+3)*4 的结果"
+        }
+    }
+}
