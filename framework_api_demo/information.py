@@ -4,10 +4,10 @@ Framework API Demo 插件元数据
 展示 InstructionX 框架提供的所有核心 API 接口的使用方法。
 """
 
-from core.plugin.plugin_info_interface import IPluginInfo
+from core.interfaces import IPluginInfo
 from core.plugin.plugin_version import PluginVersion
 from core.plugin.plugin_icon import PluginIcon
-from typing import Dict, Any, List
+from typing import Dict, Any, Optional
 
 
 class FrameworkAPIDemoPluginInfo(IPluginInfo):
@@ -58,58 +58,13 @@ class FrameworkAPIDemoPluginInfo(IPluginInfo):
     def service_api(self) -> Dict[str, Any]:
         """Service API 定义"""
         return {
-            "demo_data_operation": {
-                "description": "演示 DataProvider 数据操作",
-                "parameters": {
-                    "operation": {
-                        "type": "str",
-                        "description": "操作类型: read/write/list",
-                        "required": True
-                    },
-                    "key": {
-                        "type": "str",
-                        "description": "数据键名",
-                        "required": False
-                    },
-                    "value": {
-                        "type": "any",
-                        "description": "数据值",
-                        "required": False
-                    }
-                },
-                "returns": {
-                    "type": "any",
-                    "description": "操作结果"
-                }
-            },
-            "demo_task_operation": {
-                "description": "演示任务操作",
-                "parameters": {
-                    "operation": {
-                        "type": "str",
-                        "description": "操作类型: create/query/cancel",
-                        "required": True
-                    },
-                    "task_type": {
-                        "type": "str",
-                        "description": "任务类型: sync/async/scheduled",
-                        "required": False
-                    }
-                },
-                "returns": {
-                    "type": "any",
-                    "description": "操作结果"
-                }
-            },
-            "get_framework_info": {
-                "description": "获取框架信息",
-                "parameters": {},
-                "returns": {
-                    "type": "dict",
-                    "description": "框架信息字典"
-                }
-            }
+            "demo_data_operation": self._api("演示 DataProvider 数据操作", {"operation": {"type": "str", "description": "操作类型: read/write/list", "required": True}, "key": {"type": "str", "description": "数据键名", "required": False}, "value": {"type": "any", "description": "数据值", "required": False}}, {"type": "any", "description": "操作结果"}),
+            "demo_task_operation": self._api("演示任务操作", {"operation": {"type": "str", "description": "操作类型: create/query/cancel", "required": True}, "task_type": {"type": "str", "description": "任务类型: sync/async/scheduled", "required": False}}, {"type": "any", "description": "操作结果"}),
+            "get_framework_info": self._api("获取框架信息", {}, {"type": "dict", "description": "框架信息字典"})
         }
+
+    def _api(self, desc: str, params: Dict, returns: Dict) -> Dict:
+        return {"description": desc, "parameters": params, "returns": returns}
 
     @property
     def skill_icon(self) -> PluginIcon:
@@ -122,16 +77,20 @@ class FrameworkAPIDemoPluginInfo(IPluginInfo):
         return "演示框架所有 API 接口"
 
     @property
-    def tags(self) -> List[str]:
+    def tags(self) -> Optional[list[str]]:
         """插件标签"""
         return ["demo", "api", "framework", "learning"]
 
     @property
-    def dependencies(self) -> None:
+    def dependencies(self) -> Dict[str, str]:
         """依赖项"""
-        return None
+        return {}
 
     @property
     def plugin_type_id(self) -> str:
-        """插件类型标识符"""
+        """插件类型标识符
+
+        用于代码层面的插件识别，应保持稳定不随显示名称变化。
+        建议使用小写字母、数字、连字符格式。
+        """
         return "framework-api-demo"
