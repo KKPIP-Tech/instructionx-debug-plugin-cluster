@@ -2,7 +2,7 @@
 任务报告生成器插件元数据
 """
 
-from core.plugin.plugin_info_interface import IPluginInfo
+from core.interfaces import IPluginInfo
 from core.plugin.plugin_version import PluginVersion
 from core.plugin.plugin_icon import PluginIcon
 from typing import Dict, Any, Optional
@@ -61,91 +61,18 @@ class TaskReporterPluginInfo(IPluginInfo):
     
     @property
     def service_api(self) -> Dict[str, Any]:
+        tm_id = {"task_manager_id": {"type": "str", "description": "任务管理器插件ID", "required": True}}
         return {
-            "subscribe_to_task_manager": {
-                "description": "订阅任务管理器的数据变更",
-                "parameters": {
-                    "task_manager_id": {
-                        "type": "str",
-                        "description": "任务管理器插件ID",
-                        "required": True
-                    }
-                },
-                "returns": {
-                    "type": "bool",
-                    "description": "是否订阅成功"
-                }
-            },
-            "unsubscribe_from_task_manager": {
-                "description": "取消订阅任务管理器",
-                "parameters": {
-                    "task_manager_id": {
-                        "type": "str",
-                        "description": "任务管理器插件ID（可选）",
-                        "required": False
-                    }
-                },
-                "returns": {
-                    "type": "None",
-                    "description": "无返回值"
-                }
-            },
-            "get_statistics_report": {
-                "description": "获取统计报告",
-                "parameters": {
-                    "task_manager_id": {
-                        "type": "str",
-                        "description": "任务管理器插件ID",
-                        "required": True
-                    }
-                },
-                "returns": {
-                    "type": "dict",
-                    "description": "统计报告（包含统计数据和性能指标）"
-                }
-            },
-            "get_event_history": {
-                "description": "获取事件历史",
-                "parameters": {
-                    "limit": {
-                        "type": "int",
-                        "description": "最大返回数量",
-                        "required": False
-                    }
-                },
-                "returns": {
-                    "type": "list",
-                    "description": "事件列表"
-                }
-            },
-            "generate_report": {
-                "description": "生成完整报告",
-                "parameters": {
-                    "task_manager_id": {
-                        "type": "str",
-                        "description": "任务管理器插件ID",
-                        "required": True
-                    },
-                    "format": {
-                        "type": "str",
-                        "description": "报告格式 (json, txt, html)",
-                        "required": False
-                    }
-                },
-                "returns": {
-                    "type": "str",
-                    "description": "报告文件的相对路径"
-                }
-            },
-            "clear_event_log": {
-                "description": "清除事件日志",
-                "parameters": {},
-                "returns": {
-                    "type": "None",
-                    "description": "无返回值"
-                }
-            }
+            "subscribe_to_task_manager": self._api("订阅任务管理器的数据变更", tm_id, {"type": "bool", "description": "是否订阅成功"}),
+            "unsubscribe_from_task_manager": self._api("取消订阅任务管理器", {"task_manager_id": {"type": "str", "description": "任务管理器插件ID（可选）", "required": False}}, {"type": "None", "description": "无返回值"}),
+            "get_statistics_report": self._api("获取统计报告", tm_id, {"type": "dict", "description": "统计报告（包含统计数据和性能指标）"}),
+            "get_event_history": self._api("获取事件历史", {"limit": {"type": "int", "description": "最大返回数量", "required": False}}, {"type": "list", "description": "事件列表"}),
+            "generate_report": self._api("生成完整报告", {"task_manager_id": {"type": "str", "description": "任务管理器插件ID", "required": True}, "format": {"type": "str", "description": "报告格式 (json, txt, html)", "required": False}}, {"type": "str", "description": "报告文件的相对路径"}),
+            "clear_event_log": self._api("清除事件日志", {}, {"type": "None", "description": "无返回值"})
         }
+
+    def _api(self, desc: str, params: Dict, returns: Dict) -> Dict:
+        return {"description": desc, "parameters": params, "returns": returns}
     
     @property
     def skill_icon(self) -> PluginIcon:
@@ -160,8 +87,8 @@ class TaskReporterPluginInfo(IPluginInfo):
         return ["report", "statistics", "analytics", "monitoring"]
     
     @property
-    def dependencies(self) -> Optional[Dict[str, str]]:
-        return None
+    def dependencies(self) -> Dict[str, str]:
+        return {}
 
     @property
     def plugin_type_id(self) -> str:

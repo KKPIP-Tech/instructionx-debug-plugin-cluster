@@ -5,8 +5,5 @@
     "main": "entrance.py",
     "description": "任务报告生成器插件提供任务统计和报告生成功能，包括：实时订阅任务管理器的数据变更、自动生成任务统计报告、可视化任务进度等功能。",
     "author": "InstructionX Team",
-    "author_email": "support@instructionx.dev",
-    "homepage": "https://github.com/KKPIP-Tech/InstructionX",
-    "keywords": ["instructionx", "plugin", "task", "reporter", "statistics"],
-    "dependencies": {}
+    "keywords": ["instructionx", "plugin", "task", "reporter", "statistics"]
 }
