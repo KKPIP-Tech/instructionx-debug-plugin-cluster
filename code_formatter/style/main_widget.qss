@@ -1,0 +1,79 @@
+/* Code Formatter Plugin - Main Widget Styles */
+
+#code-formatter-main QLabel[heading="true"] {
+    font-size: 16px;
+    font-weight: bold;
+    color: {textPrimary};
+}
+
+#code-formatter-main QGroupBox {
+    font-weight: bold;
+    border: 1px solid {borderLight};
+    border-radius: {radius};
+    margin-top: 8px;
+    padding-top: 8px;
+}
+
+#code-formatter-main QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 4px;
+    color: {textPrimary};
+}
+
+#code-formatter-main QTextEdit {
+    padding: 8px;
+    border: 1px solid {borderLight};
+    border-radius: {radius};
+    background-color: {base};
+    color: {textPrimary};
+}
+
+#code-formatter-main QTextEdit:focus {
+    border-color: {accent};
+}
+
+#code-formatter-main QTextEdit:disabled {
+    background-color: {controlFillDisabled};
+    color: {textDisabled};
+}
+
+#code-formatter-main QPushButton {
+    padding: 6px 16px;
+    border: 1px solid {borderLight};
+    border-radius: {radius};
+    background-color: {button};
+    color: {buttonText};
+    min-height: 28px;
+}
+
+#code-formatter-main QPushButton:hover {
+    background-color: {controlFillHover};
+    border-color: {border};
+}
+
+#code-formatter-main QPushButton:pressed {
+    background-color: {controlFillPressed};
+}
+
+#code-formatter-main QPushButton:disabled {
+    background-color: {controlFillDisabled};
+    color: {textDisabled};
+}
+
+#code-formatter-main QComboBox {
+    padding: 6px 8px;
+    border: 1px solid {borderLight};
+    border-radius: {radius};
+    background-color: {base};
+    color: {textPrimary};
+}
+
+#code-formatter-main QComboBox:hover {
+    border-color: {accent};
+}
+
+#code-formatter-main QComboBox::drop-down {
+    border: none;
+    width: 20px;
+}

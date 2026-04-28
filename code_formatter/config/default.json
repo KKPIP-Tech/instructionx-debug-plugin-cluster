@@ -1,0 +1,13 @@
+{
+  "plugin": {
+    "name": "code_formatter",
+    "version": "1.0.0"
+  },
+  "ui": {
+    "margins": [16, 16, 16, 16],
+    "spacing": 16,
+    "inner_spacing": 12,
+    "input_placeholder": "粘贴代码..."
+  },
+  "languages": ["python", "javascript"]
+}
