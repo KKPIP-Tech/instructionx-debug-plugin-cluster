@@ -1,0 +1,10 @@
+{
+  "plugin": {
+    "name": "color_converter",
+    "version": "1.0.0"
+  },
+  "ui": {
+    "margins": [16, 16, 16, 16],
+    "spacing": 16
+  }
+}

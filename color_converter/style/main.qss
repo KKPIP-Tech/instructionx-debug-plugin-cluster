@@ -1,0 +1,7 @@
+/* color_converter 插件样式 */
+
+ColorConverterWidget[heading="true"] {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+}
