@@ -1,0 +1,16 @@
+{
+  "plugin": {
+    "name": "task_manager",
+    "version": "1.0.0"
+  },
+  "ui": {
+    "margins": [16, 16, 16, 16],
+    "spacing": 16
+  },
+  "defaults": {
+    "plugin_id": "task-manager-default",
+    "priority": "normal",
+    "priorities": ["low", "normal", "high"],
+    "statuses": ["pending", "in_progress", "completed", "cancelled"]
+  }
+}

@@ -1,0 +1,87 @@
+/* Task Manager Plugin Styles */
+
+TaskManagerWidget {
+    background-color: {window};
+}
+
+TaskManagerWidget QLabel[heading="true"] {
+    font-size: 18px;
+    font-weight: bold;
+    color: {textPrimary};
+    padding: 8px 0;
+}
+
+TaskManagerWidget QGroupBox {
+    border: 1px solid {borderLight};
+    border-radius: {radius};
+    margin-top: 8px;
+    padding-top: 8px;
+}
+
+TaskManagerWidget QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    left: 8px;
+    color: {textPrimary};
+}
+
+TaskManagerWidget QListWidget {
+    border: 1px solid {borderLight};
+    border-radius: {radius};
+    background-color: {base};
+    padding: 4px;
+}
+
+TaskManagerWidget QListWidget::item {
+    padding: 6px;
+    border-radius: {radiusSmall};
+}
+
+TaskManagerWidget QListWidget::item:selected {
+    background-color: {controlFillSelected};
+}
+
+TaskManagerWidget QPushButton {
+    background-color: {button};
+    border: 1px solid {borderLight};
+    border-radius: {radius};
+    padding: 6px 12px;
+    min-width: 80px;
+}
+
+TaskManagerWidget QPushButton:hover {
+    background-color: {controlFillHover};
+}
+
+TaskManagerWidget QPushButton:pressed {
+    background-color: {controlFillPressed};
+}
+
+TaskManagerWidget QPushButton:disabled {
+    background-color: {controlFillDisabled};
+    color: {textDisabled};
+}
+
+TaskManagerWidget QComboBox {
+    border: 1px solid {borderLight};
+    border-radius: {radius};
+    padding: 4px 8px;
+    background-color: {button};
+}
+
+TaskManagerWidget QComboBox:hover {
+    border-color: {accent};
+}
+
+TaskManagerWidget QComboBox::drop-down {
+    border: none;
+    width: 20px;
+}
+
+TaskManagerWidget QComboBox::down-arrow {
+    image: none;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 6px solid {textPrimary};
+    margin-right: 8px;
+}
