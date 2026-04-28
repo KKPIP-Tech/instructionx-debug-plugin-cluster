@@ -1,0 +1,146 @@
+/* Framework API Demo Plugin Styles */
+
+#FrameworkApiDemoWidget {
+    background-color: {window};
+    color: {textPrimary};
+}
+
+#FrameworkApiDemoWidget QLabel {
+    color: {textPrimary};
+    background-color: transparent;
+}
+
+#FrameworkApiDemoWidget QLabel[heading="true"] {
+    font-size: 16px;
+    font-weight: bold;
+    color: {textPrimary};
+}
+
+#FrameworkApiDemoWidget QLabel[muted="true"] {
+    color: {textSecondary};
+    font-size: 12px;
+}
+
+#FrameworkApiDemoWidget QPushButton {
+    background-color: {button};
+    color: {buttonText};
+    border: 1px solid {borderLight};
+    padding: 5px 15px;
+    border-radius: {radius};
+}
+
+#FrameworkApiDemoWidget QPushButton:hover {
+    background-color: {controlFillHover};
+    border-color: {border};
+}
+
+#FrameworkApiDemoWidget QPushButton:pressed {
+    background-color: {controlFillPressed};
+}
+
+#FrameworkApiDemoWidget QTextEdit {
+    background-color: {base};
+    color: {textPrimary};
+    border: 1px solid {borderLight};
+    border-radius: {radius};
+}
+
+#FrameworkApiDemoWidget QLineEdit {
+    background-color: {base};
+    color: {textPrimary};
+    border: 1px solid {borderLight};
+    border-radius: {radius};
+    padding: 3px 6px;
+}
+
+#FrameworkApiDemoWidget QLineEdit:focus {
+    border: 1px solid {accent};
+}
+
+#FrameworkApiDemoWidget QGroupBox {
+    color: {textPrimary};
+    border: 1px solid {borderLight};
+    border-radius: {radius};
+    margin-top: 8px;
+    padding-top: 8px;
+}
+
+#FrameworkApiDemoWidget QGroupBox::title {
+    color: {textPrimary};
+}
+
+#FrameworkApiDemoWidget QComboBox {
+    background-color: {base};
+    color: {textPrimary};
+    border: 1px solid {borderLight};
+    border-radius: {radius};
+    padding: 3px 6px;
+}
+
+#FrameworkApiDemoWidget QComboBox::drop-down {
+    border: none;
+}
+
+#FrameworkApiDemoWidget QSpinBox {
+    background-color: {base};
+    color: {textPrimary};
+    border: 1px solid {borderLight};
+    border-radius: {radius};
+    padding: 3px 6px;
+}
+
+#FrameworkApiDemoWidget QListWidget {
+    background-color: {base};
+    color: {textPrimary};
+    border: 1px solid {borderLight};
+    border-radius: {radius};
+}
+
+#FrameworkApiDemoWidget QListWidget::item {
+    padding: 2px 4px;
+}
+
+#FrameworkApiDemoWidget QListWidget::item:selected {
+    background-color: {accentDark};
+}
+
+#FrameworkApiDemoWidget QTabWidget::pane {
+    border: 1px solid {borderLight};
+    background-color: {window};
+}
+
+#FrameworkApiDemoWidget QTabBar::tab {
+    background-color: {base};
+    color: {textPrimary};
+    padding: 5px 10px;
+    border: 1px solid {borderLight};
+}
+
+#FrameworkApiDemoWidget QTabBar::tab:selected {
+    background-color: {window};
+    border-bottom: 2px solid {accentDark};
+}
+
+#FrameworkApiDemoWidget QTabBar::tab:hover {
+    background-color: {button};
+}
+
+#FrameworkApiDemoWidget QScrollArea {
+    background-color: transparent;
+    border: none;
+}
+
+#FrameworkApiDemoWidget QScrollBar:vertical {
+    background-color: {base};
+    width: 10px;
+}
+
+#FrameworkApiDemoWidget QScrollBar::handle:vertical {
+    background-color: {border};
+    border-radius: 5px;
+    min-height: 20px;
+}
+
+#FrameworkApiDemoWidget QScrollBar::handle:vertical:hover {
+    background-color: {borderDark};
+}
