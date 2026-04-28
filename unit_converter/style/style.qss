@@ -1,0 +1,6 @@
+/* 单位转换插件专属样式 */
+
+#resultValue {
+    color: {accent};
+    font-weight: 600;
+}

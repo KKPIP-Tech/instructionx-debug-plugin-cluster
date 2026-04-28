@@ -1,0 +1,41 @@
+{
+  "plugin": {
+    "name": "unit_converter",
+    "version": "1.0.0"
+  },
+  "ui": {
+    "margins": [16, 16, 16, 16],
+    "spacing": 16
+  },
+  "units": {
+    "length": ["m", "km", "cm", "mm", "inch", "ft"],
+    "weight": ["kg", "g", "mg", "lb", "oz"],
+    "temperature": ["C", "F", "K"]
+  },
+  "conversion_factors": {
+    "length": {
+      "to_base": {
+        "m": 1,
+        "km": 1000,
+        "cm": 0.01,
+        "mm": 0.001,
+        "inch": 0.0254,
+        "ft": 0.3048
+      }
+    },
+    "weight": {
+      "to_base": {
+        "kg": 1,
+        "g": 0.001,
+        "mg": 0.000001,
+        "lb": 0.453592,
+        "oz": 0.0283495
+      }
+    },
+    "temperature": {
+      "celsius_offset": 273.15,
+      "fahrenheit_slope": 1.8,
+      "fahrenheit_offset": 32
+    }
+  }
+}
