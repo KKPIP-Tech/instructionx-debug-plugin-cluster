@@ -1,94 +1,35 @@
 """
-字符串工具服务 - 提供 API 方法供其他插件调用
+字符串工具插件服务层
+
+作为接口层，仅封装 function 子模块的方法，不包含任何业务逻辑和 UI 操作。
 """
 
+from .function.services.core_service import CoreService as _Impl
+
+
 class Service:
-    """字符串工具服务类，提供各种字符串处理功能"""
-    
+    """字符串工具服务类（接口层）"""
+
+    def __init__(self, plugin_id: str):
+        self._impl = _Impl(plugin_id)
+
     def to_uppercase(self, text: str) -> str:
-        """
-        将文本转换为大写
-        
-        Args:
-            text: 输入文本
-            
-        Returns:
-            大写文本
-        """
-        return text.upper()
-    
+        return self._impl.to_uppercase(text)
+
     def to_lowercase(self, text: str) -> str:
-        """
-        将文本转换为小写
-        
-        Args:
-            text: 输入文本
-            
-        Returns:
-            小写文本
-        """
-        return text.lower()
-    
+        return self._impl.to_lowercase(text)
+
     def reverse_text(self, text: str) -> str:
-        """
-        反转文本
-        
-        Args:
-            text: 输入文本
-            
-        Returns:
-            反转后的文本
-        """
-        return text[::-1]
-    
+        return self._impl.reverse_text(text)
+
     def capitalize_words(self, text: str) -> str:
-        """
-        将每个单词的首字母大写
-        
-        Args:
-            text: 输入文本
-            
-        Returns:
-            首字母大写的文本
-        """
-        return ' '.join(word.capitalize() for word in text.split())
-    
+        return self._impl.capitalize_words(text)
+
     def count_words(self, text: str) -> int:
-        """
-        统计单词数量
-        
-        Args:
-            text: 输入文本
-            
-        Returns:
-            单词数量
-        """
-        return len(text.split())
-    
+        return self._impl.count_words(text)
+
     def count_chars(self, text: str, include_spaces: bool = True) -> int:
-        """
-        统计字符数量
-        
-        Args:
-            text: 输入文本
-            include_spaces: 是否包含空格，默认为 True
-            
-        Returns:
-            字符数量
-        """
-        if include_spaces:
-            return len(text)
-        else:
-            return len(text.replace(" ", ""))
-    
+        return self._impl.count_chars(text, include_spaces)
+
     def remove_whitespace(self, text: str) -> str:
-        """
-        移除所有空白字符
-        
-        Args:
-            text: 输入文本
-            
-        Returns:
-            移除空白后的文本
-        """
-        return ''.join(text.split())
+        return self._impl.remove_whitespace(text)

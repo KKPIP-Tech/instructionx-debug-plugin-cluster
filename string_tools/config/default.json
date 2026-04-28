@@ -1,0 +1,11 @@
+{
+  "plugin": {
+    "name": "string_tools",
+    "version": "release.1.0.0"
+  },
+  "ui": {
+    "margins": [16, 16, 16, 16],
+    "spacing": 16,
+    "grid_spacing": 8
+  }
+}

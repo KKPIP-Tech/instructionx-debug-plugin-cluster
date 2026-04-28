@@ -1,0 +1,52 @@
+/* String Tools Plugin Styles */
+
+#StringToolsWidget {
+    background-color: {window};
+    color: {textPrimary};
+}
+
+#StringToolsWidget QLabel {
+    color: {textPrimary};
+    background-color: transparent;
+}
+
+#StringToolsWidget QPushButton {
+    background-color: {button};
+    color: {buttonText};
+    border: 1px solid {borderLight};
+    padding: 5px 10px;
+    border-radius: {radius};
+    min-width: 60px;
+}
+
+#StringToolsWidget QPushButton:hover {
+    background-color: {controlFillHover};
+    border-color: {border};
+}
+
+#StringToolsWidget QPushButton:pressed {
+    background-color: {controlFillPressed};
+}
+
+#StringToolsWidget QTextEdit {
+    background-color: {base};
+    color: {textPrimary};
+    border: 1px solid {borderLight};
+    border-radius: {radius};
+    font-family: 'Consolas', 'Courier New', monospace;
+}
+
+#StringToolsWidget QGroupBox {
+    color: {textPrimary};
+    border: 1px solid {borderLight};
+    border-radius: {radius};
+    margin-top: 8px;
+    padding-top: 8px;
+}
+
+#StringToolsWidget QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 3px;
+    color: {textPrimary};
+}
