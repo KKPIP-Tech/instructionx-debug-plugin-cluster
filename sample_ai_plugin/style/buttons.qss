@@ -1,0 +1,23 @@
+/* 示例 AI 插件按钮样式 */
+
+.btn-ai {
+    background-color: {button};
+    color: {buttonText};
+    border: 1px solid {borderLight};
+    border-radius: {radius};
+    padding: {btn_padding_v}px {btn_padding_h}px;
+    min-height: {btn_min_height}px;
+}
+
+.btn-ai:hover {
+    background-color: {controlFillHover};
+}
+
+.btn-ai:pressed {
+    background-color: {controlFillPressed};
+}
+
+.btn-ai:disabled {
+    background-color: {controlFillDisabled};
+    color: {textDisabled};
+}
