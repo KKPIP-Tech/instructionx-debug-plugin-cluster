@@ -1,0 +1,37 @@
+/* local_server 插件样式 */
+
+/* 状态标签语义化类 */
+.status-info {
+    color: {textSecondary};
+    font-weight: bold;
+}
+
+.status-success {
+    color: #10B981;
+    font-weight: bold;
+}
+
+.status-error {
+    color: #EF4444;
+    font-weight: bold;
+}
+
+.status-warning {
+    color: #F59E0B;
+    font-weight: bold;
+}
+
+/* 日志文本框 */
+#log_edit {
+    background-color: {codeBackground};
+    border: 1px solid {borderLight};
+    border-radius: {radius};
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 12px;
+    padding: 4px;
+}
+
+#log_edit:disabled {
+    background-color: {codeBackground};
+    color: {textDisabled};
+}

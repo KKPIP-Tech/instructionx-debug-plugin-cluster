@@ -1,31 +1,26 @@
 """
-本地HTTP服务器插件
+local_server 插件服务层（接口层）
 
-提供本地HTTP服务器功能，可用于测试Webhook、API等场景。
+仅对外暴露 API，不含任何业务逻辑。
+所有业务逻辑委托给 function/services/ 目录下的模块。
 """
 
 from core.data.data_provider import DataProvider, DataProviderError, DataNamespace
+from .function.services.core_service import HttpService
 
 
 class Service:
-    """本地HTTP服务器服务"""
+    """本地 HTTP 服务器服务（接口层）"""
 
     def __init__(self, plugin_id: str = None, data_provider=None):
         self.plugin_id = plugin_id
         self.data_provider = data_provider or DataProvider()
-
-        # 从 DataProvider 恢复状态
-        if plugin_id:
-            self._server_task_id = self.load_data("server_task_id")
-            self._request_count = self.load_data("request_count", 0)
-            self._is_running = self.load_data("is_running", False)
-        else:
-            self._server_task_id = None
-            self._request_count = 0
-            self._is_running = False
+        self._http_service = HttpService()
+        self._server_task_id = self.load_data("server_task_id")
+        self._request_count = self.load_data("request_count", 0)
+        self._is_running = self.load_data("is_running", False)
 
     def get_status(self) -> dict:
-        """获取服务器状态"""
         return {
             "is_running": self._is_running,
             "request_count": self._request_count,
@@ -33,14 +28,9 @@ class Service:
         }
 
     def increment_request_count(self):
-        """增加请求计数"""
         self._request_count += 1
-
-        # 确保 plugin_id 存在
         if not self.plugin_id:
             return
-
-        # 更新状态到 DataProvider
         self.data_provider.set_plugin_data(
             self.plugin_id,
             "request_count",
@@ -49,14 +39,10 @@ class Service:
         )
 
     def set_running(self, is_running: bool, task_id: str = None):
-        """设置运行状态"""
         self._is_running = is_running
         self._server_task_id = task_id
-
-        # 确保 plugin_id 存在
         if not self.plugin_id:
             return
-
         self.data_provider.set_plugin_data(
             self.plugin_id,
             "is_running",
@@ -65,7 +51,6 @@ class Service:
         )
 
     def save_data(self, key: str, value):
-        """保存数据"""
         self.data_provider.set_plugin_data(
             self.plugin_id,
             key,
@@ -74,7 +59,6 @@ class Service:
         )
 
     def load_data(self, key: str, default=None):
-        """加载数据"""
         try:
             return self.data_provider.get_plugin_data(
                 self.plugin_id,
@@ -83,5 +67,19 @@ class Service:
                 default
             )
         except DataProviderError:
-            # 插件尚未注册（首次安装），使用默认值
             return default
+
+    def get_default_port(self) -> int:
+        return self._http_service.get_default_port()
+
+    def get_port_range(self) -> tuple:
+        return self._http_service.get_port_range()
+
+    def start_http_server(self, port: int, request_callback):
+        self._http_service.start_server(port, request_callback)
+
+    def stop_http_server(self):
+        self._http_service.stop_server()
+
+    def is_http_running(self) -> bool:
+        return self._http_service.is_running()

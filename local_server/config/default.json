@@ -1,0 +1,14 @@
+{
+  "plugin": {
+    "name": "local_server",
+    "version": "1.0.0"
+  },
+  "ui": {
+    "margins": [16, 16, 16, 16],
+    "spacing": 16
+  },
+  "server": {
+    "default_port": 8080,
+    "port_range": [1024, 65535]
+  }
+}
