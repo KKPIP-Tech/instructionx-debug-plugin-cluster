@@ -1,0 +1,21 @@
+{
+    "layout": {
+        "content_margin": 10,
+        "spacing": 10,
+        "group_spacing": 15,
+        "slider_row_height": 40,
+        "title_font_size": "20px",
+        "title_font_weight": "bold"
+    },
+    "progress": {
+        "default_value": 60,
+        "slider_default": 50,
+        "animation_interval": 50,
+        "step": 10,
+        "max_value": 100
+    },
+    "tabs": {
+        "basic_margin": 5,
+        "basic_spacing": 5
+    }
+}
