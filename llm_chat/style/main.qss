@@ -1,0 +1,69 @@
+/* LLM Chat Plugin Styles */
+
+#LLMChatWidget {
+    background-color: {window};
+    color: {textPrimary};
+}
+
+#LLMChatWidget QLabel {
+    color: {textPrimary};
+    background-color: transparent;
+}
+
+#LLMChatWidget QPushButton {
+    background-color: {accent};
+    color: {highlightedText};
+    border: none;
+    padding: 5px 15px;
+    border-radius: {radius};
+}
+
+#LLMChatWidget QPushButton:hover {
+    background-color: {accentLight};
+}
+
+#LLMChatWidget QPushButton:pressed {
+    background-color: {accentDark};
+}
+
+#LLMChatWidget QTextEdit {
+    background-color: {base};
+    color: {textPrimary};
+    border: 1px solid {borderLight};
+    border-radius: {radius};
+}
+
+#LLMChatWidget QLineEdit {
+    background-color: {base};
+    color: {textPrimary};
+    border: 1px solid {borderLight};
+    padding: 5px 8px;
+    border-radius: {radius};
+}
+
+#LLMChatWidget QComboBox {
+    background-color: {base};
+    color: {textPrimary};
+    border: 1px solid {borderLight};
+    padding: 3px 5px;
+    border-radius: {radius};
+}
+
+#LLMChatWidget QListWidget {
+    background-color: {base};
+    color: {textPrimary};
+    border: 1px solid {borderLight};
+}
+
+#LLMChatWidget QProgressBar {
+    background-color: {button};
+    color: {buttonText};
+    border: none;
+    border-radius: {radius};
+    text-align: center;
+}
+
+#LLMChatWidget QProgressBar::chunk {
+    background-color: {accent};
+    border-radius: {radius};
+}

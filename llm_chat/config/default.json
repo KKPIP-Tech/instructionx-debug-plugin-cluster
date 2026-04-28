@@ -1,0 +1,17 @@
+{
+  "plugin": {
+    "name": "llm_chat",
+    "version": "1.0.0"
+  },
+  "ui": {
+    "margins": [16, 16, 16, 16],
+    "spacing": 12
+  },
+  "llm": {
+    "default_temperature": 0.7,
+    "temperature_slider_range": [0, 100],
+    "max_tokens_options": [256, 512, 1024, 2048, 4096],
+    "default_max_tokens_index": 1,
+    "default_plugin_id": "llm-chat-default"
+  }
+}
