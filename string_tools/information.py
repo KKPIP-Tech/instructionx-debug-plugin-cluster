@@ -2,10 +2,10 @@
 字符串工具插件元数据
 """
 
-from core.plugin.plugin_info_interface import IPluginInfo
+from core.interfaces import IPluginInfo
 from core.plugin.plugin_version import PluginVersion
 from core.plugin.plugin_icon import PluginIcon
-from typing import Dict, Any, List
+from typing import Dict, Any, Optional
 
 class StringToolsPluginInfo(IPluginInfo):
     """字符串工具插件元数据"""
@@ -60,112 +60,21 @@ class StringToolsPluginInfo(IPluginInfo):
     @property
     def service_api(self) -> Dict[str, Any]:
         """Service API 定义"""
+        text_param = {"text": {"type": "str", "description": "输入文本", "required": True}}
+        ret_str = {"type": "str", "description": "处理结果"}
+        ret_int = {"type": "int", "description": "统计结果"}
         return {
-            "to_uppercase": {
-                "description": "将文本转换为大写",
-                "parameters": {
-                    "text": {
-                        "type": "str",
-                        "description": "输入文本",
-                        "required": True
-                    }
-                },
-                "returns": {
-                    "type": "str",
-                    "description": "大写后的文本"
-                }
-            },
-            "to_lowercase": {
-                "description": "将文本转换为小写",
-                "parameters": {
-                    "text": {
-                        "type": "str",
-                        "description": "输入文本",
-                        "required": True
-                    }
-                },
-                "returns": {
-                    "type": "str",
-                    "description": "小写后的文本"
-                }
-            },
-            "reverse_text": {
-                "description": "反转文本",
-                "parameters": {
-                    "text": {
-                        "type": "str",
-                        "description": "输入文本",
-                        "required": True
-                    }
-                },
-                "returns": {
-                    "type": "str",
-                    "description": "反转后的文本"
-                }
-            },
-            "capitalize_words": {
-                "description": "将每个单词的首字母大写",
-                "parameters": {
-                    "text": {
-                        "type": "str",
-                        "description": "输入文本",
-                        "required": True
-                    }
-                },
-                "returns": {
-                    "type": "str",
-                    "description": "首字母大写的文本"
-                }
-            },
-            "count_words": {
-                "description": "统计单词数量",
-                "parameters": {
-                    "text": {
-                        "type": "str",
-                        "description": "输入文本",
-                        "required": True
-                    }
-                },
-                "returns": {
-                    "type": "int",
-                    "description": "单词数量"
-                }
-            },
-            "count_chars": {
-                "description": "统计字符数量",
-                "parameters": {
-                    "text": {
-                        "type": "str",
-                        "description": "输入文本",
-                        "required": True
-                    },
-                    "include_spaces": {
-                        "type": "bool",
-                        "description": "是否包含空格",
-                        "required": False,
-                        "default": True
-                    }
-                },
-                "returns": {
-                    "type": "int",
-                    "description": "字符数量"
-                }
-            },
-            "remove_whitespace": {
-                "description": "移除所有空白字符",
-                "parameters": {
-                    "text": {
-                        "type": "str",
-                        "description": "输入文本",
-                        "required": True
-                    }
-                },
-                "returns": {
-                    "type": "str",
-                    "description": "移除空白后的文本"
-                }
-            }
+            "to_uppercase": self._api("将文本转换为大写", text_param, ret_str),
+            "to_lowercase": self._api("将文本转换为小写", text_param, ret_str),
+            "reverse_text": self._api("反转文本", text_param, ret_str),
+            "capitalize_words": self._api("将每个单词的首字母大写", text_param, ret_str),
+            "count_words": self._api("统计单词数量", text_param, ret_int),
+            "count_chars": self._api("统计字符数量", {"text": {"type": "str", "description": "输入文本", "required": True}, "include_spaces": {"type": "bool", "description": "是否包含空格", "required": False, "default": True}}, ret_int),
+            "remove_whitespace": self._api("移除所有空白字符", text_param, ret_str)
         }
+
+    def _api(self, desc: str, params: Dict, returns: Dict) -> Dict:
+        return {"description": desc, "parameters": params, "returns": returns}
     
     @property
     def skill_icon(self) -> PluginIcon:
@@ -178,14 +87,14 @@ class StringToolsPluginInfo(IPluginInfo):
         return "提供字符串处理工具"
     
     @property
-    def tags(self) -> List[str]:
+    def tags(self) -> Optional[list[str]]:
         """插件标签"""
         return ["text", "string", "formatting", "utility"]
-    
+
     @property
-    def dependencies(self) -> None:
+    def dependencies(self) -> Dict[str, str]:
         """依赖项"""
-        return None
+        return {}
 
     @property
     def plugin_type_id(self) -> str:

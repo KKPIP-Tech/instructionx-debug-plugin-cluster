@@ -5,8 +5,5 @@
     "main": "entrance.py",
     "description": "字符串工具插件提供丰富的文本处理功能，包括：文本大小写转换（大写、小写）、文本反转、单词首字母大写、单词统计、字符统计、移除空白字符等。",
     "author": "InstructionX Team",
-    "author_email": "support@instructionx.dev",
-    "homepage": "https://github.com/KKPIP-Tech/InstructionX",
-    "keywords": ["instructionx", "plugin", "text", "string", "formatting", "utility"],
-    "dependencies": {}
+    "keywords": ["instructionx", "plugin", "text", "string", "formatting", "utility"]
 }
