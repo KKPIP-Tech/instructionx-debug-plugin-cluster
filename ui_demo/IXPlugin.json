@@ -5,8 +5,5 @@
     "main": "entrance.py",
     "description": "UI 控件演示插件用于展示所有控件效果。包含按钮、输入框、复选框、单选按钮、滑块、进度条、下拉框等多种 Qt 控件的样式演示。",
     "author": "InstructionX Team",
-    "author_email": "support@instructionx.dev",
-    "homepage": "https://github.com/KKPIP-Tech/InstructionX",
-    "keywords": ["instructionx", "plugin", "ui", "demo", "widget"],
-    "dependencies": {}
+    "keywords": ["instructionx", "plugin", "ui", "demo", "widget"]
 }

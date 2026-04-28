@@ -2,7 +2,7 @@
 UI 控件演示插件元数据
 """
 
-from core.plugin.plugin_info_interface import IPluginInfo
+from core.interfaces import IPluginInfo
 from core.plugin.plugin_version import PluginVersion
 from core.plugin.plugin_icon import PluginIcon
 from typing import Dict, Any, Optional
@@ -65,8 +65,8 @@ class UiDemoPluginInfo(IPluginInfo):
         return ["ui", "demo", "controls"]
 
     @property
-    def dependencies(self) -> Optional[Dict[str, str]]:
-        return None
+    def dependencies(self) -> Dict[str, str]:
+        return {}
 
     @property
     def plugin_type_id(self) -> str:
