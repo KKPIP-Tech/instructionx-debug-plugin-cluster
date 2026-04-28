@@ -2,7 +2,7 @@
 图片压缩插件元数据
 """
 
-from core.plugin.plugin_info_interface import IPluginInfo
+from core.interfaces import IPluginInfo
 from core.plugin.plugin_version import PluginVersion
 from core.plugin.plugin_icon import PluginIcon
 from typing import Dict, Any, Optional
@@ -45,41 +45,12 @@ class ImageCompressorPluginInfo(IPluginInfo):
     @property
     def service_api(self) -> Dict[str, Any]:
         return {
-            "compress_image": {
-                "description": "压缩图片",
-                "parameters": {
-                    "file_path": {
-                        "type": "str",
-                        "description": "图片文件路径",
-                        "required": True
-                    },
-                    "quality": {
-                        "type": "int",
-                        "description": "压缩质量 (1-100)，默认85",
-                        "required": False,
-                        "default": 85
-                    }
-                },
-                "returns": {
-                    "type": "bool",
-                    "description": "是否成功"
-                }
-            },
-            "get_image_info": {
-                "description": "获取图片信息",
-                "parameters": {
-                    "file_path": {
-                        "type": "str",
-                        "description": "图片文件路径",
-                        "required": True
-                    }
-                },
-                "returns": {
-                    "type": "dict",
-                    "description": "图片信息字典，包含file_path, file_size, file_size_str"
-                }
-            }
+            "compress_image": self._api("压缩图片", {"file_path": {"type": "str", "description": "图片文件路径", "required": True}, "quality": {"type": "int", "description": "压缩质量 (1-100)，默认85", "required": False, "default": 85}}, {"type": "bool", "description": "是否成功"}),
+            "get_image_info": self._api("获取图片信息", {"file_path": {"type": "str", "description": "图片文件路径", "required": True}}, {"type": "dict", "description": "图片信息字典，包含file_path, file_size, file_size_str"})
         }
+
+    def _api(self, desc: str, params: Dict, returns: Dict) -> Dict:
+        return {"description": desc, "parameters": params, "returns": returns}
     
     @property
     def skill_icon(self) -> PluginIcon:
@@ -94,8 +65,8 @@ class ImageCompressorPluginInfo(IPluginInfo):
         return ["image", "compression", "utility"]
     
     @property
-    def dependencies(self) -> Optional[Dict[str, str]]:
-        return None
+    def dependencies(self) -> Dict[str, str]:
+        return {}
 
     @property
     def plugin_type_id(self) -> str:
