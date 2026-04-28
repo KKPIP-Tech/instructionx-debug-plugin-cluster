@@ -5,8 +5,5 @@
     "main": "entrance.py",
     "description": "颜色转换插件提供颜色格式转换工具，包括：HEX 颜色转 RGB 格式。适用于在设计工作、开发调试、颜色管理等多种场景。",
     "author": "InstructionX Team",
-    "author_email": "support@instructionx.dev",
-    "homepage": "https://github.com/KKPIP-Tech/InstructionX",
-    "keywords": ["instructionx", "plugin", "color", "converter", "utility"],
-    "dependencies": {}
+    "keywords": ["color", "conversion", "utility", "hex", "rgb"]
 }

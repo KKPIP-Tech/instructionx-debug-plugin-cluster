@@ -2,7 +2,7 @@
 颜色转换插件元数据
 """
 
-from core.plugin.plugin_info_interface import IPluginInfo
+from core.interfaces import IPluginInfo
 from core.plugin.plugin_version import PluginVersion
 from core.plugin.plugin_icon import PluginIcon
 from typing import Dict, Any, Optional
@@ -33,31 +33,14 @@ class ColorConverterPluginInfo(IPluginInfo):
     
     @property
     def description(self) -> str:
-        return """
-        颜色转换插件提供颜色格式转换工具，包括：
-        - HEX 颜色转 RGB 格式
-        
-        该插件适用于需要在不同颜色格式之间转换的场景，
-        如设计工作、开发调试、颜色管理等。
-        """
+        return "颜色转换插件提供 HEX/RGB 颜色格式转换工具，适用于设计工作、开发调试、颜色管理等场景。"
     
     @property
     def service_api(self) -> Dict[str, Any]:
+        def api(name, params, returns):
+            return {"description": name, "parameters": params, "returns": returns}
         return {
-            "hex_to_rgb": {
-                "description": "将 HEX 颜色格式转换为 RGB 格式",
-                "parameters": {
-                    "hex_str": {
-                        "type": "str",
-                        "description": "HEX 颜色字符串（如 #FF5733 或 FF5733）",
-                        "required": True
-                    }
-                },
-                "returns": {
-                    "type": "str",
-                    "description": "RGB 格式字符串（如 rgb(255, 87, 51)），如果格式无效则返回错误信息"
-                }
-            }
+            "hex_to_rgb": api("将 HEX 颜色格式转换为 RGB 格式", {"hex_str": {"type": "str", "description": "HEX 颜色字符串（如 #FF5733 或 FF5733）", "required": True}}, {"type": "str", "description": "RGB 格式字符串（如 rgb(255, 87, 51)），如果格式无效则返回错误信息"})
         }
     
     @property
@@ -73,8 +56,8 @@ class ColorConverterPluginInfo(IPluginInfo):
         return ["color", "conversion", "utility"]
     
     @property
-    def dependencies(self) -> Optional[Dict[str, str]]:
-        return None
+    def dependencies(self) -> Dict[str, str]:
+        return {}
 
     @property
     def plugin_type_id(self) -> str:
