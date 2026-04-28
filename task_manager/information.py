@@ -2,7 +2,7 @@
 任务管理器插件元数据
 """
 
-from core.plugin.plugin_info_interface import IPluginInfo
+from core.interfaces import IPluginInfo
 from core.plugin.plugin_version import PluginVersion
 from core.plugin.plugin_icon import PluginIcon
 from typing import Dict, Any, Optional
@@ -57,101 +57,19 @@ class TaskManagerPluginInfo(IPluginInfo):
     
     @property
     def service_api(self) -> Dict[str, Any]:
+        add_params = {"title": {"type": "str", "description": "任务标题", "required": True}, "description": {"type": "str", "description": "任务描述", "required": False}, "priority": {"type": "str", "description": "优先级 (low, normal, high)", "required": False}}
+        update_params = {"task_id": {"type": "str", "description": "任务ID", "required": True}, "status": {"type": "str", "description": "状态 (pending, in_progress, completed, cancelled)", "required": True}}
         return {
-            "add_task": {
-                "description": "添加新任务",
-                "parameters": {
-                    "title": {
-                        "type": "str",
-                        "description": "任务标题",
-                        "required": True
-                    },
-                    "description": {
-                        "type": "str",
-                        "description": "任务描述",
-                        "required": False
-                    },
-                    "priority": {
-                        "type": "str",
-                        "description": "优先级 (low, normal, high)",
-                        "required": False
-                    }
-                },
-                "returns": {
-                    "type": "dict",
-                    "description": "任务信息"
-                }
-            },
-            "update_task_status": {
-                "description": "更新任务状态",
-                "parameters": {
-                    "task_id": {
-                        "type": "str",
-                        "description": "任务ID",
-                        "required": True
-                    },
-                    "status": {
-                        "type": "str",
-                        "description": "状态 (pending, in_progress, completed, cancelled)",
-                        "required": True
-                    }
-                },
-                "returns": {
-                    "type": "bool",
-                    "description": "是否成功"
-                }
-            },
-            "get_tasks": {
-                "description": "获取任务列表",
-                "parameters": {
-                    "status": {
-                        "type": "str",
-                        "description": "可选，筛选特定状态的任务",
-                        "required": False
-                    }
-                },
-                "returns": {
-                    "type": "list",
-                    "description": "任务列表"
-                }
-            },
-            "delete_task": {
-                "description": "删除任务",
-                "parameters": {
-                    "task_id": {
-                        "type": "str",
-                        "description": "任务ID",
-                        "required": True
-                    }
-                },
-                "returns": {
-                    "type": "bool",
-                    "description": "是否成功"
-                }
-            },
-            "get_statistics": {
-                "description": "获取任务统计信息",
-                "parameters": {},
-                "returns": {
-                    "type": "dict",
-                    "description": "统计信息（总数、各状态数量）"
-                }
-            },
-            "export_tasks": {
-                "description": "导出任务数据",
-                "parameters": {
-                    "format": {
-                        "type": "str",
-                        "description": "导出格式 (json, csv)",
-                        "required": False
-                    }
-                },
-                "returns": {
-                    "type": "str",
-                    "description": "导出文件的相对路径"
-                }
-            }
+            "add_task": self._api("添加新任务", add_params, {"type": "dict", "description": "任务信息"}),
+            "update_task_status": self._api("更新任务状态", update_params, {"type": "bool", "description": "是否成功"}),
+            "get_tasks": self._api("获取任务列表", {"status": {"type": "str", "description": "筛选特定状态的任务", "required": False}}, {"type": "list", "description": "任务列表"}),
+            "delete_task": self._api("删除任务", {"task_id": {"type": "str", "description": "任务ID", "required": True}}, {"type": "bool", "description": "是否成功"}),
+            "get_statistics": self._api("获取任务统计信息", {}, {"type": "dict", "description": "统计信息（总数、各状态数量）"}),
+            "export_tasks": self._api("导出任务数据", {"format": {"type": "str", "description": "导出格式 (json, csv)", "required": False}}, {"type": "str", "description": "导出文件的相对路径"})
         }
+
+    def _api(self, desc: str, params: Dict, returns: Dict) -> Dict:
+        return {"description": desc, "parameters": params, "returns": returns}
     
     @property
     def skill_icon(self) -> PluginIcon:
@@ -166,8 +84,8 @@ class TaskManagerPluginInfo(IPluginInfo):
         return ["task", "management", "productivity", "tracker"]
     
     @property
-    def dependencies(self) -> Optional[Dict[str, str]]:
-        return None
+    def dependencies(self) -> Dict[str, str]:
+        return {}
 
     @property
     def plugin_type_id(self) -> str:
