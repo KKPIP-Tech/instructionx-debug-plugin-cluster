@@ -2,7 +2,7 @@
 单位转换插件元数据
 """
 
-from core.plugin.plugin_info_interface import IPluginInfo
+from core.interfaces import IPluginInfo
 from core.plugin.plugin_version import PluginVersion
 from core.plugin.plugin_icon import PluginIcon
 from typing import Dict, Any, Optional
@@ -45,80 +45,17 @@ class UnitConverterPluginInfo(IPluginInfo):
     
     @property
     def service_api(self) -> Dict[str, Any]:
+        def conv_params(from_unit: str, from_desc: str) -> Dict:
+            return {"value": {"type": "float", "description": "数值", "required": True}, "from_unit": {"type": "str", "description": from_desc, "required": True}, "to_unit": {"type": "str", "description": "目标单位", "required": True}}
+        ret = {"type": "float", "description": "转换后的数值"}
         return {
-            "length_converter": {
-                "description": "长度单位转换",
-                "parameters": {
-                    "value": {
-                        "type": "float",
-                        "description": "数值",
-                        "required": True
-                    },
-                    "from_unit": {
-                        "type": "str",
-                        "description": "源单位 (m, km, cm, mm, inch, ft)",
-                        "required": True
-                    },
-                    "to_unit": {
-                        "type": "str",
-                        "description": "目标单位",
-                        "required": True
-                    }
-                },
-                "returns": {
-                    "type": "float",
-                    "description": "转换后的数值"
-                }
-            },
-            "weight_converter": {
-                "description": "重量单位转换",
-                "parameters": {
-                    "value": {
-                        "type": "float",
-                        "description": "数值",
-                        "required": True
-                    },
-                    "from_unit": {
-                        "type": "str",
-                        "description": "源单位 (kg, g, mg, lb, oz)",
-                        "required": True
-                    },
-                    "to_unit": {
-                        "type": "str",
-                        "description": "目标单位",
-                        "required": True
-                    }
-                },
-                "returns": {
-                    "type": "float",
-                    "description": "转换后的数值"
-                }
-            },
-            "temperature_converter": {
-                "description": "温度单位转换",
-                "parameters": {
-                    "value": {
-                        "type": "float",
-                        "description": "数值",
-                        "required": True
-                    },
-                    "from_unit": {
-                        "type": "str",
-                        "description": "源单位 (C, F, K)",
-                        "required": True
-                    },
-                    "to_unit": {
-                        "type": "str",
-                        "description": "目标单位",
-                        "required": True
-                    }
-                },
-                "returns": {
-                    "type": "float",
-                    "description": "转换后的数值"
-                }
-            }
+            "length_converter": self._api("长度单位转换", conv_params("源单位 (m, km, cm, mm, inch, ft)"), ret),
+            "weight_converter": self._api("重量单位转换", conv_params("源单位 (kg, g, mg, lb, oz)"), ret),
+            "temperature_converter": self._api("温度单位转换", conv_params("源单位 (C, F, K)"), ret)
         }
+
+    def _api(self, desc: str, params: Dict, returns: Dict) -> Dict:
+        return {"description": desc, "parameters": params, "returns": returns}
     
     @property
     def skill_icon(self) -> PluginIcon:
@@ -133,8 +70,8 @@ class UnitConverterPluginInfo(IPluginInfo):
         return ["unit", "conversion", "utility"]
     
     @property
-    def dependencies(self) -> Optional[Dict[str, str]]:
-        return None
+    def dependencies(self) -> Dict[str, str]:
+        return {}
 
     @property
     def plugin_type_id(self) -> str:

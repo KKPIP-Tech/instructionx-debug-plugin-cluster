@@ -3,10 +3,7 @@
     "name": "Unit Converter",
     "version": "release.1.0.0",
     "main": "entrance.py",
-    "description": "单位转换插件提供常用的单位转换工具，包括：长度单位转换（米、千米、厘米、毫米、英寸、英尺）、重量单位转换、体积单位转换、温度单位转换等。",
+    "description": "单位转换插件提供常用的单位转换工具，包括：长度单位转换（米、千米、厘米、毫米、英寸、英尺）、重量单位转换（千克、克、毫克、磅、盎司）、温度单位转换（摄氏度、华氏度、开尔文）等。",
     "author": "InstructionX Team",
-    "author_email": "support@instructionx.dev",
-    "homepage": "https://github.com/KKPIP-Tech/InstructionX",
-    "keywords": ["instructionx", "plugin", "unit", "converter", "utility"],
-    "dependencies": {}
+    "keywords": ["instructionx", "plugin", "unit", "converter", "utility"]
 }
