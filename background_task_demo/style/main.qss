@@ -1,0 +1,10 @@
+/* 后台任务演示器样式 */
+
+QLabel[heading="true"] {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+QLabel[muted="true"] {
+    color: {text-muted};
+}
