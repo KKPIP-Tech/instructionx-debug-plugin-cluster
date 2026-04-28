@@ -1,6 +1,6 @@
 {
     "name": "InstructionX Official Plugins",
-    "description": "InstructionX 官方测试插件集合，包含 14 个测试工具插件，涵盖文本处理、代码格式化、图片压缩、单位转换、任务管理、LLM 对话等功能。",
+    "description": "InstructionX 官方测试插件集合，包含 15 个测试工具插件，涵盖文本处理、代码格式化、图片压缩、单位转换、任务管理、LLM 对话等功能。",
     "plugins": [
         {"id": "api-demo", "name": "API Demo", "path": "api_demo/"},
         {"id": "background-task-demo", "name": "Background Task Demo", "path": "background_task_demo/"},
@@ -10,6 +10,7 @@
         {"id": "image-compressor", "name": "Image Compressor", "path": "image_compressor/"},
         {"id": "llm-chat", "name": "LLM Chat", "path": "llm_chat/"},
         {"id": "local-server", "name": "Local Server", "path": "local_server/"},
+        {"id": "sample-ai-plugin", "name": "示例AI插件", "path": "sample_ai_plugin/"},
         {"id": "string-tools", "name": "String Tools", "path": "string_tools/"},
         {"id": "task-manager", "name": "Task Manager", "path": "task_manager/"},
         {"id": "task-reporter", "name": "Task Reporter", "path": "task_reporter/"},
