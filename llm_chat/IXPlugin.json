@@ -5,8 +5,5 @@
     "main": "entrance.py",
     "description": "LLM Chat 插件 - 智能对话工具。支持多个 LLM Provider (MiniMax, SiliconFlow, GLM, Ollama)，提供多会话管理、流式输出、工具调用等功能。",
     "author": "InstructionX Team",
-    "author_email": "support@instructionx.dev",
-    "homepage": "https://github.com/KKPIP-Tech/InstructionX",
-    "keywords": ["instructionx", "plugin", "llm", "chat", "ai"],
-    "dependencies": {}
+    "keywords": ["instructionx", "plugin", "llm", "chat", "ai"]
 }

@@ -2,10 +2,10 @@
 LLM Chat 插件信息
 """
 
-from core.plugin.plugin_info_interface import IPluginInfo
+from core.interfaces import IPluginInfo
 from core.plugin.plugin_version import PluginVersion
 from core.plugin.plugin_icon import PluginIcon
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 
 class LLMChatPluginInfo(IPluginInfo):
@@ -48,87 +48,17 @@ class LLMChatPluginInfo(IPluginInfo):
 
     @property
     def service_api(self) -> Dict[str, Any]:
-        """
-        定义可被其他插件调用的方法
-        """
+        """定义可被其他插件调用的方法"""
+        send_msg_params = {"message": {"type": "str", "description": "用户消息", "required": True}, "provider": {"type": "str", "description": "Provider 名称", "required": True}, "model": {"type": "str", "description": "模型名称（可选）", "required": False}, "temperature": {"type": "float", "description": "温度参数 (0.0-2.0)", "required": False, "default": 0.7}, "max_tokens": {"type": "int", "description": "最大 token 数", "required": False}, "images": {"type": "list", "description": "图片 base64 列表（用于 Vision）", "required": False}}
         return {
-            "send_message": {
-                "description": "发送消息并获取 LLM 回复",
-                "parameters": {
-                    "message": {
-                        "type": "str",
-                        "description": "用户消息",
-                        "required": True
-                    },
-                    "provider": {
-                        "type": "str",
-                        "description": "Provider 名称",
-                        "required": True
-                    },
-                    "model": {
-                        "type": "str",
-                        "description": "模型名称（可选）",
-                        "required": False
-                    },
-                    "temperature": {
-                        "type": "float",
-                        "description": "温度参数 (0.0-2.0)",
-                        "required": False,
-                        "default": 0.7
-                    },
-                    "max_tokens": {
-                        "type": "int",
-                        "description": "最大 token 数",
-                        "required": False
-                    },
-                    "images": {
-                        "type": "list",
-                        "description": "图片 base64 列表（用于 Vision）",
-                        "required": False
-                    }
-                },
-                "returns": {
-                    "type": "dict",
-                    "description": "包含 success, response, error 等字段的字典"
-                }
-            },
-            "get_providers": {
-                "description": "获取所有可用的 Provider 列表",
-                "parameters": {},
-                "returns": {
-                    "type": "list",
-                    "description": "Provider 名称列表"
-                }
-            },
-            "get_models": {
-                "description": "获取指定 Provider 的模型列表",
-                "parameters": {
-                    "provider": {
-                        "type": "str",
-                        "description": "Provider 名称",
-                        "required": True
-                    }
-                },
-                "returns": {
-                    "type": "list",
-                    "description": "模型信息列表"
-                }
-            },
-            "validate_provider": {
-                "description": "验证 Provider 配置是否有效",
-                "parameters": {
-                    "provider": {
-                        "type": "str",
-                        "description": "Provider 名称",
-                        "required": True
-                    }
-                },
-                "returns": {
-                    "type": "dict",
-                    "description": "包含 valid, message, supports_vision 的字典"
-                }
-            }
+            "send_message": self._api("发送消息并获取 LLM 回复", send_msg_params, {"type": "dict", "description": "包含 success, response, error 等字段的字典"}),
+            "get_providers": self._api("获取所有可用的 Provider 列表", {}, {"type": "list", "description": "Provider 名称列表"}),
+            "get_models": self._api("获取指定 Provider 的模型列表", {"provider": {"type": "str", "description": "Provider 名称", "required": True}}, {"type": "list", "description": "模型信息列表"}),
+            "validate_provider": self._api("验证 Provider 配置是否有效", {"provider": {"type": "str", "description": "Provider 名称", "required": True}}, {"type": "dict", "description": "包含 valid, message, supports_vision 的字典"})
         }
+
+    def _api(self, desc: str, params: Dict, returns: Dict) -> Dict:
+        return {"description": desc, "parameters": params, "returns": returns}
 
     @property
     def skill_icon(self) -> PluginIcon:
@@ -142,9 +72,14 @@ class LLMChatPluginInfo(IPluginInfo):
         return "LLM 智能对话"
 
     @property
-    def tags(self) -> list:
+    def tags(self) -> Optional[list[str]]:
         """插件标签"""
         return ["AI", "LLM", "对话", "多模态"]
+
+    @property
+    def dependencies(self) -> Dict[str, str]:
+        """插件依赖（声明对其他插件的依赖，格式 {type_id: 版本约束}）"""
+        return {}
 
     @property
     def plugin_type_id(self) -> str:
