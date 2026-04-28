@@ -1,30 +1,8 @@
 """
-文本格式化服务 - 功能实现
+文本格式化服务接口层
+
+作为 PluginManager API 自动注册的入口，
+实际业务逻辑委托给 CoreService。
 """
 
-class Service:
-    """文本格式化服务类，提供文本格式化功能的实现"""
-    
-    def to_uppercase(self, text: str) -> str:
-        """
-        将文本转换为大写
-        
-        Args:
-            text: 输入文本
-            
-        Returns:
-            大写文本
-        """
-        return text.upper()
-    
-    def to_lowercase(self, text: str) -> str:
-        """
-        将文本转换为小写
-        
-        Args:
-            text: 输入文本
-            
-        Returns:
-            小写文本
-        """
-        return text.lower()
+from .function.services.core_service import CoreService as Service

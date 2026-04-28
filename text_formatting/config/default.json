@@ -1,0 +1,10 @@
+{
+  "plugin": {
+    "name": "text_formatting",
+    "version": "1.0.0"
+  },
+  "ui": {
+    "margins": [16, 16, 16, 16],
+    "spacing": 16
+  }
+}
