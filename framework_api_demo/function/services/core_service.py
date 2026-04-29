@@ -4,11 +4,11 @@ Framework API Demo 插件服务层
 提供演示 InstructionX 框架 API 的服务类。
 """
 
+import hashlib
 import time
-import uuid
 import json
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from core.data.data_provider import DataProvider, DataNamespace
 from core.task import BackgroundTaskManager
@@ -45,7 +45,10 @@ class DataDemoService(Service):
         demo_cfg = config.get("demo", {})
         prefix = demo_cfg.get("plugin_id_prefix", "demo-target")
         hex_len = demo_cfg.get("plugin_id_hex_length", 8)
-        self.demo_plugin_id = f"{prefix}-{uuid.uuid4().hex[:hex_len]}"
+        # 使用确定性哈希，确保服务重建后 demo_plugin_id 不变
+        hash_val = hashlib.md5(plugin_id.encode()).hexdigest()[:hex_len]
+        self.demo_plugin_id = f"{prefix}-{hash_val}"
+        self._last_asset_path: Optional[str] = None
 
     def register_demo_plugin(self) -> Dict[str, Any]:
         """演示注册插件"""
@@ -131,14 +134,17 @@ class DataDemoService(Service):
             relative_path = self.data_provider.save_asset(
                 self.plugin_id, "demo.txt", content
             )
+            self._last_asset_path = relative_path
             return {"success": True, "path": relative_path}
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    def load_demo_asset(self, relative_path: str) -> Dict[str, Any]:
+    def load_demo_asset(self, relative_path: str = None) -> Dict[str, Any]:
         """演示加载资源文件"""
         try:
-            content = self.data_provider.load_asset(relative_path)
+            default_path = f"assets/plugins/{self.plugin_id}/demo.txt"
+            path = relative_path or self._last_asset_path or default_path
+            content = self.data_provider.load_asset(path)
             return {"success": True, "content": content.decode()}
         except Exception as e:
             return {"success": False, "error": str(e)}

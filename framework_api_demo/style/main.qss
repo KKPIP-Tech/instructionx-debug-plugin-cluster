@@ -1,146 +1,35 @@
-/* Framework API Demo Plugin Styles */
+/* Framework API Demo Plugin Styles — 仅保留插件特有增强，基础样式由全局 QSS 提供 */
 
 #FrameworkApiDemoWidget {
-    background-color: {window};
-    color: {textPrimary};
-}
-
-#FrameworkApiDemoWidget QLabel {
-    color: {textPrimary};
     background-color: transparent;
 }
 
-#FrameworkApiDemoWidget QLabel[heading="true"] {
-    font-size: 16px;
-    font-weight: bold;
-    color: {textPrimary};
-}
-
-#FrameworkApiDemoWidget QLabel[muted="true"] {
-    color: {textSecondary};
+/* 结果展示区 */
+#FrameworkApiDemoWidget QTextEdit#resultDisplay {
+    font-family: "Cascadia Code", "Consolas", "Courier New", monospace;
     font-size: 12px;
+    line-height: 1.5;
 }
 
-#FrameworkApiDemoWidget QPushButton {
-    background-color: {button};
-    color: {buttonText};
-    border: 1px solid {borderLight};
-    padding: 5px 15px;
-    border-radius: {radius};
+/* 日志区域 */
+#FrameworkApiDemoWidget QTextEdit#logText {
+    max-height: 160px;
+    font-family: "Cascadia Code", "Consolas", "Courier New", monospace;
+    font-size: 11px;
+    line-height: 1.4;
 }
 
-#FrameworkApiDemoWidget QPushButton:hover {
-    background-color: {controlFillHover};
-    border-color: {border};
-}
-
-#FrameworkApiDemoWidget QPushButton:pressed {
-    background-color: {controlFillPressed};
-}
-
-#FrameworkApiDemoWidget QTextEdit {
-    background-color: {base};
-    color: {textPrimary};
-    border: 1px solid {borderLight};
-    border-radius: {radius};
-}
-
-#FrameworkApiDemoWidget QLineEdit {
-    background-color: {base};
-    color: {textPrimary};
-    border: 1px solid {borderLight};
-    border-radius: {radius};
-    padding: 3px 6px;
-}
-
-#FrameworkApiDemoWidget QLineEdit:focus {
-    border: 1px solid {accent};
-}
-
+/* 右侧 GroupBox 紧凑化 */
 #FrameworkApiDemoWidget QGroupBox {
-    color: {textPrimary};
-    border: 1px solid {borderLight};
-    border-radius: {radius};
-    margin-top: 8px;
+    margin-top: 6px;
     padding-top: 8px;
+    padding-left: 6px;
+    padding-right: 6px;
+    padding-bottom: 6px;
 }
 
-#FrameworkApiDemoWidget QGroupBox::title {
-    color: {textPrimary};
-}
-
-#FrameworkApiDemoWidget QComboBox {
-    background-color: {base};
-    color: {textPrimary};
-    border: 1px solid {borderLight};
-    border-radius: {radius};
-    padding: 3px 6px;
-}
-
-#FrameworkApiDemoWidget QComboBox::drop-down {
-    border: none;
-}
-
-#FrameworkApiDemoWidget QSpinBox {
-    background-color: {base};
-    color: {textPrimary};
-    border: 1px solid {borderLight};
-    border-radius: {radius};
-    padding: 3px 6px;
-}
-
+/* 右侧列表高度限制 */
 #FrameworkApiDemoWidget QListWidget {
-    background-color: {base};
-    color: {textPrimary};
-    border: 1px solid {borderLight};
-    border-radius: {radius};
-}
-
-#FrameworkApiDemoWidget QListWidget::item {
-    padding: 2px 4px;
-}
-
-#FrameworkApiDemoWidget QListWidget::item:selected {
-    background-color: {accentDark};
-}
-
-#FrameworkApiDemoWidget QTabWidget::pane {
-    border: 1px solid {borderLight};
-    background-color: {window};
-}
-
-#FrameworkApiDemoWidget QTabBar::tab {
-    background-color: {base};
-    color: {textPrimary};
-    padding: 5px 10px;
-    border: 1px solid {borderLight};
-}
-
-#FrameworkApiDemoWidget QTabBar::tab:selected {
-    background-color: {window};
-    border-bottom: 2px solid {accentDark};
-}
-
-#FrameworkApiDemoWidget QTabBar::tab:hover {
-    background-color: {button};
-}
-
-#FrameworkApiDemoWidget QScrollArea {
-    background-color: transparent;
-    border: none;
-}
-
-#FrameworkApiDemoWidget QScrollBar:vertical {
-    background-color: {base};
-    width: 10px;
-}
-
-#FrameworkApiDemoWidget QScrollBar::handle:vertical {
-    background-color: {border};
-    border-radius: 5px;
-    min-height: 20px;
-}
-
-#FrameworkApiDemoWidget QScrollBar::handle:vertical:hover {
-    background-color: {borderDark};
+    min-height: 40px;
+    max-height: 100px;
 }
