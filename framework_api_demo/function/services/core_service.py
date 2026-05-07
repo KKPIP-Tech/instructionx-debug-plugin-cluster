@@ -15,6 +15,7 @@ from core.task import BackgroundTaskManager
 from core.llm.llm_provider import LLMProvider
 from core.plugin.manager import PluginManager
 from utils.logging_tools import LoggerManager, get_name
+from core.version import get_instructionx_version_string
 
 
 def _load_config() -> Dict[str, Any]:
@@ -430,7 +431,7 @@ class FrameworkInfoService(Service):
         """获取框架信息"""
         return {
             "framework": "InstructionX",
-            "version": "1.0.0",
+            "version": get_instructionx_version_string(),
             "apis": [
                 "DataProvider",
                 "BackgroundTaskManager",
