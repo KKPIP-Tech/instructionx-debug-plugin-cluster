@@ -297,7 +297,12 @@ class LLMChatPlugin(IPlugin):
         widget = QWidget(parent)
         widget.setObjectName("LLMChatWidget")
         self._load_plugin_style(widget)
-        widget.destroyed.connect(lambda qss=self._qss_content: widget.setStyleSheet(""))
+        def _on_destroyed(w=widget):
+            try:
+                w.setStyleSheet("")
+            except RuntimeError:
+                pass
+        widget.destroyed.connect(_on_destroyed)
         return widget
 
     def _build_layout(self, widget) -> QWidget:
