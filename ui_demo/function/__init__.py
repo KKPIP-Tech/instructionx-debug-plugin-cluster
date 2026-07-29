@@ -1,1 +1,2 @@
-"""UI Demo Function Module"""
+# -*- coding: utf-8 -*-
+"""UI Demo 插件功能层（业务逻辑与纯数据目录）。"""

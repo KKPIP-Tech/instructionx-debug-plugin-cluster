@@ -1,31 +1,22 @@
-"""UI Demo Plugin"""
+# -*- coding: utf-8 -*-
+"""UI Demo 插件入口（胶水层）：协调框架与插件 UI/服务。"""
 
 from core.plugin.plugin_interface import IPlugin
-from .service import Service
+
 from .ui.main_widget import MainWidget
 
 
 class UiDemoPlugin(IPlugin):
-    """UI Control Demo Plugin"""
+    """InstructionX_UIKit 组件橱窗插件。
 
-    def __init__(self):
-        super().__init__()
+    以导航树分页演示 UIKit 的设计令牌、12 个布局、57 个组件、
+    动画、图表与蓝图节点图，页面移植自 UIKit 仓库 Demo。
+    """
 
     @property
     def plugin_name(self) -> str:
         return "UI\nDemo"
 
-    def get_widget(self, parent=None, data_provider=None):
-        from utils.style_qss import get_style_qss
-        current_theme = get_style_qss().theme()
-        if getattr(self, '_cached_theme', None) != current_theme:
-            self._cached_theme = current_theme
-            self._cached_widget = None
-            self._cached_parent = None
-        return super().get_widget(parent, data_provider)
-
     def _create_widget(self, parent=None, data_provider=None) -> MainWidget:
-        """Create plugin widget"""
-        service = Service()
-        widget = MainWidget(parent=parent, service=service, plugin=self)
-        return widget
+        """创建插件主控件（导航树 + 演示页堆叠）。"""
+        return MainWidget(parent=parent)
