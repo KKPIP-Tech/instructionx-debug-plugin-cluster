@@ -45,7 +45,7 @@ class UnitConverterPluginInfo(IPluginInfo):
     
     @property
     def service_api(self) -> Dict[str, Any]:
-        def conv_params(from_unit: str, from_desc: str) -> Dict:
+        def conv_params(from_desc: str) -> Dict:
             return {"value": {"type": "float", "description": "数值", "required": True}, "from_unit": {"type": "str", "description": from_desc, "required": True}, "to_unit": {"type": "str", "description": "目标单位", "required": True}}
         ret = {"type": "float", "description": "转换后的数值"}
         return {
