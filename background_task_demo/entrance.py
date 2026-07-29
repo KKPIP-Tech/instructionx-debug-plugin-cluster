@@ -12,14 +12,14 @@
 
 import time
 from typing import Optional
-from pathlib import Path
 
-from PySide6.QtWidgets import QWidget, QVBoxLayout
-from PySide6.QtCore import Signal, QObject
+from PySide6.QtCore import QObject, Signal
+from PySide6.QtWidgets import QVBoxLayout, QWidget
 
 from core.plugin.plugin_interface import IPlugin
 from core.task import TaskStatus
-from utils.style_qss.registry import QssRegistry
+from utils.logging_tools import LoggerManager, get_name
+
 from .service import Service
 from .ui.main_widget import MainWidget
 
@@ -40,6 +40,8 @@ def _buffer_log(message: str):
 
 class BackgroundTaskDemoPlugin(IPlugin):
     """后台任务演示器插件"""
+
+    _logger = LoggerManager()
 
     def __init__(self):
         super().__init__()
@@ -79,34 +81,17 @@ class BackgroundTaskDemoPlugin(IPlugin):
                     str(result) if result else "",
                     error if error else ""
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                self._logger.error(
+                    get_name(), f"定时任务完成回调信号发送失败: {e}")
         return task_callback
 
     @property
     def plugin_name(self) -> str:
         return "后台任务演示"
 
-    def _load_plugin_style(self, widget: QWidget):
-        """加载插件目录下的 style/*.qss，支持 {variable} 变量替换"""
-        style_dir = Path(__file__).parent / "style"
-        if not style_dir.exists():
-            return
-
-        qss_parts = []
-        for qss_file in sorted(style_dir.glob("*.qss")):
-            raw = qss_file.read_text(encoding="utf-8")
-            qss_parts.append(QssRegistry.apply_variables(raw))
-
-        if qss_parts:
-            self._qss_content = "\n".join(qss_parts)
-            widget.setStyleSheet(self._qss_content)
-
     def _create_widget(self, parent=None, data_provider=None) -> QWidget:
         widget = QWidget(parent)
-        self._load_plugin_style(widget)
-        widget.destroyed.connect(lambda qss=self._qss_content: widget.setStyleSheet(""))
-
         main_layout = QVBoxLayout(widget)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)

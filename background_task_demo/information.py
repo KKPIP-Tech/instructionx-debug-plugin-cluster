@@ -2,10 +2,11 @@
 后台任务演示器插件信息
 """
 
+from typing import Any, Dict, Optional
+
 from core.interfaces import IPluginInfo
-from core.plugin.plugin_version import PluginVersion
 from core.plugin.plugin_icon import PluginIcon
-from typing import Dict, Any, Optional
+from core.plugin.plugin_version import PluginVersion
 
 
 class BackgroundTaskDemoInfo(IPluginInfo):
@@ -13,7 +14,7 @@ class BackgroundTaskDemoInfo(IPluginInfo):
 
     @property
     def version(self) -> PluginVersion:
-        return PluginVersion.from_string("release.1.0.0")
+        return PluginVersion.from_string("release.1.1.0")
 
     @property
     def developer(self) -> str:
