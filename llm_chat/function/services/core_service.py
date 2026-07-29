@@ -4,10 +4,13 @@ LLM Chat 服务层 - 处理 LLM 调用逻辑
 
 import base64
 import json
-from typing import Dict, Any, List, Optional
+import threading
+import traceback
 from pathlib import Path
+from queue import Queue
+from typing import Dict, Any, List, Optional
 
-from core.llm import get_llm_provider
+from core.llm import get_llm_provider, get_llm_plugin_service
 from core.llm.exceptions import (
     LLMException,
     ConfigurationError,
@@ -46,11 +49,11 @@ DEFAULT_MAX_TOKENS_OPTIONS = _LLM_CONFIG.get("max_tokens_options", [256, 512, 10
 
 # 数据 key 常量
 _KEY_CHAT_HISTORY = "chat_history"
-_KEY_LAST_PROVIDER = "last_provider"
-_KEY_LAST_MODEL_PREFIX = "last_model_"
-_KEY_SYSTEM_LLM = "__app_llm__"
-_KEY_LLM_PROVIDER = "provider"
-_KEY_LLM_MODEL = "model"
+
+# 流式事件协议（stream_chat callback → 生成器适配的内部事件类型）
+_EVENT_CHUNK = "chunk"
+_EVENT_DONE = "done"
+_EVENT_ERROR = "error"
 
 
 class LLMChatService:
@@ -181,15 +184,47 @@ class LLMChatService:
                     return {"success": False, "error": default_msg or f"错误: {str(e)}", "error_type": err_type}
             return {"success": False, "error": f"未知错误: {str(e)}", "error_type": "unknown"}
 
-    def _stream_iterate(self, responses):
-        """遍历流式响应并 yield"""
-        full_response = ""
-        for response in responses:
-            content = response.content or ""
-            full_response += content
-            self._logger.debug(get_name(), f"Chunk: {len(content)} chars")
-            yield {"chunk": content, "done": False, "model": response.model}
-        yield {"chunk": "", "done": True, "full_response": full_response}
+    def _run_stream(self, messages, provider, model, temperature,
+                    max_tokens, events: Queue):
+        """执行 stream_chat 并把最终结果/异常投递到事件队列
+
+        框架 ``LLMProvider.stream_chat`` 为 callback 契约（同步执行并返回
+        完整文本），callback 在本方法所在线程内同步触发，仅投递队列、不操作 UI。
+        """
+        def _on_chunk(text: str, done: bool) -> None:
+            if text:
+                events.put((_EVENT_CHUNK, text))
+
+        try:
+            full_text = self.llm_provider.stream_chat(
+                messages=messages, provider=provider, model=model,
+                temperature=temperature, max_tokens=max_tokens,
+                callback=_on_chunk)
+            last_response = getattr(self.llm_provider, "last_stream_response", None)
+            agg_model = getattr(last_response, "model", "") or ""
+            events.put((_EVENT_DONE, (full_text, agg_model)))
+        except Exception as e:
+            events.put((_EVENT_ERROR, e))
+
+    def _stream_iterate(self, events: Queue):
+        """消费流式事件队列并 yield 既有格式的结果字典
+
+        保持插件内 ChatWorker 的消费方式不变：中间块
+        ``{"chunk": ..., "done": False}``，结束块携带 ``full_response`` 与
+        ``model``；异常事件重新抛出，由 ``stream_send_message`` 统一映射。
+        """
+        while True:
+            kind, payload = events.get()
+            if kind == _EVENT_CHUNK:
+                self._logger.debug(get_name(), f"Chunk: {len(payload)} chars")
+                yield {"chunk": payload, "done": False}
+            elif kind == _EVENT_DONE:
+                full_response, agg_model = payload
+                yield {"chunk": "", "done": True,
+                       "full_response": full_response, "model": agg_model}
+                return
+            else:
+                raise payload
 
     _STREAM_ERROR_MAP = {
         AuthenticationError: ("authentication", "认证失败: API Key 无效或已过期。"),
@@ -205,8 +240,13 @@ class LLMChatService:
         self._logger.debug(get_name(), f"Provider: {provider}, Model: {model}")
         try:
             messages = self._build_messages(message, images, history)
-            responses = self.llm_provider.stream_chat(messages=messages, provider=provider, model=model, temperature=temperature, max_tokens=max_tokens)
-            yield from self._stream_iterate(responses)
+            events: Queue = Queue()
+            threading.Thread(
+                target=self._run_stream,
+                args=(messages, provider, model, temperature, max_tokens, events),
+                daemon=True,
+            ).start()
+            yield from self._stream_iterate(events)
         except ConnectionError as e:
             yield {"chunk": "", "done": True, "error": f"连接失败: 无法连接到 API 服务器 - {str(e)}", "error_type": "connection"}
         except Exception as e:
@@ -214,7 +254,6 @@ class LLMChatService:
                 if isinstance(e, exc_type):
                     yield {"chunk": "", "done": True, "error": default_msg, "error_type": err_type}
                     return
-            import traceback
             self._logger.debug(get_name(), f"Exception: {e}\n{traceback.format_exc()}")
             yield {"chunk": "", "done": True, "error": f"错误: {str(e)}", "error_type": "unknown"}
 
@@ -267,18 +306,29 @@ class LLMChatService:
         """加载对话历史"""
         return self.load_preference(_KEY_CHAT_HISTORY, [])
 
+    def _find_current_chat_model(self, llm_service, provider_id: str) -> str:
+        """在实例列表中查找指定实例的当前对话模型"""
+        if not provider_id:
+            return ""
+        for info in llm_service.list_providers():
+            if info.instance_id == provider_id:
+                return info.current_chat_model or ""
+        return ""
+
     def get_current_llm_preference(self) -> tuple:
         """获取当前全局 LLM 选择（供其他插件使用）
 
-        从 DataProvider 读取系统级 LLM Provider/Model 选择。
+        通过框架 LLMPluginService 读取默认 chat 实例及其当前模型
+        （框架旧版的系统级数据键已不再写入，改为查询默认实例）。
 
         Returns:
-            tuple: (provider_name, model_name)
+            tuple: (provider_id, model_name)；无默认实例时为 ("", "")
         """
-        provider = self.data_provider.get_plugin_data(
-            _KEY_SYSTEM_LLM, _KEY_LLM_PROVIDER, DataNamespace.PRIVATE, ""
-        )
-        model = self.data_provider.get_plugin_data(
-            _KEY_SYSTEM_LLM, _KEY_LLM_MODEL, DataNamespace.PRIVATE, ""
-        )
-        return provider, model
+        try:
+            llm_service = get_llm_plugin_service()
+            provider_id = llm_service.get_default_provider_id(feature="chat") or ""
+            model = self._find_current_chat_model(llm_service, provider_id)
+            return provider_id, model
+        except Exception as e:
+            self._logger.error(get_name(), f"获取默认 LLM 配置失败: {e}")
+            return "", ""
