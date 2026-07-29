@@ -1,9 +1,9 @@
 {
     "id": "task-reporter",
     "name": "Task Reporter",
-    "version": "release.1.0.0",
+    "version": "release.1.1.0",
     "main": "entrance.py",
-    "description": "任务报告生成器插件提供任务统计和报告生成功能，包括：实时订阅任务管理器的数据变更、自动生成任务统计报告、可视化任务进度等功能。",
+    "description": "订阅 TaskManager 插件事件并生成统计报告，支持实时统计展示、事件历史记录与 JSON/TXT/HTML 多格式报告导出。",
     "author": "InstructionX Team",
     "keywords": ["instructionx", "plugin", "task", "reporter", "statistics"]
 }
