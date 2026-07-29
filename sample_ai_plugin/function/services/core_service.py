@@ -6,6 +6,8 @@
 
 from core.llm import get_llm_plugin_service
 
+from ..tools.llm_tools import register_sample_tools
+
 
 class CoreService:
     """示例 AI 插件核心服务"""
@@ -15,8 +17,8 @@ class CoreService:
         self._llm = get_llm_plugin_service()
 
     def get_available_providers(self):
-        """获取可用 Provider 列表"""
-        return self._llm.get_available_providers()
+        """获取可用 Provider 实例列表（List[ProviderInfo]）"""
+        return self._llm.list_providers()
 
     def create_conversation(self, system_prompt: str, provider: str, model: str) -> str:
         """创建对话"""
@@ -40,5 +42,4 @@ class CoreService:
 
     def register_tools(self):
         """注册示例工具到共享工具注册表"""
-        from ..tools.llm_tools import register_sample_tools
         register_sample_tools()

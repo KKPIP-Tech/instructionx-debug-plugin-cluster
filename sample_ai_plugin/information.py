@@ -13,7 +13,7 @@ class SampleAIPluginInfo(IPluginInfo):
 
     @property
     def version(self) -> PluginVersion:
-        return PluginVersion.from_string("release.1.0.0")
+        return PluginVersion.from_string("release.1.1.0")
 
     @property
     def developer(self) -> str:

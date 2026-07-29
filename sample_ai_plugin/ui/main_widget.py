@@ -1,22 +1,42 @@
-"""
-示例 AI 插件主控件
+# -*- coding: utf-8 -*-
+"""示例 AI 插件主控件。
 
 演示 LLMPluginService 的完整集成方式，支持对话、流式输出、工具调用。
+样式全面使用 InstructionX_UIKit 组件（Button/ComboBox/TextArea）与 T()
+令牌，随全局主题自动换肤；后台线程的 UI 更新统一经 run_in_ui_thread
+封送到 UI 线程。
 """
 
 import json
 import threading
 from pathlib import Path
-from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QTextEdit,
-    QLabel, QComboBox, QScrollArea, QFrame
-)
+
 from PySide6.QtCore import Qt, QThread, Signal
-from utils.style_qss.registry import QssRegistry
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QScrollArea,
+    QVBoxLayout,
+    QWidget,
+)
+
+from InstructionX_UIKit import MONO_FAMILY, T
+from InstructionX_UIKit.components import Button, ComboBox, TextArea
+
+from utils.thread_utils import run_in_ui_thread
+
+_CONFIG_PATH = Path(__file__).parent.parent / "config" / "default.json"
+_DEFAULT_MARGINS = [16, 16, 16, 16]
+_DEFAULT_SPACING = 16
+_OUTPUT_MIN_HEIGHT = 160
+#: provider/model 参数取该值表示「默认实例 / 默认模型」（与框架 DEFAULT_PROVIDER 语义一致）
+_DEFAULT_REFERENCE = "default"
 
 
 class StreamWorker(QThread):
-    """流式响应工作线程"""
+    """流式响应工作线程（QThread + Signal，天然线程安全，无需封送）"""
 
     chunk_received = Signal(str)
     finished = Signal(dict)
@@ -47,131 +67,109 @@ class MainWidget(QWidget):
 
     def __init__(self, service, parent=None):
         super().__init__(parent)
-        self.setObjectName("MainWidget")
         self._service = service
         self._providers = []
         self._conv_id = None
         self._worker = None
-        self._load_plugin_style()
+        cfg = self._load_config().get("ui", {})
+        self._margins = cfg.get("margins", _DEFAULT_MARGINS)
+        self._spacing = cfg.get("spacing", _DEFAULT_SPACING)
         self._setup_ui()
         self._populate_providers()
 
-    def _load_plugin_style(self):
-        """加载插件 QSS 样式文件"""
-        style_dir = Path(__file__).parent.parent / "style"
-        config_dir = Path(__file__).parent.parent / "config"
-        if not style_dir.exists():
-            return
-        ui_cfg = {}
-        if config_dir.exists():
-            cfg_file = config_dir / "default.json"
-            if cfg_file.exists():
-                cfg = json.loads(cfg_file.read_text(encoding="utf-8"))
-                ui_cfg = cfg.get("ui", {})
-        self._ui_config = ui_cfg
-        qss_parts = []
-        for qss_file in sorted(style_dir.glob("*.qss")):
-            raw = qss_file.read_text(encoding="utf-8")
-            raw = QssRegistry.apply_variables(raw)
-            for key, val in ui_cfg.items():
-                raw = raw.replace(f"{{{key}}}", str(val))
-            qss_parts.append(raw)
-        if qss_parts:
-            self._plugin_qss = "\n".join(qss_parts)
-            self.setStyleSheet(self._plugin_qss)
-            self.destroyed.connect(self._unload_plugin_style)
-
-    def _unload_plugin_style(self):
-        """卸载插件 QSS 样式（widget 销毁时调用）"""
-        if hasattr(self, "_plugin_qss"):
-            self.setStyleSheet("")
-            del self._plugin_qss
+    def _load_config(self) -> dict:
+        """读取插件默认配置（UI 间距与边距参数）"""
+        if _CONFIG_PATH.exists():
+            with open(_CONFIG_PATH, encoding="utf-8") as f:
+                return json.load(f)
+        return {}
 
     def _setup_ui(self):
-        """初始化 UI 布局"""
+        """构建 UI"""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
-        self._create_scroll_area(main_layout)
-        self._create_title_and_selectors()
-        self._create_output_area()
-        self._create_buttons()
 
-    def _create_scroll_area(self, main_layout):
+        scroll_area = self._create_scroll_area()
+        content = QWidget()
+        layout = QVBoxLayout(content)
+        layout.setContentsMargins(*self._margins)
+        layout.setSpacing(self._spacing)
+
+        self._add_title(layout)
+        layout.addLayout(self._create_selectors())
+        self._output = self._create_output_area()
+        layout.addWidget(self._output)
+        self._add_buttons(layout)
+        layout.addStretch()
+
+        scroll_area.setWidget(content)
+        main_layout.addWidget(scroll_area)
+
+    def _create_scroll_area(self) -> QScrollArea:
         """创建滚动区域"""
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll_area.setFrameShape(QFrame.Shape.NoFrame)
-        content = QWidget()
-        self._content_layout = QVBoxLayout(content)
-        ui_cfg = getattr(self, "_ui_config", {})
-        m_top = ui_cfg.get("content_margins_top", 16)
-        m_bottom = ui_cfg.get("content_margins_bottom", 16)
-        m_left = ui_cfg.get("content_margins_left", 16)
-        m_right = ui_cfg.get("content_margins_right", 16)
-        spacing = ui_cfg.get("content_spacing", 16)
-        self._content_layout.setContentsMargins(m_top, m_bottom, m_left, m_right)
-        self._content_layout.setSpacing(spacing)
-        self._content_layout.addStretch()
-        scroll_area.setWidget(content)
-        main_layout.addWidget(scroll_area)
+        return scroll_area
 
-    def _create_title_and_selectors(self):
-        """创建标题和选择器"""
+    def _add_title(self, layout: QVBoxLayout):
+        """添加标题（字号取 UIKit 令牌，颜色随全局主题）"""
         title = QLabel("示例 AI 插件 — LLMPluginService 演示")
-        title.setProperty("heading", "true")
-        self._content_layout.insertWidget(self._content_layout.count() - 1, title)
+        font = QFont()
+        font.setPixelSize(T("font.lg"))
+        font.setWeight(QFont.Weight(QFont.Bold))
+        title.setFont(font)
+        layout.addWidget(title)
 
+    def _create_selectors(self) -> QHBoxLayout:
+        """创建 Provider / Model 选择器行"""
         selector_layout = QHBoxLayout()
         selector_layout.addWidget(QLabel("Provider:"))
-        self._provider_combo = QComboBox()
+        self._provider_combo = ComboBox()
         self._provider_combo.currentIndexChanged.connect(self._on_provider_changed)
         selector_layout.addWidget(self._provider_combo)
         selector_layout.addWidget(QLabel("Model:"))
-        self._model_combo = QComboBox()
+        self._model_combo = ComboBox()
         selector_layout.addWidget(self._model_combo)
-        self._content_layout.insertLayout(self._content_layout.count() - 1, selector_layout)
+        return selector_layout
 
-    def _create_output_area(self):
-        """创建输出区域"""
-        self._output = QTextEdit()
-        self._output.setReadOnly(True)
-        self._content_layout.insertWidget(self._content_layout.count() - 1, self._output)
+    def _create_output_area(self) -> TextArea:
+        """创建输出区域（等宽字体便于查看流式输出）"""
+        output = TextArea()
+        output.setReadOnly(True)
+        output.setMinimumHeight(_OUTPUT_MIN_HEIGHT)
+        output.setFont(QFont(MONO_FAMILY))
+        return output
 
-    def _create_buttons(self):
-        """创建按钮"""
-        btn_chat = QPushButton("发送测试消息（同步）")
-        btn_chat.setProperty("class", "btn-ai")
-        btn_chat.clicked.connect(self._on_sync_chat)
-        self._content_layout.insertWidget(self._content_layout.count() - 1, btn_chat)
-
-        btn_stream = QPushButton("流式发送消息")
-        btn_stream.setProperty("class", "btn-ai")
-        btn_stream.clicked.connect(self._on_stream_chat)
-        self._content_layout.insertWidget(self._content_layout.count() - 1, btn_stream)
-
-        btn_tools = QPushButton("使用工具调用")
-        btn_tools.setProperty("class", "btn-ai")
-        btn_tools.clicked.connect(self._on_tools)
-        self._content_layout.insertWidget(self._content_layout.count() - 1, btn_tools)
+    def _add_buttons(self, layout: QVBoxLayout):
+        """创建操作按钮（同步/流式/工具调用，均为主操作 primary 变体）"""
+        for text, handler in (
+            ("发送测试消息（同步）", self._on_sync_chat),
+            ("流式发送消息", self._on_stream_chat),
+            ("使用工具调用", self._on_tools),
+        ):
+            btn = Button(text, variant="primary")
+            btn.clicked.connect(handler)
+            layout.addWidget(btn)
 
     def _populate_providers(self):
-        """填充 Provider 列表"""
+        """填充 Provider 列表（itemData 存实例 id，语义同框架 provider 参数）"""
         self._providers = self._service.get_available_providers()
         self._provider_combo.blockSignals(True)
         self._provider_combo.clear()
         if self._providers:
             for p in self._providers:
-                self._provider_combo.addItem(p.name, p.name)
+                self._provider_combo.addItem(p.name, p.instance_id)
             self._on_provider_changed()
         else:
             self._model_combo.clear()
-            self._model_combo.addItem("无可用 Provider", "")
+            self._model_combo.addItem("无可用 Provider", _DEFAULT_REFERENCE)
         self._provider_combo.blockSignals(False)
 
     def _on_provider_changed(self):
-        """Provider 选择变更"""
+        """Provider 选择变更，刷新模型下拉（ModelInfo 字段：name/id）"""
         idx = self._provider_combo.currentIndex()
         if idx < 0 or idx >= len(self._providers):
             return
@@ -181,13 +179,16 @@ class MainWidget(QWidget):
         for m in provider.models:
             self._model_combo.addItem(m.name or m.id, m.id)
         if not provider.models:
-            self._model_combo.addItem(provider.current_chat_model or "default", "default")
+            self._model_combo.addItem(
+                provider.current_chat_model or _DEFAULT_REFERENCE,
+                _DEFAULT_REFERENCE,
+            )
         self._model_combo.blockSignals(False)
 
     def _get_selected(self) -> tuple:
-        """获取当前选中的 Provider 和 Model"""
-        provider = self._provider_combo.currentData() or "default"
-        model = self._model_combo.currentData() or "default"
+        """获取当前选中的 Provider 实例 id 和 Model id"""
+        provider = self._provider_combo.currentData() or _DEFAULT_REFERENCE
+        model = self._model_combo.currentData() or _DEFAULT_REFERENCE
         return provider, model
 
     def _ensure_conversation(self, provider, model):
@@ -202,8 +203,12 @@ class MainWidget(QWidget):
         self._append(f"[系统] 对话已创建: {self._conv_id[:8]}...")
 
     def _append(self, text: str):
-        """追加文本到输出区"""
+        """追加文本到输出区（仅允许在 UI 线程调用）"""
         self._output.append(text)
+
+    def _append_safe(self, text: str):
+        """从任意线程追加文本（经 run_in_ui_thread 封送到 UI 线程）"""
+        run_in_ui_thread(self._append, text)
 
     def _on_sync_chat(self):
         """同步聊天按钮处理"""
@@ -214,9 +219,9 @@ class MainWidget(QWidget):
         def send():
             try:
                 content = self._service.send_message(self._conv_id, "请用三句话解释量子计算")
-                self._append(f"[助手] {content}")
+                self._append_safe(f"[助手] {content}")
             except Exception as e:
-                self._append(f"[错误] {e}")
+                self._append_safe(f"[错误] {e}")
 
         t = threading.Thread(target=send)
         t.start()
@@ -237,12 +242,12 @@ class MainWidget(QWidget):
         self._worker.start()
 
     def _on_chunk(self, text: str):
-        """处理流式 chunk"""
+        """处理流式 chunk（经 Signal 到达，已在 UI 线程）"""
         if text:
             self._append(text)
 
     def _on_finished(self, result: dict):
-        """流式响应完成"""
+        """流式响应完成（经 Signal 到达，已在 UI 线程）"""
         if not result.get("success"):
             self._append(f"[错误] {result.get('error')}")
 
@@ -260,14 +265,14 @@ class MainWidget(QWidget):
             try:
                 executor = self._service.get_tool_executor()
                 messages = [{"role": "user", "content": "计算 (2+3)*4 的结果"}]
-                msgs, results, final = executor.chat_with_tools(
+                chat_result = executor.chat_with_tools(
                     messages, provider=provider, model=model,
                 )
-                for r in results:
-                    self._append(f"[工具 {r.tool_name}] {r.result}")
-                self._append(f"[助手] {final}")
+                for r in chat_result.tool_results:
+                    self._append_safe(f"[工具 {r.tool_name}] {r.result}")
+                self._append_safe(f"[助手] {chat_result.final_text}")
             except Exception as e:
-                self._append(f"[错误] {e}")
+                self._append_safe(f"[错误] {e}")
 
         t = threading.Thread(target=send)
         t.start()
