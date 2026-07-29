@@ -22,15 +22,6 @@ class ApiDemoPlugin(IPlugin):
     def plugin_name(self) -> str:
         return "API 调用\n演示"
 
-    def get_widget(self, parent=None, data_provider=None):
-        from utils.style_qss import get_style_qss
-        current_theme = get_style_qss().theme()
-        if getattr(self, '_cached_theme', None) != current_theme:
-            self._cached_theme = current_theme
-            self._cached_widget = None
-            self._cached_parent = None
-        return super().get_widget(parent, data_provider)
-
     def _create_widget(self, parent=None, data_provider=None) -> QWidget:
         plugin_id = self.plugin_id or "api-demo-default"
         data_provider = data_provider or (self._services.data_provider if self._services else None)

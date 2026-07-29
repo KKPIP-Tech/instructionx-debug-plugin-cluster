@@ -1,19 +1,28 @@
-"""
-API Demo 插件主控件
+# -*- coding: utf-8 -*-
+"""API Demo 插件主控件。
 
 展示如何通过 PluginManager 调用其他插件的 API。
+样式全面使用 InstructionX_UIKit 组件（Button/ListWidget/TextArea/Message）
+与 T() 令牌，随全局主题自动换肤。
 """
 
-from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QPushButton, QGroupBox, QTextEdit,
-    QListWidget, QListWidgetItem, QSplitter, QMessageBox
-)
-from PySide6.QtCore import Qt
-
-from utils.style_qss import QssRegistry
-from pathlib import Path
 import json
+from pathlib import Path
+
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import (
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QListWidgetItem,
+    QSplitter,
+    QVBoxLayout,
+    QWidget,
+)
+
+from InstructionX_UIKit import T
+from InstructionX_UIKit.components import Button, ListWidget, Message, TextArea
 
 
 class MainWidget(QWidget):
@@ -23,29 +32,11 @@ class MainWidget(QWidget):
         super().__init__(parent)
         self.setObjectName("ApiDemoWidget")
         self._service = service
-        self._qss = ""
         self._setup_ui()
-        self._load_style()
         self._refresh_api_list()
-        self.destroyed.connect(self._on_destroyed)
-
-    def _load_style(self):
-        style_dir = Path(__file__).parent.parent / "style"
-        if not style_dir.exists():
-            return
-        parts = []
-        for qss_file in sorted(style_dir.glob("*.qss")):
-            raw = qss_file.read_text(encoding="utf-8")
-            parts.append(QssRegistry.apply_variables(raw))
-        if parts:
-            self._qss = "\n".join(parts)
-            self.setStyleSheet(self._qss)
-
-    def _on_destroyed(self):
-        """Widget 销毁时卸载 QSS 样式，防止样式泄漏到其他插件"""
-        self.setStyleSheet("")
 
     def _setup_ui(self):
+        """构建 UI"""
         cfg = self._load_config()
         layout = QVBoxLayout(self)
         self._apply_layout_config(layout, cfg)
@@ -61,15 +52,18 @@ class MainWidget(QWidget):
         layout.setSpacing(ui_cfg.get("spacing", 12))
 
     def _add_title(self, layout):
+        """添加标题（字号取 UIKit 令牌，颜色随全局主题）"""
         title = QLabel("API 调用演示")
         title.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        title.setProperty("class", "heading")
+        font = QFont()
+        font.setPixelSize(T("font.lg"))
+        font.setWeight(QFont.Weight(QFont.Bold))
+        title.setFont(font)
         layout.addWidget(title)
 
     def _add_description(self, layout):
         desc = QLabel("此插件演示如何通过 PluginManager 调用其他插件的 API 方法。")
         desc.setWordWrap(True)
-        desc.setProperty("class", "muted")
         layout.addWidget(desc)
 
     def _create_splitter(self, cfg):
@@ -108,8 +102,8 @@ class MainWidget(QWidget):
         return group
 
     def _setup_api_list(self, cfg, layout):
-        self.api_list = QListWidget()
-        self.api_list.setSelectionMode(QListWidget.SelectionMode.SingleSelection)
+        self.api_list = ListWidget()
+        self.api_list.setSelectionMode(ListWidget.SelectionMode.SingleSelection)
         layout.addWidget(self.api_list)
 
     def _setup_buttons(self, layout):
@@ -118,8 +112,7 @@ class MainWidget(QWidget):
             ("查看所有插件 API", self._view_all_apis),
             ("查看 Function Tools", self._view_tools)
         ]:
-            btn = QPushButton(btn_text)
-            btn.setProperty("class", "subtle")
+            btn = Button(btn_text, variant="default")
             btn.clicked.connect(handler)
             layout.addWidget(btn)
 
@@ -137,8 +130,7 @@ class MainWidget(QWidget):
         group = QGroupBox("输入参数")
         layout = QVBoxLayout()
         layout.setSpacing(cfg.get("ui", {}).get("spacing", 12))
-        self.input_text = QTextEdit()
-        self.input_text.setPlaceholderText("在此输入要处理的文本...")
+        self.input_text = TextArea(placeholder="在此输入要处理的文本...")
         h = cfg.get("ui", {}).get("input_min_height", 80)
         self.input_text.setMinimumHeight(h)
         layout.addWidget(self.input_text)
@@ -147,9 +139,8 @@ class MainWidget(QWidget):
 
     def _create_button_layout(self, cfg):
         layout = QHBoxLayout()
-        self.execute_btn = QPushButton("执行 API 调用")
+        self.execute_btn = Button("执行 API 调用", variant="primary")
         self.execute_btn.setEnabled(False)
-        self.execute_btn.setProperty("class", "primary")
         self.execute_btn.clicked.connect(self._do_execute)
         layout.addWidget(self.execute_btn)
         return layout
@@ -158,7 +149,7 @@ class MainWidget(QWidget):
         group = QGroupBox("调用结果")
         layout = QVBoxLayout()
         layout.setSpacing(cfg.get("ui", {}).get("spacing", 12))
-        self.output_text = QTextEdit()
+        self.output_text = TextArea()
         self.output_text.setReadOnly(True)
         h = cfg.get("ui", {}).get("output_min_height", 100)
         self.output_text.setMinimumHeight(h)
@@ -193,12 +184,12 @@ class MainWidget(QWidget):
     def _do_execute(self):
         current_item = self.api_list.currentItem()
         if not current_item:
-            QMessageBox.warning(None, "警告", "请先选择一个 API 方法")
+            Message.warning(self, "请先选择一个 API 方法")
             return
         method_name = current_item.data(Qt.ItemDataRole.UserRole)
         text_input = self.input_text.toPlainText()
         if not text_input:
-            QMessageBox.warning(None, "警告", "请输入文本参数")
+            Message.warning(self, "请输入文本参数")
             return
         string_tools_id = self._service.get_target_plugin_id("string-tools")
         if not string_tools_id:
@@ -246,5 +237,3 @@ class MainWidget(QWidget):
             for pname, pinfo in params.items():
                 info += f"  - {pname} ({pinfo['type']}): {pinfo['description']}\n"
         return info + "-" * 50 + "\n"
-
-

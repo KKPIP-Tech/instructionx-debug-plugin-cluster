@@ -1,9 +1,9 @@
 {
     "id": "api-demo",
     "name": "API Demo",
-    "version": "release.1.0.0",
+    "version": "release.1.1.0",
     "main": "entrance.py",
-    "description": "API 调用演示插件展示如何使用 PluginManager 的 API 调用功能。演示内容包括：如何使用 API 注册表、如何调用其他插件的 API 方法、跨插件通信机制等。",
+    "description": "演示 PluginManager 跨插件 API 的注册与调用。",
     "author": "InstructionX Team",
     "keywords": ["instructionx", "plugin", "api", "demo"]
 }
