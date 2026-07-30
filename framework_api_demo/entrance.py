@@ -6,16 +6,18 @@ Framework API Demo 插件入口（胶水层）
 全部 UI 构建与事件处理位于 ui/main_widget.py。
 """
 
+import traceback
 from typing import Optional
 
 from PySide6.QtCore import QObject, Signal, Slot
 from PySide6.QtWidgets import QWidget
 
+from core.interfaces import PluginServices
 from core.plugin.plugin_interface import IPlugin
 from core.data.data_provider import DataProvider, DataProviderError
 from utils.logging_tools import LoggerManager
 
-from .function.services.core_service import (
+from .function.services import (
     DataDemoService, TaskDemoService, LLMDemoService,
     APIDemoService, FrameworkInfoService
 )
@@ -32,8 +34,10 @@ class FrameworkAPIDemoPlugin(IPlugin):
 
     _logger = LoggerManager()
 
-    def __init__(self):
+    def __init__(self, services: Optional[PluginServices] = None):
         super().__init__()
+        # 框架加载时经构造函数注入 PluginServices（见 PluginManager._instantiate_plugin）
+        self._injected_services = services
         self._signal_bridge = SignalBridge()
         self._main_widget: Optional[MainWidget] = None
 
@@ -55,11 +59,24 @@ class FrameworkAPIDemoPlugin(IPlugin):
         self._init_services(dp)
         self._signal_bridge.log_message.connect(self._on_log_message)
 
+    def on_plugin_unloaded(self):
+        """插件卸载清理：逐个服务 cleanup + 断开信号桥，异常不向外逃逸"""
+        for service in self._iter_cleanup_services():
+            self._safe_cleanup_service(service)
+        self._disconnect_signal_bridge()
+
+    def _get_services(self) -> Optional[PluginServices]:
+        """获取 PluginServices：优先构造注入，其次框架注入的 _services 实例属性"""
+        if self._injected_services is not None:
+            return self._injected_services
+        return getattr(self, '_services', None)
+
     def _get_data_provider(self) -> DataProvider:
-        """获取 DataProvider 实例（优先使用框架注入的）"""
-        services = getattr(self, '_services', None)
-        if services and hasattr(services, 'data_provider'):
+        """获取 DataProvider 实例（优先使用框架注入的；取不到回退单例保证容错）"""
+        services = self._get_services()
+        if services and getattr(services, 'data_provider', None):
             return services.data_provider
+        # 回退单例：兼容框架未注入 services 的旧加载路径
         return DataProvider()
 
     def _register_with_provider(self, dp: DataProvider):
@@ -78,13 +95,41 @@ class FrameworkAPIDemoPlugin(IPlugin):
             self._log(f"设置活跃实例失败: {e}")
 
     def _init_services(self, dp: DataProvider):
-        """初始化所有演示服务"""
+        """初始化所有演示服务（统一传入 PluginServices 与 DataProvider）"""
         pid = self.plugin_id
-        self.data_service = DataDemoService(pid, dp)
-        self.task_service = TaskDemoService(pid, dp)
-        self.llm_service = LLMDemoService(pid, dp)
-        self.api_service = APIDemoService(pid, dp)
-        self.info_service = FrameworkInfoService(pid, dp)
+        services = self._get_services()
+        self.data_service = DataDemoService(pid, services=services, data_provider=dp)
+        self.task_service = TaskDemoService(pid, services=services, data_provider=dp)
+        self.llm_service = LLMDemoService(pid, services=services, data_provider=dp)
+        self.api_service = APIDemoService(pid, services=services, data_provider=dp)
+        self.info_service = FrameworkInfoService(pid, services=services, data_provider=dp)
+
+    def _iter_cleanup_services(self):
+        """返回需要执行卸载清理的服务实例（跳过未初始化的）"""
+        return [
+            s for s in (self.data_service, self.task_service)
+            if s is not None
+        ]
+
+    def _safe_cleanup_service(self, service) -> None:
+        """调用单个服务的 cleanup，异常仅记日志不抛出（LoggerManager 不支持 exc_info）"""
+        try:
+            service.cleanup()
+        except Exception as e:
+            self._logger.error(
+                "FrameworkAPIDemo",
+                f"服务卸载清理失败: {e}\n{traceback.format_exc()}"
+            )
+
+    def _disconnect_signal_bridge(self) -> None:
+        """断开信号桥连接，异常仅记日志"""
+        try:
+            self._signal_bridge.log_message.disconnect(self._on_log_message)
+        except Exception as e:
+            self._logger.error(
+                "FrameworkAPIDemo",
+                f"断开信号桥失败: {e}\n{traceback.format_exc()}"
+            )
 
     def _create_widget(self, parent=None, data_provider=None) -> QWidget:
         """创建插件主控件（UI 构建由 MainWidget 完成）"""

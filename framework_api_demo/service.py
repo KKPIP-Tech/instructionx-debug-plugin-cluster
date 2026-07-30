@@ -2,10 +2,10 @@
 Framework API Demo 服务接口层
 
 作为 PluginManager API 自动注册的入口，
-实际业务逻辑委托给 function.services.core_service。
+实际业务逻辑委托给 function.services 包。
 """
 
-from .function.services.core_service import (
+from .function.services import (
     DataDemoService,
     TaskDemoService,
     LLMDemoService,
