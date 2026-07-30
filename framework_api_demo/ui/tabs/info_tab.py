@@ -78,16 +78,20 @@ class InfoTab(BaseTab):
 
 1. DataProvider
    - register_plugin() / unregister_plugin()
-   - get_plugin_data() / set_plugin_data()
+   - get_plugin_data() / set_plugin_data() / get_all_plugin_data()
+   - subscribe() / publish() / unsubscribe()（发布订阅）
    - save_asset() / load_asset()
+   - get_active_instance()
 
 2. BackgroundTaskManager
    - register_sync_task() / register_async_task()
-   - register_scheduled_task()
+   - register_scheduled_task()（含启用/禁用/注销）
+   - register_long_running_task() / stop_long_running_task()
+   - cancel_task() / get_task_status()
    - get_tasks_by_plugin() / clear_completed_tasks()
 
-3. LLMProvider
-   - get_all_providers() / get_cached_models()
+3. ILLMService（llm_facade）
+   - list_providers() / get_models()
    - chat() / stream_chat()
    - embed()
 

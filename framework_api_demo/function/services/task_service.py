@@ -17,6 +17,11 @@ from .base import Service, _load_config
 # 长期任务演示：每次循环休眠秒数（每秒计数 +1）
 LONG_TASK_TICK_SECONDS = 1
 
+# 定时任务间隔配置缺省值（config/default.json 的 task 段缺失时回退）
+DEFAULT_INTERVAL_SECONDS = 60
+DEFAULT_INTERVAL_MIN = 5
+DEFAULT_INTERVAL_MAX = 3600
+
 
 class TaskDemoService(Service):
     """演示 BackgroundTaskManager 接口的服务类"""
@@ -27,6 +32,19 @@ class TaskDemoService(Service):
         demo_cfg = config.get("demo", {})
         self.sync_seconds = demo_cfg.get("sync_task_seconds", 1)
         self.async_seconds = demo_cfg.get("async_task_seconds", 2)
+        task_cfg = config.get("task", {})
+        interval_range = task_cfg.get("interval_range", [DEFAULT_INTERVAL_MIN, DEFAULT_INTERVAL_MAX])
+        self.interval_min = interval_range[0]
+        self.interval_max = interval_range[1]
+        self.default_interval = task_cfg.get("default_interval", DEFAULT_INTERVAL_SECONDS)
+
+    def get_interval_config(self) -> Dict[str, int]:
+        """返回定时任务间隔配置（minimum/maximum/default），供 UI 构建 SpinBox 使用"""
+        return {
+            "minimum": self.interval_min,
+            "maximum": self.interval_max,
+            "default": self.default_interval,
+        }
 
     def _make_completion_callback(self, task_name: str) -> Callable:
         """构造任务完成回调（工作线程执行）：经 notifier 上抛 + 记日志，异常不外抛"""

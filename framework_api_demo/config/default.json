@@ -1,12 +1,4 @@
 {
-  "plugin": {
-    "name": "framework_api_demo",
-    "version": "1.0.0"
-  },
-  "ui": {
-    "margins": [16, 16, 16, 16],
-    "spacing": 12
-  },
   "task": {
     "default_interval": 60,
     "interval_range": [5, 3600]

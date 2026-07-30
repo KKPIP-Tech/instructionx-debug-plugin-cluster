@@ -89,7 +89,12 @@ class FrameworkAPIDemoPluginInfo(IPluginInfo):
                     },
                     "task_type": {
                         "type": "str",
-                        "description": "任务类型: sync/async/scheduled",
+                        "description": "任务类型: sync/async/scheduled（仅 create 使用）",
+                        "required": False,
+                    },
+                    "task_id": {
+                        "type": "str",
+                        "description": "目标任务 ID（cancel 操作必填）",
                         "required": False,
                     },
                 },

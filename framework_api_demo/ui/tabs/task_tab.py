@@ -67,7 +67,12 @@ class TaskTab(BaseTab):
         self.task_type_combo = ComboBox(items=["sync", "async", "scheduled", "long_running"])
         form.addRow("类型:", self.task_type_combo)
 
-        self.task_interval_spin = SpinBox(minimum=5, maximum=3600, value=60)
+        interval_cfg = self.task_service.get_interval_config()
+        self.task_interval_spin = SpinBox(
+            minimum=interval_cfg["minimum"],
+            maximum=interval_cfg["maximum"],
+            value=interval_cfg["default"],
+        )
         self.task_interval_spin.setSuffix(" 秒")
         form.addRow("间隔:", self.task_interval_spin)
 
