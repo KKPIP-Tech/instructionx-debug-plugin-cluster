@@ -107,7 +107,7 @@ class FrameworkAPIDemoPlugin(IPlugin):
     def _iter_cleanup_services(self):
         """返回需要执行卸载清理的服务实例（跳过未初始化的）"""
         return [
-            s for s in (self.data_service, self.task_service)
+            s for s in (self.data_service, self.task_service, self.llm_service)
             if s is not None
         ]
 
