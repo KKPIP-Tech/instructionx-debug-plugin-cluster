@@ -1,24 +1,30 @@
 # -*- coding: utf-8 -*-
 """框架信息演示 Tab。
 
-演示框架信息获取，并展示可用接口文档文本。
+演示框架信息获取、框架 utils 工具（日志级别、线程封送、字体与资源）
+以及 UIKit 主题跟随，并展示可用接口文档文本。
 槽函数仅调用 FrameworkInfoService、显示结果，业务逻辑在服务层。
 """
 
 import json
-from typing import Callable
+from typing import Any, Callable, Dict
 
-from PySide6.QtWidgets import QGroupBox, QVBoxLayout, QScrollArea
+from PySide6.QtWidgets import QGroupBox, QLabel, QVBoxLayout, QScrollArea
 
+from InstructionX_UIKit import ThemeManager
 from InstructionX_UIKit.components import Button, TextArea
 
 from .base_tab import BaseTab
+
+# 主题状态标签的文案前缀
+_THEME_LABEL_PREFIX = "当前主题: "
 
 
 class InfoTab(BaseTab):
     """框架信息演示 Tab
 
-    职责：构建信息演示页的控件布局（含可用接口文档）并处理其事件，
+    职责：构建信息演示页的控件布局（含框架信息、utils 工具演示、
+    主题跟随演示与可用接口文档）并处理其事件，
     通过注入的结果/日志回调与主控件公共面板交互。
     """
 
@@ -41,6 +47,10 @@ class InfoTab(BaseTab):
         """构建 Info Tab 内容"""
         scroll, layout = self._make_scroll_tab()
         layout.addWidget(self._build_info_group())
+        layout.addWidget(self._build_log_group())
+        layout.addWidget(self._build_thread_group())
+        layout.addWidget(self._build_asset_group())
+        layout.addWidget(self._build_theme_group())
         layout.addWidget(self._build_info_doc_group())
         layout.addStretch()
         return scroll
@@ -58,6 +68,54 @@ class InfoTab(BaseTab):
         self.info_text.setReadOnly(True)
         layout.addWidget(self.info_text)
 
+        group.setLayout(layout)
+        return group
+
+    def _build_log_group(self) -> QGroupBox:
+        """构建「日志级别」分组：写入 LoggerManager 五级日志"""
+        group = QGroupBox("日志级别（LoggerManager）")
+        layout = QVBoxLayout()
+        self.log_levels_btn = Button("写入五级日志", variant="primary")
+        self.log_levels_btn.clicked.connect(self._on_write_log_levels)
+        layout.addWidget(self.log_levels_btn)
+        group.setLayout(layout)
+        return group
+
+    def _build_thread_group(self) -> QGroupBox:
+        """构建「线程工具」分组：演示 is_ui_thread 与 run_in_ui_thread(_sync)"""
+        group = QGroupBox("线程工具（thread_utils）")
+        layout = QVBoxLayout()
+        self.thread_utils_btn = Button("演示线程封送", variant="primary")
+        self.thread_utils_btn.clicked.connect(self._on_demo_thread_utils)
+        layout.addWidget(self.thread_utils_btn)
+        group.setLayout(layout)
+        return group
+
+    def _build_asset_group(self) -> QGroupBox:
+        """构建「字体与资源」分组：FontMap 字体查询与图片转 Base64"""
+        group = QGroupBox("字体与资源（FontMap / image_utils）")
+        layout = QVBoxLayout()
+        self.font_map_btn = Button("列出字体", variant="primary")
+        self.font_map_btn.clicked.connect(self._on_demo_font_map)
+        layout.addWidget(self.font_map_btn)
+        self.image_base64_btn = Button("图片转 Base64", variant="primary")
+        self.image_base64_btn.clicked.connect(self._on_demo_image_base64)
+        layout.addWidget(self.image_base64_btn)
+        group.setLayout(layout)
+        return group
+
+    def _build_theme_group(self) -> QGroupBox:
+        """构建「主题跟随」分组：监听 ThemeManager.theme_changed
+
+        UIKit 组件本身随全局 QSS 自动跟随主题，无需监听信号；
+        只有插件自建样式（自定义 QSS/绘制）才需要监听 theme_changed 做适配。
+        """
+        group = QGroupBox("主题跟随（ThemeManager.theme_changed）")
+        layout = QVBoxLayout()
+        theme_manager = ThemeManager.instance()
+        self.theme_status_label = QLabel(f"{_THEME_LABEL_PREFIX}{theme_manager.mode}")
+        layout.addWidget(self.theme_status_label)
+        theme_manager.theme_changed.connect(self._on_theme_changed)
         group.setLayout(layout)
         return group
 
@@ -103,6 +161,11 @@ class InfoTab(BaseTab):
 
 5. LoggerManager
    - debug() / info() / warning() / error() / critical()
+
+6. utils 工具
+   - is_ui_thread() / run_in_ui_thread() / run_in_ui_thread_sync()
+   - FontMap.get() / FontMap.all_fonts()
+   - load_image_as_base64()
 """
 
     # ------------------------------------------------------------------
@@ -118,3 +181,34 @@ class InfoTab(BaseTab):
             self.info_text.setPlainText(content)
         else:
             self._display_result("获取框架信息失败", "无返回数据", is_error=True)
+
+    def _on_write_log_levels(self):
+        """写入五级日志并展示结果"""
+        result = self.info_service.demo_log_levels()
+        self._show_service_result("日志级别演示", result)
+
+    def _on_demo_thread_utils(self):
+        """演示线程封送：is_ui_thread 对照经服务任务回传"""
+        result = self.info_service.demo_thread_utils()
+        self._show_service_result("线程工具演示", result)
+
+    def _on_demo_font_map(self):
+        """列出 FontMap 可用字体"""
+        result = self.info_service.demo_font_map()
+        self._show_service_result("字体查询演示", result)
+
+    def _on_demo_image_base64(self):
+        """演示图片转 Base64"""
+        result = self.info_service.demo_load_image_base64()
+        self._show_service_result("图片转 Base64 演示", result)
+
+    def _on_theme_changed(self, mode: str):
+        """主题切换回调：更新状态标签并记录日志（UIKit 组件本身自动跟随主题）"""
+        self.theme_status_label.setText(f"{_THEME_LABEL_PREFIX}{mode}")
+        self._log(f"主题已切换: {mode}")
+
+    def _show_service_result(self, title: str, result: Dict[str, Any]):
+        """统一展示服务返回结果（含失败分支）"""
+        self._log(f"{title}: {result}")
+        content = json.dumps(result, indent=2, ensure_ascii=False)
+        self._display_result(title, content, is_error=not result.get("success", False))

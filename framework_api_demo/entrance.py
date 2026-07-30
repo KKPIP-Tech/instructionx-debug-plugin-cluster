@@ -9,13 +9,13 @@ Framework API Demo 插件入口（胶水层）
 import traceback
 from typing import Any, Dict, List, Optional
 
-from PySide6.QtCore import QObject, Signal, Slot
 from PySide6.QtWidgets import QWidget
 
 from core.interfaces import PluginServices
 from core.plugin.plugin_interface import IPlugin
 from core.data.data_provider import DataProvider, DataProviderError
 from utils.logging_tools import LoggerManager
+from utils.thread_utils import run_in_ui_thread
 
 from .function.services import (
     DataDemoService, TaskDemoService, LLMDemoService,
@@ -23,11 +23,6 @@ from .function.services import (
 )
 from .function.tools import DEMO_TOOL_DEFINITIONS
 from .ui.main_widget import MainWidget
-
-
-class SignalBridge(QObject):
-    """Qt 信号桥接器，用于线程安全的 UI 更新"""
-    log_message = Signal(str)
 
 
 class FrameworkAPIDemoPlugin(IPlugin):
@@ -39,7 +34,6 @@ class FrameworkAPIDemoPlugin(IPlugin):
         super().__init__()
         # 框架加载时经构造函数注入 PluginServices（见 PluginManager._instantiate_plugin）
         self._injected_services = services
-        self._signal_bridge = SignalBridge()
         self._main_widget: Optional[MainWidget] = None
 
         # 服务实例（在 on_plugin_loaded 中初始化）
@@ -72,13 +66,11 @@ class FrameworkAPIDemoPlugin(IPlugin):
         dp = self._get_data_provider()
         self._register_with_provider(dp)
         self._init_services(dp)
-        self._signal_bridge.log_message.connect(self._on_log_message)
 
     def on_plugin_unloaded(self):
-        """插件卸载清理：逐个服务 cleanup + 断开信号桥，异常不向外逃逸"""
+        """插件卸载清理：逐个服务 cleanup，异常不向外逃逸"""
         for service in self._iter_cleanup_services():
             self._safe_cleanup_service(service)
-        self._disconnect_signal_bridge()
 
     def _get_services(self) -> Optional[PluginServices]:
         """获取 PluginServices：优先构造注入，其次框架注入的 _services 实例属性"""
@@ -137,16 +129,6 @@ class FrameworkAPIDemoPlugin(IPlugin):
                 f"服务卸载清理失败: {e}\n{traceback.format_exc()}"
             )
 
-    def _disconnect_signal_bridge(self) -> None:
-        """断开信号桥连接，异常仅记日志"""
-        try:
-            self._signal_bridge.log_message.disconnect(self._on_log_message)
-        except Exception as e:
-            self._logger.error(
-                "FrameworkAPIDemo",
-                f"断开信号桥失败: {e}\n{traceback.format_exc()}"
-            )
-
     def _create_widget(self, parent=None, data_provider=None) -> QWidget:
         """创建插件主控件（UI 构建由 MainWidget 完成）"""
         widget = MainWidget(
@@ -164,11 +146,14 @@ class FrameworkAPIDemoPlugin(IPlugin):
         return widget
 
     def _log(self, message: str):
-        """插件加载早期日志：经信号桥转发给主控件（控件未创建时丢弃）"""
-        self._signal_bridge.log_message.emit(message)
+        """插件加载早期日志：经 run_in_ui_thread 封送到 UI 线程转发给主控件
 
-    @Slot(str)
-    def _on_log_message(self, message: str):
-        """将信号桥日志转发给主控件日志面板（控件未创建时忽略）"""
+        替代原 SignalBridge：run_in_ui_thread 在 UI 线程直接执行、
+        其他线程经队列投递到 UI 事件循环，语义与自建信号桥等价。
+        """
+        run_in_ui_thread(self._deliver_log, message)
+
+    def _deliver_log(self, message: str):
+        """将日志转发给主控件日志面板（控件未创建时忽略）"""
         if self._main_widget is not None:
             self._main_widget.append_log(message)

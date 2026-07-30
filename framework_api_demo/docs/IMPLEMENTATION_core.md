@@ -3,7 +3,7 @@
 ## 架构
 | 文件 | 职责 |
 |------|------|
-| `entrance.py` | 多标签页 UI、事件处理、日志系统、SignalBridge |
+| `entrance.py` | 插件胶水层、生命周期、日志系统（run_in_ui_thread 封送） |
 | `function/services/core_service.py` | 5 个 Service 类：DataDemoService、TaskDemoService、LLMDemoService、APIDemoService、FrameworkInfoService |
 | `information.py` | 插件元数据（IPluginInfo 实现） |
 | `config/default.json` | 任务默认间隔配置 |
@@ -26,7 +26,7 @@
 
 ## 关键设计决策
 1. 5 个 Service 类分别对应 5 个框架模块，职责清晰。
-2. 使用 `SignalBridge` 支持在 Service 回调中安全更新 UI 日志。
+2. 早期日志经 `run_in_ui_thread` 封送到 UI 线程更新日志面板（替代原 SignalBridge）。
 3. 每个标签页独立封装，互不干扰。
 
 ## 配置
