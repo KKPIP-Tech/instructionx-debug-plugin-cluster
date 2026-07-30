@@ -7,7 +7,7 @@ Framework API Demo 插件入口（胶水层）
 """
 
 import traceback
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 from PySide6.QtCore import QObject, Signal, Slot
 from PySide6.QtWidgets import QWidget
@@ -21,6 +21,7 @@ from .function.services import (
     DataDemoService, TaskDemoService, LLMDemoService,
     APIDemoService, FrameworkInfoService
 )
+from .function.tools import DEMO_TOOL_DEFINITIONS
 from .ui.main_widget import MainWidget
 
 
@@ -51,6 +52,19 @@ class FrameworkAPIDemoPlugin(IPlugin):
     @property
     def plugin_name(self) -> str:
         return "Framework\nAPI Demo"
+
+    @property
+    def llm_tools(self) -> List[Dict[str, Any]]:
+        """演示 IPlugin.llm_tools 钩子：声明本插件暴露给 LLM 的工具
+
+        框架消费方式说明（以 core/ 实际代码为准）：框架核心当前仅在
+        IPlugin 接口中定义该属性契约（OpenAI function calling 格式的
+        字典列表），尚未在 PluginManager 等处自动收集消费——插件需
+        自行把工具注册进共享 ToolRegistry（见 llm_service.register_demo_tools）
+        才能让 LLM 实际调用；该属性是声明式清单，与 information.py 的
+        service_api 自动注册跨插件 API 是两条独立通道。
+        """
+        return DEMO_TOOL_DEFINITIONS
 
     def on_plugin_loaded(self, plugin_id=None, **kwargs):
         """插件加载完成后初始化服务和注册（仅执行一次）"""

@@ -25,10 +25,15 @@ from ...function.services.llm_service import (
     STREAM_CHUNK_PREFIX,
     STREAM_DONE_EVENT,
     STREAM_ERROR_PREFIX,
+    TOOL_DONE_EVENT,
+    TOOL_ERROR_PREFIX,
 )
 
 # 会话列表中会话 id 的展示长度（完整 id 存于 UserRole）
 CONV_ID_DISPLAY_LEN = 8
+
+# 工具对话演示的默认输入消息（触发两个演示工具）
+TOOL_DEMO_DEFAULT_MESSAGE = "现在几点了？帮我算一下 12*(3+4)"
 
 
 class LLMTab(BaseTab):
@@ -56,10 +61,23 @@ class LLMTab(BaseTab):
         run_in_ui_thread(self._dispatch_stream_event, message)
 
     def _dispatch_stream_event(self, message: str):
-        """UI 线程分发服务事件：聊天流式 / 会话演示两类协议分别处理"""
+        """UI 线程分发服务事件：工具调用 / 会话演示 / 聊天流式三类协议分别处理"""
+        if self._dispatch_tool_event(message):
+            return
         if self._dispatch_conversation_event(message):
             return
         self._dispatch_chat_stream_event(message)
+
+    def _dispatch_tool_event(self, message: str) -> bool:
+        """UI 线程分发工具调用事件；命中工具协议返回 True，否则返回 False"""
+        if message == TOOL_DONE_EVENT:
+            self._show_tool_chat_result()
+            return True
+        if message.startswith(TOOL_ERROR_PREFIX):
+            error = message[len(TOOL_ERROR_PREFIX):]
+            self._display_result("工具对话失败", error, is_error=True)
+            return True
+        return False
 
     def _dispatch_chat_stream_event(self, message: str):
         """UI 线程分发聊天流式事件：片段增量刷新 / 完成展示 / 失败提示"""
@@ -126,6 +144,25 @@ class LLMTab(BaseTab):
         )
         self._display_result("流式聊天响应", content)
 
+    def _show_tool_chat_result(self):
+        """工具对话完成事件后拉取服务聚合结果，在结果面板展示最终回复与调用明细"""
+        result = self.llm_service.get_last_tool_chat_result().get("result") or {}
+        content = (
+            f"工具调用轮次: {result.get('turn_count', 0)}\n\n"
+            f"{self._format_tool_results(result.get('tool_results', []))}"
+            f"\n最终回复:\n{result.get('final_text', '')}"
+        )
+        self._display_result("工具对话响应", content)
+
+    @staticmethod
+    def _format_tool_results(tool_results: list) -> str:
+        """把各轮工具调用明细格式化为展示文本（无调用时返回空串）"""
+        lines = []
+        for item in tool_results:
+            detail = item.get("error") or item.get("result", "")
+            lines.append(f"[{item.get('tool_name', '?')}]({item.get('arguments', {})}) -> {detail}")
+        return "工具调用明细:\n" + "\n".join(lines) + "\n" if lines else ""
+
     # ------------------------------------------------------------------
     #  布局构建
     # ------------------------------------------------------------------
@@ -137,6 +174,7 @@ class LLMTab(BaseTab):
         layout.addWidget(self._build_llm_provider_group())
         layout.addWidget(self._build_llm_chat_group())
         layout.addWidget(self._build_llm_conversation_group())
+        layout.addWidget(self._build_llm_tool_group())
         layout.addWidget(self._build_llm_embed_group())
         layout.addStretch()
         return scroll
@@ -257,6 +295,35 @@ class LLMTab(BaseTab):
         self.conv_result_text.setMaximumHeight(100)
         form.addRow("回复:", self.conv_result_text)
         return form
+
+    def _build_llm_tool_group(self) -> QGroupBox:
+        """构建「工具调用」分组（注册/注销/查看工具 + 工具对话）"""
+        group = QGroupBox("工具调用")
+        form = QFormLayout()
+        form.setSpacing(6)
+        form.addRow("", self._build_tool_buttons_row())
+        self.tool_message_input = LineEdit(text=TOOL_DEMO_DEFAULT_MESSAGE)
+        form.addRow("消息:", self.tool_message_input)
+        self.tool_chat_btn = Button("工具对话", variant="primary")
+        self.tool_chat_btn.clicked.connect(self._on_tool_chat)
+        form.addRow("", self.tool_chat_btn)
+        group.setLayout(form)
+        return group
+
+    def _build_tool_buttons_row(self) -> QHBoxLayout:
+        """构建工具注册表操作按钮行：注册 / 注销 / 查看已注册工具"""
+        row = QHBoxLayout()
+        row.setSpacing(8)
+        self.tool_register_btn = Button("注册演示工具")
+        self.tool_register_btn.clicked.connect(self._on_register_tools)
+        row.addWidget(self.tool_register_btn)
+        self.tool_unregister_btn = Button("注销演示工具", variant="danger")
+        self.tool_unregister_btn.clicked.connect(self._on_unregister_tools)
+        row.addWidget(self.tool_unregister_btn)
+        self.tool_list_btn = Button("查看已注册工具")
+        self.tool_list_btn.clicked.connect(self._on_list_tools)
+        row.addWidget(self.tool_list_btn)
+        return row
 
     def _build_llm_embed_group(self) -> QGroupBox:
         group = QGroupBox("嵌入测试")
@@ -433,6 +500,47 @@ class LLMTab(BaseTab):
             return
         content = json.dumps(result.get("conversation", {}), ensure_ascii=False, indent=2)
         self._display_result("会话详情", content)
+
+    # ------------------------------------------------------------------
+    #  工具调用事件
+    # ------------------------------------------------------------------
+
+    def _on_register_tools(self):
+        result = self.llm_service.register_demo_tools()
+        self._log(f"注册演示工具: {result}")
+        if result.get("success"):
+            self._display_result("注册演示工具", "\n".join(result.get("registered", [])))
+        else:
+            self._display_result("注册演示工具失败", result.get("error", ""), is_error=True)
+
+    def _on_unregister_tools(self):
+        result = self.llm_service.unregister_demo_tools()
+        self._log(f"注销演示工具: {result}")
+        self._show_tool_op_result("注销演示工具", result, "unregistered")
+
+    def _on_list_tools(self):
+        result = self.llm_service.list_registered_tools()
+        self._log(f"已注册工具: {result}")
+        if not result.get("success"):
+            self._display_result("查看已注册工具失败", result.get("error", ""), is_error=True)
+            return
+        descriptions = result.get("tool_descriptions", {})
+        lines = [f"{name}: {desc}" for name, desc in descriptions.items()]
+        self._display_result("共享 ToolRegistry 已注册工具", "\n".join(lines))
+
+    def _on_tool_chat(self):
+        message = self.tool_message_input.text()
+        result = self.llm_service.chat_with_tools_demo(message)
+        self._log(f"工具对话发起: {result}")
+        if not result.get("success"):
+            self._display_result("工具对话发起失败", result.get("error", ""), is_error=True)
+
+    def _show_tool_op_result(self, title: str, result: dict, key: str):
+        """统一展示工具注册表操作结果（成功列名 / 失败弹错误）"""
+        if result.get("success"):
+            self._display_result(title, "\n".join(result.get(key, [])) or "（无）")
+            return
+        self._display_result(f"{title}失败", result.get("error", ""), is_error=True)
 
     def _on_send_embed(self):
         text = self.embed_text_input.text()

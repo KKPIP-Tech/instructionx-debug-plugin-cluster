@@ -2,7 +2,8 @@
 Framework API Demo LLM 演示服务
 
 演示 ILLMService（llm_facade）接口：Provider 实例列表、模型列表、
-聊天（含流式）、嵌入调用与会话管理（创建/发送/流式发送/查询/删除），
+聊天（含流式）、嵌入调用、会话管理（创建/发送/流式发送/查询/删除）
+与工具调用（共享 ToolRegistry 注册/注销 + chat_with_tools 多轮循环），
 统一经基类解析的 self.llm（插件侧门面）访问。
 流式聊天为阻塞调用，经 BackgroundTaskManager 放到工作线程执行，
 片段/完成事件经基类 notifier 上抛，由 UI 层自行线程封送。
@@ -10,9 +11,10 @@ Framework API Demo LLM 演示服务
 
 from typing import Any, Callable, Dict, List, Optional
 
-from core.llm.types import Conversation, ProviderInfo, StreamChunk
+from core.llm.types import Conversation, ProviderInfo, StreamChunk, ToolChatResult, ToolResult
 from utils.logging_tools import get_name
 
+from ..tools.demo_tools import DEMO_TOOL_DEFINITIONS, DEMO_TOOL_HANDLERS
 from .base import Service
 
 # 默认实例引用（语义等同 core.llm.types.DEFAULT_PROVIDER，字面量演示 ILLMService 约定）
@@ -36,6 +38,14 @@ CONV_STREAM_CHUNK_PREFIX = "[会话流式片段] "
 CONV_STREAM_DONE_EVENT = "[会话流式完成]"
 CONV_STREAM_ERROR_PREFIX = "[会话流式失败] "
 
+# 工具调用后台任务名（register_sync_task 的 name 参数）
+TOOL_CHAT_TASK_NAME = "llm_tool_chat"
+# 工具调用演示的最大工具调用轮数（防无限循环，与框架默认一致）
+TOOL_CHAT_MAX_TURNS = 5
+# 工具调用演示 notifier 事件前缀（前缀独立，避免与聊天/会话事件串台）
+TOOL_DONE_EVENT = "[工具对话完成]"
+TOOL_ERROR_PREFIX = "[工具对话失败] "
+
 
 class LLMDemoService(Service):
     """演示 ILLMService（llm_facade）接口的服务类"""
@@ -48,6 +58,8 @@ class LLMDemoService(Service):
         self._conversation_ids: List[str] = []
         # 最近一次会话流式发送的聚合结果（工作线程写入，UI 在完成事件后读取）
         self._last_conv_stream_result: Optional[Dict[str, Any]] = None
+        # 最近一次工具对话的聚合结果（工作线程写入，UI 在完成事件后读取）
+        self._last_tool_chat_result: Optional[Dict[str, Any]] = None
 
     def get_providers(self) -> Dict[str, Any]:
         """演示 ILLMService.list_providers / get_default_provider_id / resolve_provider_id"""
@@ -367,14 +379,154 @@ class LLMDemoService(Service):
             self.logger.error(get_name(), f"[{self.plugin_id}] 会话流式完成回调处理失败: {e}")
 
     # ------------------------------------------------------------------
+    #  工具调用演示
+    # ------------------------------------------------------------------
+
+    def register_demo_tools(self) -> Dict[str, Any]:
+        """演示 ILLMService.get_shared_tool_registry().register：注册全部演示工具
+
+        共享 ToolRegistry 默认重名抛 ValueError，replace=True 覆盖同名旧注册；
+        这里逐个用 replace=True，保证幂等（重复点击注册不报错）。
+        """
+        try:
+            registry = self.llm.get_shared_tool_registry()
+            registered = self._register_all_demo_tools(registry)
+            return {"success": True, "registered": registered}
+        except Exception as e:
+            self.logger.error(get_name(), f"[{self.plugin_id}] 注册演示工具失败: {e}")
+            return {"success": False, "error": str(e)}
+
+    @staticmethod
+    def _register_all_demo_tools(registry) -> List[str]:
+        """把 DEMO_TOOL_DEFINITIONS 逐个注册进注册表（replace 覆盖），返回工具名列表"""
+        registered: List[str] = []
+        for definition in DEMO_TOOL_DEFINITIONS:
+            func = definition["function"]
+            name = func["name"]
+            registry.register(
+                name=name,
+                description=func["description"],
+                parameters=func["parameters"],
+                handler=DEMO_TOOL_HANDLERS[name],
+                replace=True,
+            )
+            registered.append(name)
+        return registered
+
+    def unregister_demo_tools(self) -> Dict[str, Any]:
+        """演示 ToolRegistry.unregister：注销全部演示工具"""
+        try:
+            registry = self.llm.get_shared_tool_registry()
+            removed = [n for n in DEMO_TOOL_HANDLERS if registry.unregister(n)]
+            return {"success": True, "unregistered": removed}
+        except Exception as e:
+            self.logger.error(get_name(), f"[{self.plugin_id}] 注销演示工具失败: {e}")
+            return {"success": False, "error": str(e)}
+
+    def list_registered_tools(self) -> Dict[str, Any]:
+        """演示 ToolRegistry.list_tools / get_tools：展示共享注册表全貌"""
+        try:
+            registry = self.llm.get_shared_tool_registry()
+            definitions = registry.get_tools()
+            return {
+                "success": True,
+                "tool_names": registry.list_tools(),
+                "tool_descriptions": {
+                    d["function"]["name"]: d["function"]["description"] for d in definitions
+                },
+            }
+        except Exception as e:
+            self.logger.error(get_name(), f"[{self.plugin_id}] 查询已注册工具失败: {e}")
+            return {"success": False, "error": str(e)}
+
+    def chat_with_tools_demo(self, message: str) -> Dict[str, Any]:
+        """演示 ILLMService.chat_with_tools（阻塞多轮调用，经后台任务执行）
+
+        调用前确保演示工具已注册（幂等）；chat_with_tools 内部为
+        LLM → 工具调用 → 结果回传 的多轮阻塞循环，经 register_sync_task
+        放到工作线程执行，聚合结果经完成回调 + notifier 上抛。
+        """
+        try:
+            registry = self.llm.get_shared_tool_registry()
+            self._register_all_demo_tools(registry)
+            task_id = self.tm.register_sync_task(
+                plugin_id=self.plugin_id, name=TOOL_CHAT_TASK_NAME,
+                func=self._run_tool_chat, args=(message,),
+                callback=self._on_tool_chat_done,
+            )
+            return {"success": True, "task_id": task_id, "message": "工具对话已发起（后台任务执行）"}
+        except Exception as e:
+            self.logger.error(get_name(), f"[{self.plugin_id}] 发起工具对话失败: {e}")
+            return {"success": False, "error": str(e)}
+
+    def get_last_tool_chat_result(self) -> Dict[str, Any]:
+        """返回最近一次工具对话的聚合结果（供 UI 在完成事件后拉取展示）"""
+        return {"success": True, "result": self._last_tool_chat_result}
+
+    def _run_tool_chat(self, message: str) -> Dict[str, Any]:
+        """在工作线程执行 chat_with_tools 多轮循环，返回聚合结果"""
+        messages: List[Dict[str, str]] = [{"role": "user", "content": message}]
+        chat_result = self.llm.chat_with_tools(
+            messages, provider=DEFAULT_PROVIDER_REF, max_turns=TOOL_CHAT_MAX_TURNS,
+        )
+        result = self._build_tool_chat_result(chat_result)
+        self._last_tool_chat_result = result
+        return result
+
+    @staticmethod
+    def _build_tool_chat_result(chat_result: ToolChatResult) -> Dict[str, Any]:
+        """汇总 ToolChatResult 为展示用字典（最终文本 + 各轮工具调用明细）"""
+        return {
+            "success": True,
+            "final_text": chat_result.final_text,
+            "turn_count": len(chat_result.tool_results),
+            "tool_results": [
+                LLMDemoService._tool_result_to_dict(r) for r in chat_result.tool_results
+            ],
+            "message_count": len(chat_result.messages),
+        }
+
+    @staticmethod
+    def _tool_result_to_dict(tool_result: ToolResult) -> Dict[str, Any]:
+        """将 ToolResult 转换为展示用字典（工具名/参数/结果/错误）"""
+        return {
+            "tool_name": tool_result.tool_name,
+            "arguments": tool_result.arguments,
+            "result": str(tool_result.result),
+            "error": tool_result.error,
+        }
+
+    def _on_tool_chat_done(self, task_id: str, status, result, error) -> None:
+        """工具对话任务完成回调（工作线程）：经 notifier 上抛完成/失败事件"""
+        try:
+            if error:
+                self._notify_event(f"{TOOL_ERROR_PREFIX}{error}")
+                self.logger.error(get_name(), f"[{self.plugin_id}] 工具对话任务失败({task_id}): {error}")
+                return
+            self._notify_event(TOOL_DONE_EVENT)
+            self.logger.info(get_name(), f"[{self.plugin_id}] 工具对话任务完成({task_id}): {status}")
+        except Exception as e:
+            self.logger.error(get_name(), f"[{self.plugin_id}] 工具对话完成回调处理失败: {e}")
+
+    # ------------------------------------------------------------------
     #  卸载清理
     # ------------------------------------------------------------------
 
     def cleanup(self) -> None:
-        """卸载清理：删除本插件创建的全部会话（逐项容错，异常仅记日志）"""
+        """卸载清理：注销演示工具并删除本插件创建的全部会话（逐项容错）"""
+        self._cleanup_demo_tools()
         for conversation_id in list(self._conversation_ids):
             self._delete_one_conversation(conversation_id)
         self._conversation_ids.clear()
+
+    def _cleanup_demo_tools(self) -> None:
+        """注销共享注册表中的演示工具，失败仅记日志不中断其余清理"""
+        try:
+            registry = self.llm.get_shared_tool_registry()
+            for name in DEMO_TOOL_HANDLERS:
+                registry.unregister(name)
+        except Exception as e:
+            self.logger.error(get_name(), f"[{self.plugin_id}] 卸载清理：注销演示工具失败: {e}")
 
     def _delete_one_conversation(self, conversation_id: str) -> None:
         """删除单个会话，失败仅记日志不中断其余清理"""
