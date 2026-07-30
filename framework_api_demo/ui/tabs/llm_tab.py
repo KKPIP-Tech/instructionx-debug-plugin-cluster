@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """LLM 演示 Tab。
 
-演示 Provider 列表、模型列表、聊天（含流式）、嵌入调用与会话管理。
+演示 Provider 列表、模型列表、聊天（含流式）、嵌入调用、会话管理、
+多模态（图片生成/语音合成）与用量统计/Provider 校验。
 流式片段经服务 notifier 上抛（工作线程），一律 run_in_ui_thread 封送后刷新。
 槽函数仅取输入、调用 LLMDemoService、显示结果，业务逻辑在服务层。
 """
@@ -16,6 +17,7 @@ from InstructionX_UIKit.components import Button, LineEdit, ListWidget, Message,
 from utils.thread_utils import run_in_ui_thread
 
 from .base_tab import BaseTab
+from .llm_tab_groups import LLMMediaStatsGroupsMixin
 from ...function.services.llm_service import (
     CONV_ERROR_PREFIX,
     CONV_REPLY_PREFIX,
@@ -36,11 +38,12 @@ CONV_ID_DISPLAY_LEN = 8
 TOOL_DEMO_DEFAULT_MESSAGE = "现在几点了？帮我算一下 12*(3+4)"
 
 
-class LLMTab(BaseTab):
+class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
     """LLM 演示 Tab
 
     职责：构建 LLM 演示页的控件布局并处理其事件，
     通过注入的结果/日志回调与主控件公共面板交互。
+    多模态与统计校验分组由 LLMMediaStatsGroupsMixin 提供（体量拆分）。
     """
 
     def __init__(self, llm_service, display_result: Callable, append_log: Callable):
@@ -61,7 +64,9 @@ class LLMTab(BaseTab):
         run_in_ui_thread(self._dispatch_stream_event, message)
 
     def _dispatch_stream_event(self, message: str):
-        """UI 线程分发服务事件：工具调用 / 会话演示 / 聊天流式三类协议分别处理"""
+        """UI 线程分发服务事件：多模态 / 工具调用 / 会话演示 / 聊天流式分别处理"""
+        if self._dispatch_multimodal_event(message):
+            return
         if self._dispatch_tool_event(message):
             return
         if self._dispatch_conversation_event(message):
@@ -176,6 +181,8 @@ class LLMTab(BaseTab):
         layout.addWidget(self._build_llm_conversation_group())
         layout.addWidget(self._build_llm_tool_group())
         layout.addWidget(self._build_llm_embed_group())
+        layout.addWidget(self._build_llm_multimodal_group())
+        layout.addWidget(self._build_llm_stats_group())
         layout.addStretch()
         return scroll
 

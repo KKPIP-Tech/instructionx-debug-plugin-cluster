@@ -9,9 +9,19 @@ Framework API Demo LLM 演示服务
 片段/完成事件经基类 notifier 上抛，由 UI 层自行线程封送。
 """
 
+import base64
 from typing import Any, Callable, Dict, List, Optional
 
-from core.llm.types import Conversation, ProviderInfo, StreamChunk, ToolChatResult, ToolResult
+from core.llm.types import (
+    AudioResult,
+    Conversation,
+    ImageResult,
+    ProviderInfo,
+    StreamChunk,
+    ToolChatResult,
+    ToolResult,
+    UsageStats,
+)
 from utils.logging_tools import get_name
 
 from ..tools.demo_tools import DEMO_TOOL_DEFINITIONS, DEMO_TOOL_HANDLERS
@@ -46,6 +56,18 @@ TOOL_CHAT_MAX_TURNS = 5
 TOOL_DONE_EVENT = "[工具对话完成]"
 TOOL_ERROR_PREFIX = "[工具对话失败] "
 
+# 多模态后台任务名（register_sync_task 的 name 参数）
+IMAGE_TASK_NAME = "llm_generate_image"
+TTS_TASK_NAME = "llm_text_to_speech"
+# 多模态演示 notifier 事件前缀（前缀独立，避免与聊天/会话/工具事件串台）
+IMAGE_DONE_EVENT = "[图片生成完成]"
+IMAGE_ERROR_PREFIX = "[图片生成失败] "
+TTS_DONE_EVENT = "[语音合成完成]"
+TTS_ERROR_PREFIX = "[语音合成失败] "
+# save_asset 落盘文件名：ImageResult.base64 解码为 PNG 字节，AudioResult.audio_data 为 MP3 字节
+IMAGE_ASSET_FILENAME = "demo_image.png"
+AUDIO_ASSET_FILENAME = "demo_audio.mp3"
+
 
 class LLMDemoService(Service):
     """演示 ILLMService（llm_facade）接口的服务类"""
@@ -60,6 +82,9 @@ class LLMDemoService(Service):
         self._last_conv_stream_result: Optional[Dict[str, Any]] = None
         # 最近一次工具对话的聚合结果（工作线程写入，UI 在完成事件后读取）
         self._last_tool_chat_result: Optional[Dict[str, Any]] = None
+        # 最近一次图片生成 / 语音合成的聚合结果（工作线程写入，UI 在完成事件后读取）
+        self._last_image_result: Optional[Dict[str, Any]] = None
+        self._last_audio_result: Optional[Dict[str, Any]] = None
 
     def get_providers(self) -> Dict[str, Any]:
         """演示 ILLMService.list_providers / get_default_provider_id / resolve_provider_id"""
@@ -507,6 +532,179 @@ class LLMDemoService(Service):
             self.logger.info(get_name(), f"[{self.plugin_id}] 工具对话任务完成({task_id}): {status}")
         except Exception as e:
             self.logger.error(get_name(), f"[{self.plugin_id}] 工具对话完成回调处理失败: {e}")
+
+    # ------------------------------------------------------------------
+    #  多模态演示（图像生成 / 语音合成）
+    # ------------------------------------------------------------------
+
+    def generate_image_demo(self, prompt: str, provider: str = DEFAULT_PROVIDER_REF) -> Dict[str, Any]:
+        """演示 ILLMService.generate_image（阻塞调用，经后台任务执行）
+
+        generate_image 为同步 HTTP 请求，经 register_sync_task 放到工作线程；
+        聚合结果在完成事件后由 UI 经 get_last_image_result 拉取展示。
+        """
+        try:
+            task_id = self.tm.register_sync_task(
+                plugin_id=self.plugin_id, name=IMAGE_TASK_NAME,
+                func=self._run_generate_image, args=(prompt, provider),
+                callback=self._on_image_task_done,
+            )
+            return {"success": True, "task_id": task_id, "message": "图片生成已发起（后台任务执行）"}
+        except Exception as e:
+            self.logger.error(get_name(), f"[{self.plugin_id}] 发起图片生成失败(provider={provider}): {e}")
+            return {"success": False, "error": str(e)}
+
+    def get_last_image_result(self) -> Dict[str, Any]:
+        """返回最近一次图片生成的聚合结果（供 UI 在完成事件后拉取展示）"""
+        return {"success": True, "result": self._last_image_result}
+
+    def _run_generate_image(self, prompt: str, provider: str) -> Dict[str, Any]:
+        """在工作线程执行 generate_image，返回聚合结果（base64 数据经 save_asset 落盘）"""
+        image = self.llm.generate_image(prompt, provider=provider)
+        result = self._build_image_result(image)
+        self._last_image_result = result
+        return result
+
+    def _build_image_result(self, image: ImageResult) -> Dict[str, Any]:
+        """汇总 ImageResult 为展示用字典；base64 数据落盘为资源文件并返回路径"""
+        result: Dict[str, Any] = {
+            "success": True,
+            "model": image.model,
+            "provider": image.provider,
+            "url": image.url,
+            "revised_prompt": image.revised_prompt,
+            "has_base64": image.base64 is not None,
+        }
+        if image.base64 is not None:
+            result.update(self._save_base64_asset(image.base64, IMAGE_ASSET_FILENAME))
+        return result
+
+    def _save_base64_asset(self, base64_data: str, filename: str) -> Dict[str, Any]:
+        """base64 解码后经 DataProvider.save_asset 落盘；保存失败容错返回错误字段"""
+        try:
+            content = base64.b64decode(base64_data)
+        except Exception as e:
+            self.logger.error(get_name(), f"[{self.plugin_id}] base64 解码失败({filename}): {e}")
+            return {"asset_save_error": f"base64 解码失败: {e}"}
+        return self._save_bytes_asset(content, filename)
+
+    def _save_bytes_asset(self, content: bytes, filename: str) -> Dict[str, Any]:
+        """经 DataProvider.save_asset 保存字节内容；失败容错返回错误字段（不中断演示）"""
+        try:
+            path = self.dp.save_asset(self.plugin_id, filename, content)
+            return {"asset_path": path, "asset_size": len(content)}
+        except Exception as e:
+            self.logger.error(get_name(), f"[{self.plugin_id}] 保存资源文件失败({filename}): {e}")
+            return {"asset_save_error": str(e)}
+
+    def text_to_speech_demo(self, text: str, provider: str = DEFAULT_PROVIDER_REF) -> Dict[str, Any]:
+        """演示 ILLMService.text_to_speech（阻塞调用，经后台任务执行）
+
+        与 generate_image_demo 同模式：工作线程执行，完成事件后由 UI 经
+        get_last_audio_result 拉取聚合结果（音频字节经 save_asset 落盘）。
+        """
+        try:
+            task_id = self.tm.register_sync_task(
+                plugin_id=self.plugin_id, name=TTS_TASK_NAME,
+                func=self._run_text_to_speech, args=(text, provider),
+                callback=self._on_tts_task_done,
+            )
+            return {"success": True, "task_id": task_id, "message": "语音合成已发起（后台任务执行）"}
+        except Exception as e:
+            self.logger.error(get_name(), f"[{self.plugin_id}] 发起语音合成失败(provider={provider}): {e}")
+            return {"success": False, "error": str(e)}
+
+    def get_last_audio_result(self) -> Dict[str, Any]:
+        """返回最近一次语音合成的聚合结果（供 UI 在完成事件后拉取展示）"""
+        return {"success": True, "result": self._last_audio_result}
+
+    def _run_text_to_speech(self, text: str, provider: str) -> Dict[str, Any]:
+        """在工作线程执行 text_to_speech，返回聚合结果（音频字节经 save_asset 落盘）"""
+        audio = self.llm.text_to_speech(text, provider=provider)
+        result = self._build_audio_result(audio)
+        self._last_audio_result = result
+        return result
+
+    def _build_audio_result(self, audio: AudioResult) -> Dict[str, Any]:
+        """汇总 AudioResult 为展示用字典；audio_data 字节落盘为资源文件并返回路径"""
+        result: Dict[str, Any] = {
+            "success": True,
+            "model": audio.model,
+            "provider": audio.provider,
+            "url": audio.url,
+            "duration_seconds": audio.duration_seconds,
+            "has_audio_data": audio.audio_data is not None,
+        }
+        if audio.audio_data is not None:
+            result.update(self._save_bytes_asset(audio.audio_data, AUDIO_ASSET_FILENAME))
+        return result
+
+    def _on_image_task_done(self, task_id: str, status, result, error) -> None:
+        """图片生成任务完成回调（工作线程）：经 notifier 上抛完成/失败事件"""
+        try:
+            if error:
+                self._notify_event(f"{IMAGE_ERROR_PREFIX}{error}")
+                self.logger.error(get_name(), f"[{self.plugin_id}] 图片生成任务失败({task_id}): {error}")
+                return
+            self._notify_event(IMAGE_DONE_EVENT)
+            self.logger.info(get_name(), f"[{self.plugin_id}] 图片生成任务完成({task_id}): {status}")
+        except Exception as e:
+            self.logger.error(get_name(), f"[{self.plugin_id}] 图片生成完成回调处理失败: {e}")
+
+    def _on_tts_task_done(self, task_id: str, status, result, error) -> None:
+        """语音合成任务完成回调（工作线程）：经 notifier 上抛完成/失败事件"""
+        try:
+            if error:
+                self._notify_event(f"{TTS_ERROR_PREFIX}{error}")
+                self.logger.error(get_name(), f"[{self.plugin_id}] 语音合成任务失败({task_id}): {error}")
+                return
+            self._notify_event(TTS_DONE_EVENT)
+            self.logger.info(get_name(), f"[{self.plugin_id}] 语音合成任务完成({task_id}): {status}")
+        except Exception as e:
+            self.logger.error(get_name(), f"[{self.plugin_id}] 语音合成完成回调处理失败: {e}")
+
+    # ------------------------------------------------------------------
+    #  用量统计与 Provider 校验演示
+    # ------------------------------------------------------------------
+
+    def get_usage_stats_demo(self, conversation_id: Optional[str] = None) -> Dict[str, Any]:
+        """演示 ILLMService.get_usage_stats（同步快速调用，直接返回统计字段）"""
+        try:
+            stats = self.llm.get_usage_stats(conversation_id)
+        except Exception as e:
+            self.logger.error(get_name(), f"[{self.plugin_id}] 获取用量统计失败({conversation_id}): {e}")
+            return {"success": False, "error": str(e)}
+        if stats is None:
+            return {"success": False, "error": f"会话不存在: {conversation_id}"}
+        return {
+            "success": True,
+            "conversation_id": conversation_id,
+            "stats": self._usage_stats_to_dict(stats),
+        }
+
+    @staticmethod
+    def _usage_stats_to_dict(stats: UsageStats) -> Dict[str, Any]:
+        """将 UsageStats 转换为展示用字典（token / 费用 / 请求数 / 分 Provider 费用）"""
+        return {
+            "total_input_tokens": stats.total_input_tokens,
+            "total_output_tokens": stats.total_output_tokens,
+            "total_tokens": stats.total_tokens,
+            "total_cost": stats.total_cost,
+            "request_count": stats.request_count,
+            "by_provider": stats.by_provider,
+        }
+
+    def validate_provider_demo(self, provider: Optional[str] = None) -> Dict[str, Any]:
+        """演示 ILLMService.validate_provider；provider 为空时取默认 chat 实例"""
+        target = provider or self.llm.get_default_provider_id(feature="chat")
+        if not target:
+            return {"success": False, "error": "未指定 Provider 且无可用默认实例"}
+        try:
+            valid, message = self.llm.validate_provider(target)
+            return {"success": True, "provider": target, "valid": valid, "message": message}
+        except Exception as e:
+            self.logger.error(get_name(), f"[{self.plugin_id}] 校验 Provider 失败({target}): {e}")
+            return {"success": False, "error": str(e)}
 
     # ------------------------------------------------------------------
     #  卸载清理
