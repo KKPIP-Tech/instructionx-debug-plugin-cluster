@@ -149,9 +149,14 @@ class InfoTab(BaseTab):
    - get_tasks_by_plugin() / clear_completed_tasks()
 
 3. ILLMService（llm_facade）
-   - list_providers() / get_models()
-   - chat() / stream_chat()
-   - embed()
+   - list_providers() / get_models() / validate_provider()
+   - chat() / stream_chat() / embed()
+   - 会话: create_conversation() / send_message() / stream_send_message()
+     / get_conversation() / list_conversations() / delete_conversation()
+   - 工具调用: get_shared_tool_registry()（register/unregister/list_tools）
+     / chat_with_tools()；入口 IPlugin.llm_tools 钩子
+   - 多模态: generate_image() / text_to_speech()
+   - get_usage_stats()
 
 4. PluginManager
    - get_all_plugins() / get_plugin_by_id()
@@ -159,13 +164,19 @@ class InfoTab(BaseTab):
    - get_all_function_tools() (Function Calling)
    - get_api_description()
 
-5. LoggerManager
+5. MCPManager / MCPClientManager
+   - start_server() / stop_server() / is_server_running() / get_server_url()
+   - service_api 自动桥接工具（{plugin_id}__{method} 净化名）
+   - connect() / disconnect() / list_connected_servers() / list_tools()
+
+6. LoggerManager
    - debug() / info() / warning() / error() / critical()
 
-6. utils 工具
+7. utils 工具与主题
    - is_ui_thread() / run_in_ui_thread() / run_in_ui_thread_sync()
    - FontMap.get() / FontMap.all_fonts()
    - load_image_as_base64()
+   - ThemeManager.theme_changed 主题跟随
 """
 
     # ------------------------------------------------------------------

@@ -1,9 +1,9 @@
 {
     "id": "framework-api-demo",
     "name": "Framework API Demo",
-    "version": "release.1.1.0",
+    "version": "release.1.2.0",
     "main": "entrance.py",
-    "description": "演示 InstructionX 框架核心 API：数据持久化、后台任务、LLM 与跨插件调用。",
+    "description": "演示 InstructionX 框架核心 API：数据持久化、后台任务、LLM（会话/工具调用/多模态/统计）、MCP 与跨插件调用。",
     "author": "InstructionX Team",
-    "keywords": ["instructionx", "plugin", "framework", "api", "demo"]
+    "keywords": ["instructionx", "plugin", "framework", "api", "demo", "llm", "mcp", "multimodal"]
 }

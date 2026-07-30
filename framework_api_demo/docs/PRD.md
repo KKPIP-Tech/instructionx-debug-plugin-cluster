@@ -1,5 +1,11 @@
 # Framework API Demo 插件 — 产品需求文档
 
+> **取代说明（2026-07-30）**：本 PRD 为 release.1.0.x~1.1.0 时期的初版需求，
+> 已被 2026-07-30 的「框架全 API 覆盖改造」需求文档取代并扩展，当前有效 PRD 为
+> `docs/req/2026-07-30/PRD-full-api-coverage-20260730.md`
+> （配套 SPEC：`SPEC-full-api-coverage-20260730.md`）。
+> 本文件保留作历史参考，下列内容不再代表现状（现状以 README 与新 PRD/SPEC 为准）。
+
 ## 概述
 全面演示 InstructionX 框架提供的所有核心 API 接口，是开发者学习框架的最佳示例。
 

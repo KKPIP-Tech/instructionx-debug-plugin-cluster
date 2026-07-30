@@ -2,7 +2,7 @@
 
 - 创建日期：2026-07-30
 - 修改日期：2026-07-30
-- 插件：framework-api-demo（release.1.1.0 → 建议 release.1.2.0，待开发者确认）
+- 插件：framework-api-demo（release.1.1.0 → release.1.2.0，已经开发者确认并实施）
 - 文档类型：技术规格说明书（SPEC）
 - 配套文档：`PRD-full-api-coverage-20260730.md`
 
@@ -83,9 +83,16 @@ plugin/framework_api_demo/
 
 说明（与任务书结构的微调）：
 
-- `function/services/core_service.py` 删除，由 `base.py` + 六个领域模块取代；对外通过 `services/__init__.py` re-export 的 `DemoServices` 门面访问，entrance/ui 只依赖门面；
+- `function/services/core_service.py` 删除，由 `base.py` + 六个领域模块取代；`services/__init__.py` re-export 全部服务类，entrance/ui 只依赖包级导出；
 - 新增 `function/tools/demo_tools.py`：FR-9 的工具定义属业务逻辑，放 function/ 而非 ui/；
 - `llm_service.py` 若随第二批增长超限，可在包内再拆 `llm/conversation_service.py` 等子模块（保持 `__init__` re-export 不变），本 SPEC 先按单文件规划。
+
+实施偏差说明（2026-07-30 收尾核对，以实际代码为准）：
+
+- **未引入 `DemoServices` 门面类**：`services/__init__.py` 直接 re-export 六个服务类（`Service` 基类 + Data/Task/LLM/API/Info/MCP 演示服务），entrance 逐个实例化并持有；第 4 节类图中的 `DemoServices` / `BaseService` 对应实际的包级 re-export 与 `Service` 基类；
+- **新增 `ui/tabs/llm_tab_groups.py`**：LLM 页的「多模态」「统计与校验」两个分组以 mixin（`LLMMediaStatsGroupsMixin`）拆分，控制 llm_tab.py 体量，属第 2 节目标结构之外的细化；
+- **`assets/`、`icons/` 目录未随本次改造新增内容**（保留磁盘上的空目录，不计入有效文件树）；
+- 其余文件树与实际一致。
 
 ---
 

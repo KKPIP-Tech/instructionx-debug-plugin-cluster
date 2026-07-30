@@ -16,7 +16,7 @@ class FrameworkAPIDemoPluginInfo(IPluginInfo):
     @property
     def version(self) -> PluginVersion:
         """插件版本"""
-        return PluginVersion.from_string("release.1.1.0")
+        return PluginVersion.from_string("release.1.2.0")
 
     @property
     def developer(self) -> str:
@@ -45,11 +45,16 @@ class FrameworkAPIDemoPluginInfo(IPluginInfo):
         Framework API Demo 插件用于演示 InstructionX 框架提供的所有核心 API 接口。
 
         演示的接口包括：
-        - DataProvider: 数据持久化、发布/订阅、资源管理
-        - BackgroundTaskManager: 同步/异步/定时/长期任务
-        - LLMProvider: 聊天、嵌入、模型管理
-        - PluginManager: 插件查询、API 注册与调用
-        - LoggerManager: 日志记录
+        - DataProvider: 数据持久化、发布/订阅、资源管理、活跃实例查询
+        - BackgroundTaskManager: 同步/异步/定时/长期任务、取消与状态查询
+        - ILLMService（llm_facade）: Provider/模型查询、聊天、流式聊天、嵌入、
+          会话管理（创建/发送/流式/查询/删除）、工具调用（ToolRegistry/chat_with_tools）、
+          多模态（图片生成/语音合成）、用量统计与 Provider 校验
+        - PluginManager: 插件查询、API 注册与调用、Function Tools 导出
+        - MCPManager / MCPClientManager: 内置 MCP Server 生命周期、
+          service_api 自动桥接工具、远程 MCP Server 连接
+        - 框架工具: LoggerManager 五级日志、thread_utils 线程封送、
+          FontMap 字体查询、image_utils 图片转 Base64、ThemeManager 主题跟随
 
         该插件是一个学习工具，帮助开发者了解如何使用框架的各种功能。
         """
