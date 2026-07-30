@@ -12,6 +12,8 @@ from PySide6.QtWidgets import QFormLayout, QGroupBox, QHBoxLayout, QVBoxLayout, 
 
 from InstructionX_UIKit.components import Button, LineEdit, Message
 
+from utils.thread_utils import run_in_ui_thread
+
 from .base_tab import BaseTab
 
 
@@ -32,6 +34,12 @@ class DataTab(BaseTab):
         """
         super().__init__(display_result, append_log)
         self.data_service = data_service
+        # 订阅回调在工作线程触发，经 run_in_ui_thread 封送到 UI 线程写日志
+        self.data_service.set_event_notifier(self._on_subscription_notify)
+
+    def _on_subscription_notify(self, message: str):
+        """订阅事件通知（工作线程）：封送到 UI 线程追加日志"""
+        run_in_ui_thread(self._append_log, message)
 
     # ------------------------------------------------------------------
     #  布局构建
@@ -46,6 +54,7 @@ class DataTab(BaseTab):
         layout.addWidget(self._build_data_public_group())
         layout.addWidget(self._build_data_query_controls())
         layout.addWidget(self._build_data_assets_section())
+        layout.addWidget(self._build_pubsub_group())
         layout.addStretch()
         return scroll
 
@@ -142,6 +151,43 @@ class DataTab(BaseTab):
         group.setLayout(row)
         return group
 
+    def _build_pubsub_group(self) -> QGroupBox:
+        """构建发布订阅演示分组（订阅/发布/取消订阅/查看事件/活跃实例）"""
+        group = QGroupBox("发布订阅（Pub/Sub）")
+        form = QFormLayout()
+        form.setSpacing(6)
+
+        self.pubsub_key_input = LineEdit(text="demo_event", placeholder="key")
+        form.addRow("键:", self.pubsub_key_input)
+
+        self.pubsub_value_input = LineEdit(text="hello", placeholder="value")
+        form.addRow("值:", self.pubsub_value_input)
+
+        row = QHBoxLayout()
+        btn_subscribe = Button("订阅", variant="primary")
+        btn_subscribe.clicked.connect(self._on_subscribe)
+        row.addWidget(btn_subscribe)
+
+        btn_publish = Button("发布")
+        btn_publish.clicked.connect(self._on_publish)
+        row.addWidget(btn_publish)
+
+        btn_unsubscribe = Button("取消订阅")
+        btn_unsubscribe.clicked.connect(self._on_unsubscribe)
+        row.addWidget(btn_unsubscribe)
+
+        btn_events = Button("查看事件")
+        btn_events.clicked.connect(self._on_show_events)
+        row.addWidget(btn_events)
+
+        btn_active = Button("活跃实例")
+        btn_active.clicked.connect(self._on_get_active_instance)
+        row.addWidget(btn_active)
+        form.addRow("", row)
+
+        group.setLayout(form)
+        return group
+
     # ------------------------------------------------------------------
     #  事件处理
     # ------------------------------------------------------------------
@@ -226,3 +272,47 @@ class DataTab(BaseTab):
             self._display_result("加载资源成功", f"内容:\n{result.get('content', '')}")
         else:
             self._display_result("加载资源失败", result.get("error", ""), is_error=True)
+
+    def _on_subscribe(self):
+        key = self.pubsub_key_input.text()
+        result = self.data_service.subscribe_demo(key)
+        self._log(f"订阅: {result}")
+        if result.get("success"):
+            self._display_result("订阅成功", result.get("message", ""))
+        else:
+            self._display_result("订阅失败", result.get("error", ""), is_error=True)
+
+    def _on_publish(self):
+        key = self.pubsub_key_input.text()
+        value = self.pubsub_value_input.text()
+        result = self.data_service.publish_demo(key, value)
+        self._log(f"发布: {result}")
+        if result.get("success"):
+            self._display_result("发布成功", result.get("message", ""))
+        else:
+            self._display_result("发布失败", result.get("error", ""), is_error=True)
+
+    def _on_unsubscribe(self):
+        result = self.data_service.unsubscribe_demo()
+        self._log(f"取消订阅: {result}")
+        if result.get("success"):
+            self._display_result("取消订阅成功", result.get("message", ""))
+        else:
+            self._display_result("取消订阅失败", result.get("error", ""), is_error=True)
+
+    def _on_show_events(self):
+        result = self.data_service.get_subscription_events()
+        content = json.dumps(result.get("events", []), indent=2, ensure_ascii=False, default=str)
+        self._log(f"查看事件: 共 {len(result.get('events', []))} 条")
+        self._display_result("订阅事件列表", content)
+
+    def _on_get_active_instance(self):
+        result = self.data_service.get_active_instance_demo()
+        self._log(f"活跃实例: {result}")
+        if result.get("success"):
+            self._display_result(
+                "活跃实例",
+                f"{result.get('plugin_type')} -> {result.get('active_instance')}",
+            )
+        else:
+            self._display_result("查询活跃实例失败", result.get("error", ""), is_error=True)
