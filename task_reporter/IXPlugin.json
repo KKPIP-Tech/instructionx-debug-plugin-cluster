@@ -1,9 +1,0 @@
-{
-    "id": "task-reporter",
-    "name": "Task Reporter",
-    "version": "release.1.1.0",
-    "main": "entrance.py",
-    "description": "订阅 TaskManager 插件事件并生成统计报告，支持实时统计展示、事件历史记录与 JSON/TXT/HTML 多格式报告导出。",
-    "author": "InstructionX Team",
-    "keywords": ["instructionx", "plugin", "task", "reporter", "statistics"]
-}

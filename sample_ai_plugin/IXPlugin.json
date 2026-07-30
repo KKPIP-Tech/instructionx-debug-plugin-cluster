@@ -1,9 +1,0 @@
-{
-    "id": "sample-ai-plugin",
-    "name": "示例AI插件",
-    "version": "release.1.1.0",
-    "main": "entrance.py",
-    "description": "示例AI插件演示LLMPluginService的完整集成方式：创建对话、发送消息（同步）、流式发送消息、工具调用",
-    "author": "KKPIP-Tech",
-    "keywords": ["ai", "llm", "demo", "example"]
-}

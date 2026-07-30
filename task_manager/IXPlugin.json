@@ -1,9 +1,0 @@
-{
-    "id": "task-manager",
-    "name": "Task Manager",
-    "version": "release.1.1.0",
-    "main": "entrance.py",
-    "description": "任务管理器，支持任务增删改查、统计与导出。",
-    "author": "InstructionX Team",
-    "keywords": ["instructionx", "plugin", "task", "manager", "productivity"]
-}

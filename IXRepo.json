@@ -1,20 +1,8 @@
 {
     "name": "InstructionX Official Plugins",
-    "description": "InstructionX 官方测试插件集合，包含 14 个测试工具插件，涵盖文本处理、代码格式化、图片压缩、单位转换、任务管理、LLM 对话等功能。",
+    "description": "InstructionX 官方测试插件集合，仅保留 Framework API Demo 与 UI Demo 两个示例插件。",
     "plugins": [
-        {"id": "api-demo", "name": "API Demo", "path": "api_demo/"},
-        {"id": "background-task-demo", "name": "Background Task Demo", "path": "background_task_demo/"},
-        {"id": "code-formatter", "name": "Code Formatter", "path": "code_formatter/"},
-        {"id": "color-converter", "name": "Color Converter", "path": "color_converter/"},
         {"id": "framework-api-demo", "name": "Framework API Demo", "path": "framework_api_demo/"},
-        {"id": "image-compressor", "name": "Image Compressor", "path": "image_compressor/"},
-        {"id": "llm-chat", "name": "LLM Chat", "path": "llm_chat/"},
-        {"id": "sample-ai-plugin", "name": "示例AI插件", "path": "sample_ai_plugin/"},
-        {"id": "string-tools", "name": "String Tools", "path": "string_tools/"},
-        {"id": "task-manager", "name": "Task Manager", "path": "task_manager/"},
-        {"id": "task-reporter", "name": "Task Reporter", "path": "task_reporter/"},
-        {"id": "text-formatting", "name": "Text Formatting", "path": "text_formatting/"},
-        {"id": "ui-demo", "name": "UI Demo", "path": "ui_demo/"},
-        {"id": "unit-converter", "name": "Unit Converter", "path": "unit_converter/"}
+        {"id": "ui-demo", "name": "UI Demo", "path": "ui_demo/"}
     ]
 }

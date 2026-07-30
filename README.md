@@ -16,7 +16,7 @@
 
 ## 项目简介
 
-本仓库包含 **InstructionX 框架**的官方插件集合，共 14 个测试工具插件，涵盖文本处理、代码格式化、图片压缩、单位转换、任务管理、LLM 对话等功能。
+本仓库包含 **InstructionX 框架**的官方插件集合，当前保留 Framework API Demo 与 UI Demo 两个示例插件，用于演示框架核心 API 与 InstructionX_UIKit 组件体系。
 
 ### 主要特性
 
@@ -30,45 +30,10 @@
 
 ## 插件列表
 
-### 工具类插件
-
-| 插件 | ID | 描述 |
-|------|-----|------|
-| **String Tools** | `string-tools` | 文本处理工具集，包括大小写转换、文本反转、单词首字母大写、去空白、字符/单词计数 |
-| **Text Formatting** | `text-formatting` | 文本大小写转换工具，支持批量处理 |
-| **Color Converter** | `color-converter` | 颜色格式转换工具，支持 HEX 与 RGB 互转 |
-| **Unit Converter** | `unit-converter` | 单位转换工具，支持长度（m, km, cm, mm, in, ft）、重量、温度等 |
-
-### 代码开发插件
-
-| 插件 | ID | 描述 |
-|------|-----|------|
-| **Code Formatter** | `code-formatter` | 代码格式化工具，支持 JSON/XML 格式化、注释移除、代码压缩 |
-| **API Demo** | `api-demo` | 演示 PluginManager API 调用，展示如何发现和调用其他插件的 API |
-
-### 任务管理插件
-
-| 插件 | ID | 描述 |
-|------|-----|------|
-| **Task Manager** | `task-manager` | 任务管理工具，支持 CRUD 操作、状态跟踪（pending, in_progress, completed, cancelled）、数据持久化 |
-| **Task Reporter** | `task-reporter` | 任务统计报表工具，实时订阅任务变化，支持 JSON/TXT/HTML 多格式导出 |
-
-### LLM/AI 插件
-
-| 插件 | ID | 描述 |
-|------|-----|------|
-| **LLM Chat** | `llm-chat` | 多 Provider LLM 对话工具，支持 MiniMax、SiliconFlow、GLM、Ollama，提供流式输出、多会话管理、图片输入（多模态） |
-| **Sample AI Plugin** | `sample-ai-plugin` | 演示 LLMPluginService 集成，包括会话创建、同步/流式消息发送、工具调用 |
-
-### 系统/框架插件
-
 | 插件 | ID | 描述 |
 |------|-----|------|
 | **Framework API Demo** | `framework-api-demo` | 框架所有核心 API 的完整演示，包括 DataProvider、BackgroundTaskManager、LLMProvider、PluginManager、LoggerManager |
-| **Background Task Demo** | `background-task-demo` | BackgroundTaskManager 完整演示，包括同步任务、异步任务、定时任务、任务回调 |
-| **UI Demo** | `ui-demo` | PySide6/Qt 控件展示，包括按钮、输入框、复选框、单选按钮、滑块、进度条、下拉框等 |
-| **Local Server** | `local-server` | 本地 HTTP 服务器，用于接收 webhooks，支持 GET/POST 请求、日志记录、长期任务集成 |
-| **Image Compressor** | `image-compressor` | 图片压缩工具，支持质量调节、图片信息查看 |
+| **UI Demo** | `ui-demo` | InstructionX_UIKit 组件体系展示，包括基础控件、输入、展示、反馈、布局、动画、图表、蓝图节点图等 |
 
 ---
 
@@ -320,84 +285,29 @@ class MyAwesomePlugin(IPlugin):
 
 ```
 plugin/
-├── IXRepo.json                          # 仓库配置（定义所有 14 个插件）
-│
-├── api_demo/                            # API 调用演示
-│   ├── entrance.py
-│   ├── service.py
-│   └── IXPlugin.json
-│
-├── background_task_demo/                # 后台任务演示
-│   ├── entrance.py
-│   ├── service.py
-│   └── IXPlugin.json
-│
-├── code_formatter/                      # 代码格式化
-│   ├── entrance.py
-│   ├── service.py
-│   └── IXPlugin.json
-│
-├── color_converter/                     # 颜色转换
-│   ├── entrance.py
-│   ├── service.py
-│   └── IXPlugin.json
+├── IXRepo.json                          # 仓库配置（定义 2 个插件）
+├── PLUGIN_STRUCTURE_GUIDE.md            # 插件结构规范
+├── README.md                            # 本文件
 │
 ├── framework_api_demo/                  # 框架 API 演示（含详细 README）
-│   ├── entrance.py
-│   ├── service.py
-│   ├── information.py
+│   ├── entrance.py                      # 入口（胶水层）
+│   ├── service.py                       # 对外接口层
+│   ├── information.py                   # 插件元数据
+│   ├── function/                        # 业务逻辑
+│   ├── ui/                              # 视图层
+│   ├── config/                          # 配置文件
+│   ├── docs/                            # 插件文档（PRD/SPEC/实现文档）
 │   ├── IXPlugin.json
-│   └── README.md                       # API 详细文档
+│   └── README.md                        # API 详细文档
 │
-├── image_compressor/                   # 图片压缩
-│   ├── entrance.py
-│   ├── service.py
-│   └── IXPlugin.json
-│
-├── llm_chat/                            # LLM 对话
-│   ├── entrance.py
-│   ├── service.py
-│   └── IXPlugin.json
-│
-├── local_server/                       # 本地服务器
-│   ├── entrance.py
-│   ├── service.py
-│   └── IXPlugin.json
-│
-├── sample_ai_plugin/                   # AI 插件示例
-│   ├── entrance.py
-│   ├── tools.py
-│   ├── __init__.py
-│   └── IXPlugin.json
-│
-├── string_tools/                       # 字符串工具
-│   ├── entrance.py
-│   ├── service.py
-│   └── IXPlugin.json
-│
-├── task_manager/                       # 任务管理
-│   ├── entrance.py
-│   ├── service.py
-│   └── IXPlugin.json
-│
-├── task_reporter/                      # 任务报表
-│   ├── entrance.py
-│   ├── service.py
-│   └── IXPlugin.json
-│
-├── text_formatting/                    # 文本格式化
-│   ├── entrance.py
-│   ├── service.py
-│   └── IXPlugin.json
-│
-├── ui_demo/                            # UI 控件演示
-│   ├── entrance.py
-│   ├── service.py
-│   └── IXPlugin.json
-│
-└── unit_converter/                     # 单位转换
-    ├── entrance.py
-    ├── service.py
+└── ui_demo/                             # UIKit 组件演示
+    ├── entrance.py                      # 入口（胶水层）
+    ├── service.py                       # 对外接口层
+    ├── information.py                   # 插件元数据
+    ├── function/                        # 业务逻辑（含组件目录）
+    ├── ui/                              # 视图层（pages/ 各组件演示页）
+    ├── config/                          # 配置文件
+    ├── docs/                            # 插件文档（PRD/SPEC）
     └── IXPlugin.json
 ```
 

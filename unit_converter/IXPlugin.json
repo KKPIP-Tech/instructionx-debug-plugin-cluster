@@ -1,9 +1,0 @@
-{
-    "id": "unit-converter",
-    "name": "Unit Converter",
-    "version": "release.1.1.0",
-    "main": "entrance.py",
-    "description": "单位转换插件提供常用的长度、重量、温度单位转换工具，适用于日常计算、工程与科研场景。",
-    "author": "InstructionX Team",
-    "keywords": ["instructionx", "plugin", "unit", "converter", "utility"]
-}

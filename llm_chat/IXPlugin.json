@@ -1,9 +1,0 @@
-{
-    "id": "llm-chat",
-    "name": "LLM Chat",
-    "version": "release.1.1.0",
-    "main": "entrance.py",
-    "description": "LLM Chat 插件 - 智能对话工具：支持多 Provider 与模型选择、流式输出、多模态图片理解与对话历史保存。",
-    "author": "InstructionX Team",
-    "keywords": ["instructionx", "plugin", "llm", "chat", "ai"]
-}
