@@ -6,6 +6,7 @@ from .task_service import TaskDemoService
 from .llm_service import LLMDemoService
 from .api_service import APIDemoService
 from .info_service import FrameworkInfoService
+from .mcp_service import MCPDemoService
 
 __all__ = [
     "Service",
@@ -14,4 +15,5 @@ __all__ = [
     "LLMDemoService",
     "APIDemoService",
     "FrameworkInfoService",
+    "MCPDemoService",
 ]

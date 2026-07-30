@@ -19,7 +19,7 @@ from utils.logging_tools import LoggerManager
 
 from .function.services import (
     DataDemoService, TaskDemoService, LLMDemoService,
-    APIDemoService, FrameworkInfoService
+    APIDemoService, FrameworkInfoService, MCPDemoService
 )
 from .function.tools import DEMO_TOOL_DEFINITIONS
 from .ui.main_widget import MainWidget
@@ -48,6 +48,7 @@ class FrameworkAPIDemoPlugin(IPlugin):
         self.llm_service: Optional[LLMDemoService] = None
         self.api_service: Optional[APIDemoService] = None
         self.info_service: Optional[FrameworkInfoService] = None
+        self.mcp_service: Optional[MCPDemoService] = None
 
     @property
     def plugin_name(self) -> str:
@@ -117,6 +118,7 @@ class FrameworkAPIDemoPlugin(IPlugin):
         self.llm_service = LLMDemoService(pid, services=services, data_provider=dp)
         self.api_service = APIDemoService(pid, services=services, data_provider=dp)
         self.info_service = FrameworkInfoService(pid, services=services, data_provider=dp)
+        self.mcp_service = MCPDemoService(pid, services=services, data_provider=dp)
 
     def _iter_cleanup_services(self):
         """返回需要执行卸载清理的服务实例（跳过未初始化的）"""
@@ -153,6 +155,7 @@ class FrameworkAPIDemoPlugin(IPlugin):
             llm_service=self.llm_service,
             api_service=self.api_service,
             info_service=self.info_service,
+            mcp_service=self.mcp_service,
             parent=parent,
         )
         self._main_widget = widget

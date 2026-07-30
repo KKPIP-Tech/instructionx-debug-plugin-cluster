@@ -18,19 +18,19 @@ from PySide6.QtWidgets import (
 from InstructionX_UIKit import MONO_FAMILY, T
 from InstructionX_UIKit.components import Button, Tabs, TextArea
 
-from .tabs import APITab, DataTab, InfoTab, LLMTab, TaskTab
+from .tabs import APITab, DataTab, InfoTab, LLMTab, MCPTab, TaskTab
 
 
 class MainWidget(QWidget):
     """Framework API Demo 插件主控件
 
-    左右分栏布局：左侧显示操作结果与执行日志，右侧为 5 个演示 Tab
-    （DataProvider / Task / LLM / API / Info）。
+    左右分栏布局：左侧显示操作结果与执行日志，右侧为 6 个演示 Tab
+    （DataProvider / Task / LLM / API / Info / MCP）。
     控件由 entrance.py 在 _create_widget 中实例化并注入各演示服务。
     """
 
     def __init__(self, data_service, task_service, llm_service,
-                 api_service, info_service, parent=None):
+                 api_service, info_service, mcp_service, parent=None):
         """初始化主控件
 
         参数:
@@ -39,6 +39,7 @@ class MainWidget(QWidget):
             llm_service: LLMDemoService 实例（LLM 演示）
             api_service: APIDemoService 实例（跨插件 API 演示）
             info_service: FrameworkInfoService 实例（框架信息演示）
+            mcp_service: MCPDemoService 实例（MCP 演示）
             parent: 父控件
         """
         super().__init__(parent)
@@ -48,6 +49,7 @@ class MainWidget(QWidget):
         self.llm_service = llm_service
         self.api_service = api_service
         self.info_service = info_service
+        self.mcp_service = mcp_service
         self._build_widget_layout()
 
     # ------------------------------------------------------------------
@@ -116,6 +118,7 @@ class MainWidget(QWidget):
         tab_widget.addTab(self._create_llm_tab(), "LLM")
         tab_widget.addTab(self._create_api_tab(), "API")
         tab_widget.addTab(self._create_info_tab(), "Info")
+        tab_widget.addTab(self._create_mcp_tab(), "MCP")
 
         layout.addWidget(tab_widget)
         return panel
@@ -144,6 +147,11 @@ class MainWidget(QWidget):
         """创建框架信息演示 Tab"""
         self.info_tab = InfoTab(self.info_service, self._display_result, self.append_log)
         return self.info_tab.create_tab()
+
+    def _create_mcp_tab(self):
+        """创建 MCP 演示 Tab"""
+        self.mcp_tab = MCPTab(self.mcp_service, self._display_result, self.append_log)
+        return self.mcp_tab.create_tab()
 
     # ------------------------------------------------------------------
     #  结果展示与日志

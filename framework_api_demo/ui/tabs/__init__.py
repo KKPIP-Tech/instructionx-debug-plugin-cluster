@@ -9,5 +9,6 @@ from .task_tab import TaskTab
 from .llm_tab import LLMTab
 from .api_tab import APITab
 from .info_tab import InfoTab
+from .mcp_tab import MCPTab
 
-__all__ = ["DataTab", "TaskTab", "LLMTab", "APITab", "InfoTab"]
+__all__ = ["DataTab", "TaskTab", "LLMTab", "APITab", "InfoTab", "MCPTab"]
