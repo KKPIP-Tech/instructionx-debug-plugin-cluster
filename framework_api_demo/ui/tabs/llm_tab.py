@@ -135,21 +135,12 @@ class LLMTab(BaseTab):
             self._display_result("获取模型失败", result.get("error", ""), is_error=True)
 
     def _collect_model_lines(self, models) -> list:
-        """收集模型展示行并填充模型列表"""
+        """收集模型展示行并填充模型列表（服务层统一返回 List[dict]）"""
         lines = []
-        if isinstance(models, dict):
-            # LLMProvider.get_models() 返回 Dict[实例id, List[ModelInfo]]，
-            # 服务层已转换为 Dict[实例id, List[dict]]，按键遍历展示
-            for provider, model_list in models.items():
-                for m in model_list:
-                    name = m.get("name", m.get("id", "unknown"))
-                    lines.append(f"{provider}: {name}")
-                    self.models_list.addItem(f"{provider}: {name}")
-        else:
-            for m in models:
-                name = m.get("name", m.get("id", "unknown"))
-                lines.append(name)
-                self.models_list.addItem(name)
+        for m in models:
+            name = m.get("name", m.get("id", "unknown"))
+            lines.append(name)
+            self.models_list.addItem(name)
         return lines
 
     def _on_send_chat(self):
