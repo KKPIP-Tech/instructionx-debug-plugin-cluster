@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """LLM 演示 Tab。
 
-演示 Provider 列表、模型列表、聊天与嵌入调用。
+演示 Provider 列表、模型列表、聊天（含流式）与嵌入调用。
+流式片段经服务 notifier 上抛（工作线程），一律 run_in_ui_thread 封送后刷新。
 槽函数仅取输入、调用 LLMDemoService、显示结果，业务逻辑在服务层。
 """
 
@@ -10,8 +11,14 @@ from typing import Callable
 from PySide6.QtWidgets import QFormLayout, QGroupBox, QHBoxLayout, QVBoxLayout, QScrollArea
 
 from InstructionX_UIKit.components import Button, LineEdit, ListWidget, Message, TextArea
+from utils.thread_utils import run_in_ui_thread
 
 from .base_tab import BaseTab
+from ...function.services.llm_service import (
+    STREAM_CHUNK_PREFIX,
+    STREAM_DONE_EVENT,
+    STREAM_ERROR_PREFIX,
+)
 
 
 class LLMTab(BaseTab):
@@ -31,6 +38,40 @@ class LLMTab(BaseTab):
         """
         super().__init__(display_result, append_log)
         self.llm_service = llm_service
+        # 流式回调在工作线程触发，经 run_in_ui_thread 封送到 UI 线程刷新界面
+        self.llm_service.set_event_notifier(self._on_stream_notify)
+
+    def _on_stream_notify(self, message: str):
+        """流式事件通知（工作线程）：按事件类型封送到 UI 线程分发处理"""
+        run_in_ui_thread(self._dispatch_stream_event, message)
+
+    def _dispatch_stream_event(self, message: str):
+        """UI 线程分发流式事件：片段增量刷新 / 完成展示 / 失败提示"""
+        if message.startswith(STREAM_CHUNK_PREFIX):
+            chunk = message[len(STREAM_CHUNK_PREFIX):]
+            self.chat_result_text.insertPlainText(chunk)
+            return
+        if message == STREAM_DONE_EVENT:
+            self._show_stream_result()
+            return
+        if message.startswith(STREAM_ERROR_PREFIX):
+            error = message[len(STREAM_ERROR_PREFIX):]
+            self._display_result("流式聊天失败", error, is_error=True)
+            self.chat_result_text.setPlainText(f"错误: {error}")
+            return
+        self._log(f"流式事件: {message}")
+
+    def _show_stream_result(self):
+        """完成事件后拉取服务聚合结果，在结果面板展示完整响应"""
+        result = self.llm_service.get_last_stream_result().get("result") or {}
+        usage = result.get("usage") or {}
+        content = (
+            f"模型: {result.get('model', 'unknown')}\n"
+            f"Provider: {result.get('provider', 'unknown')}\n"
+            f"片段数: {result.get('chunk_count', 0)}  Tokens: {usage.get('total_tokens', 'N/A')}\n\n"
+            f"{result.get('response', '')}"
+        )
+        self._display_result("流式聊天响应", content)
 
     # ------------------------------------------------------------------
     #  布局构建
@@ -81,6 +122,10 @@ class LLMTab(BaseTab):
         self.chat_btn = Button("发送聊天", variant="primary")
         self.chat_btn.clicked.connect(self._on_send_chat)
         form.addRow("", self.chat_btn)
+
+        self.chat_stream_btn = Button("流式发送", variant="primary")
+        self.chat_stream_btn.clicked.connect(self._on_send_chat_stream)
+        form.addRow("", self.chat_stream_btn)
 
         self.chat_result_text = TextArea()
         self.chat_result_text.setReadOnly(True)
@@ -159,6 +204,14 @@ class LLMTab(BaseTab):
         else:
             self._display_result("聊天失败", result.get("error", ""), is_error=True)
             self.chat_result_text.setPlainText(f"错误: {result.get('error')}")
+
+    def _on_send_chat_stream(self):
+        message = self.chat_message_input.text()
+        self.chat_result_text.clear()
+        result = self.llm_service.send_chat_stream(message)
+        self._log(f"流式聊天: {result}")
+        if not result.get("success"):
+            self._display_result("流式聊天发起失败", result.get("error", ""), is_error=True)
 
     def _on_send_embed(self):
         text = self.embed_text_input.text()

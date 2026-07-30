@@ -134,10 +134,6 @@ class DataDemoService(Service):
     #  发布订阅演示
     # ------------------------------------------------------------------
 
-    def set_event_notifier(self, notifier: Optional[Callable[[str], None]]) -> None:
-        """注入订阅事件的 UI 通知回调（callable(str)，由 UI 负责线程封送）"""
-        self._event_notifier = notifier
-
     def subscribe_demo(self, key: str) -> Dict[str, Any]:
         """演示订阅：以本插件身份订阅演示插件 PUBLIC 命名空间下指定键的变化"""
         try:
@@ -196,7 +192,6 @@ class DataDemoService(Service):
             self._events.append(event)
             if len(self._events) > MAX_SUBSCRIPTION_EVENTS:
                 del self._events[:len(self._events) - MAX_SUBSCRIPTION_EVENTS]
-            if self._event_notifier is not None:
-                self._event_notifier(f"订阅事件: {target_plugin_id}.{key} = {new_value}")
+            self._notify_event(f"订阅事件: {target_plugin_id}.{key} = {new_value}")
         except Exception as e:
             self.logger.error(get_name(), f"订阅回调处理失败: {e}")

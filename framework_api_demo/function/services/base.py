@@ -8,13 +8,13 @@ Framework API Demo 服务基类
 
 import json
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 from core.interfaces import PluginServices
 from core.data.data_provider import DataProvider
 from core.task import BackgroundTaskManager
 from core.llm.plugin_service import get_llm_plugin_service
-from utils.logging_tools import LoggerManager
+from utils.logging_tools import LoggerManager, get_name
 
 
 def _load_config() -> Dict[str, Any]:
@@ -42,6 +42,20 @@ class Service:
         self.tm = self._resolve_task_manager(services)
         self.llm = self._resolve_llm_facade(services)
         self.logger = self._resolve_logger(services)
+        # 事件通知回调（callable(str)）：工作线程回调产生的事件经它上抛，
+        # 由 UI 层注入并自行负责线程封送（run_in_ui_thread）
+        self._event_notifier: Optional[Callable[[str], None]] = None
+
+    def set_event_notifier(self, notifier: Optional[Callable[[str], None]]) -> None:
+        """注入事件的 UI 通知回调（callable(str)，由 UI 负责线程封送）"""
+        self._event_notifier = notifier
+
+    def _notify_event(self, message: str) -> None:
+        """上抛事件：有 notifier 时通知 UI，否则仅记日志"""
+        if self._event_notifier is not None:
+            self._event_notifier(message)
+        else:
+            self.logger.info(get_name(), f"服务事件（无 UI 通知器）: {message}")
 
     @staticmethod
     def _resolve_data_provider(

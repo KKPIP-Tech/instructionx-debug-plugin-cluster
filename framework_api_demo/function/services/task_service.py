@@ -27,18 +27,6 @@ class TaskDemoService(Service):
         demo_cfg = config.get("demo", {})
         self.sync_seconds = demo_cfg.get("sync_task_seconds", 1)
         self.async_seconds = demo_cfg.get("async_task_seconds", 2)
-        self._event_notifier: Optional[Callable[[str], None]] = None
-
-    def set_event_notifier(self, notifier: Optional[Callable[[str], None]]) -> None:
-        """注入任务事件的 UI 通知回调（callable(str)，由 UI 负责线程封送）"""
-        self._event_notifier = notifier
-
-    def _notify_event(self, message: str) -> None:
-        """上抛任务事件：有 notifier 时通知 UI，否则仅记日志"""
-        if self._event_notifier is not None:
-            self._event_notifier(message)
-        else:
-            self.logger.info(get_name(), f"任务事件（无 UI 通知器）: {message}")
 
     def _make_completion_callback(self, task_name: str) -> Callable:
         """构造任务完成回调（工作线程执行）：经 notifier 上抛 + 记日志，异常不外抛"""
