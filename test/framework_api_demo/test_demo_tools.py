@@ -95,12 +95,8 @@ class TestCalculateRejection:
         assert result.startswith(ERROR_PREFIX)
         assert "无法解析" in result
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="已知缺陷：calculate('1/0') 抛出 ZeroDivisionError 而非按约定返回错误字符串",
-    )
     def test_division_by_zero_returns_error(self):
-        """除零应按 handler 约定返回错误字符串（当前实现会抛 ZeroDivisionError）"""
+        """除零应按 handler 约定返回错误字符串（dev d175cc1 已修复）"""
         result = calculate("1/0")
         assert result.startswith(ERROR_PREFIX)
 
