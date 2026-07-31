@@ -136,10 +136,23 @@ class MainWidget(QWidget):
 
         NodeRegistry 是全局单例，用户切换到其他插件页面（如 ui_demo
         蓝图演示页）可能覆盖同名类型；本控件再次可见时纠正注册，
-        保证随后经创建菜单新增的节点引脚契约正确。
+        保证随后经创建菜单新增的节点引脚契约正确。同时触发节点体区
+        重排（见 _refresh_node_bodies）。
         """
         super().showEvent(event)
         ensure_node_types_registered()
+        self._refresh_node_bodies()
+
+    def _refresh_node_bodies(self) -> None:
+        """触发全部节点重排，修正体区（body_builder 控件）初始错位。
+
+        NodeWidget 在父控件未显示时 isVisible() 为 False，构造期的
+        _relayout 不会给体区控件落位（几何停在 (0,0)，叠在标题栏上）；
+        控件显示后借 node.changed 触发一次重排即可纠正。对无体区的
+        节点这只是无害的重绘。
+        """
+        for node in self.graph.nodes():
+            node.changed.emit()
 
     def graph_snapshot(self) -> Dict[str, Any]:
         """当前图快照（``canvas.to_dict()``，含节点属性 / 边 / 视图状态）。"""

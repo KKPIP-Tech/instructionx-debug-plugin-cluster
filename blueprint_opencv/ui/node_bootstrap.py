@@ -17,9 +17,13 @@ in/out/img 引脚）重新注册纠正并记 WARNING，保证本插件画布创�
   ui 其他模块不直接触碰 function 层数据结构。
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
-from InstructionX_UIKit.blueprint import NodeRegistry, register_node_type
+import os
+
+from PySide6.QtWidgets import QLabel
+
+from InstructionX_UIKit.blueprint import BlueprintNode, NodeRegistry, register_node_type
 
 from utils.logging_tools import LoggerManager, get_name
 
@@ -109,7 +113,7 @@ def apply_catalog_defaults(node) -> None:
 
 
 def _register_definition(definition) -> None:
-    """注册单个节点类型（accent 按分类映射，无 body_builder）。"""
+    """注册单个节点类型（accent 按分类映射，文件参数节点带文件名体区）。"""
     register_node_type(
         definition.type_name,
         definition.title,
@@ -117,8 +121,48 @@ def _register_definition(definition) -> None:
         inputs=[dict(pin) for pin in definition.inputs],
         outputs=[dict(pin) for pin in definition.outputs],
         accent=CATEGORY_ACCENTS.get(definition.category),
+        body_builder=_make_path_body_builder(definition),
         description=definition.description,
     )
+
+
+def _make_path_body_builder(definition) -> Optional[Callable]:
+    """为含 file_path 参数的节点构建体区 builder，其余返回 ``None``。
+
+    节点体缺省会展示 properties 键值原文，完整文件路径会把节点撑得
+    很宽；这里改为只显示文件名（完整路径放 tooltip），并监听
+    ``node.changed`` 在参数面板改值后同步刷新（体区 builder 仅在
+    NodeWidget 构造时调用一次，不会自动重建）。
+    """
+    field = _file_path_field(definition)
+    if field is None:
+        return None
+
+    def build_body(node: BlueprintNode, container) -> None:
+        label = QLabel(container)
+        label.setToolTip(str(node.properties.get(field["key"], "")))
+        _refresh_path_label(label, node, field)
+        node.changed.connect(lambda: _refresh_path_label(label, node, field))
+        container.layout().addWidget(label)
+
+    return build_body
+
+
+def _file_path_field(definition) -> Optional[Dict[str, Any]]:
+    """取节点第一个 file_path 类型参数 schema，无则返回 ``None``。"""
+    for field in definition.param_schema:
+        if field.get("type") == "file_path":
+            return field
+    return None
+
+
+def _refresh_path_label(label: QLabel, node: BlueprintNode,
+                        field: Dict[str, Any]) -> None:
+    """按当前 properties 刷新体区文件名显示（空路径显示占位提示）。"""
+    path = str(node.properties.get(field["key"], "") or "")
+    name = os.path.basename(path) if path else "（未设置）"
+    label.setText(f"{field.get('label', field['key'])}: {name}")
+    label.setToolTip(path)
 
 
 def _find_definition(type_name: str) -> Optional[Any]:
