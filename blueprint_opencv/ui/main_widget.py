@@ -131,6 +131,16 @@ class MainWidget(QWidget):
             self.build_preset_graph()
 
     # ------------------------------------------------------------------ 对外
+    def showEvent(self, event) -> None:
+        """控件可见时重新断言节点注册（幂等，见 node_bootstrap 模块 docstring）。
+
+        NodeRegistry 是全局单例，用户切换到其他插件页面（如 ui_demo
+        蓝图演示页）可能覆盖同名类型；本控件再次可见时纠正注册，
+        保证随后经创建菜单新增的节点引脚契约正确。
+        """
+        super().showEvent(event)
+        ensure_node_types_registered()
+
     def graph_snapshot(self) -> Dict[str, Any]:
         """当前图快照（``canvas.to_dict()``，含节点属性 / 边 / 视图状态）。"""
         return self.canvas.to_dict()

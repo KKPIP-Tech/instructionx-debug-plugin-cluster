@@ -68,7 +68,7 @@ class BlueprintOpenCVPlugin(IPlugin):
     # ------------------------------------------------------------------
 
     def _register_node_types(self):
-        """注册全部节点类型（ui.node_bootstrap 幂等先查后注册，热重载安全）"""
+        """注册全部节点类型（ui.node_bootstrap 幂等 + 同名冲突纠正，热重载安全）"""
         try:
             ensure_node_types_registered()
         except Exception as e:

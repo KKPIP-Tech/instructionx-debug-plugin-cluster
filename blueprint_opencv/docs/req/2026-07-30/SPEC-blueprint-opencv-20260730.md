@@ -47,9 +47,11 @@ cv2 处理（滤波、形态学、大图像 imencode）是 CPU 密集操作，�
 
 不允许 exec 与 image 混连（Blueprint `add_edge` 自带类型校验兜底）；exec 链成环、无 start 节点时拒绝运行并中文提示。
 
-### 1.5 节点类型注册的幂等性
+### 1.5 节点类型注册的幂等性与同名冲突纠正
 
-节点注册在 `function/node_catalog.py` 提供 `register_all_node_types()`（非裸模块级副作用），内部以"先查后注册"保证幂等：已注册过的 type_name 直接跳过。entrance 加载时调用一次；热重载（重复 import）不产生重复注册/异常。注册表数据结构本身放在 `NODE_DEFINITIONS`（模块级常量，可安全重复构建）。
+节点注册数据由 `function/node_catalog.py` 的 `NODE_DEFINITIONS` / `registration_payloads()` 提供（纯数据，function 层不 import UIKit），注册动作在 `ui/node_bootstrap.py` 的 `ensure_node_types_registered()`（entrance 加载时、`ui/main_widget.py` 模块级及 `MainWidget.showEvent` 各调用一次）。
+
+UIKit `NodeRegistry` 是全局单例，其他插件可能用同名 `type_name` 注册引脚定义不同的 spec（如 ui_demo 蓝图演示页用 in/out/img 引脚注册同名 `load_image` / `gaussian_blur` / `resize`）。因此本插件采用「幂等 + 冲突纠正」语义：既有 spec 与本插件定义（引脚 id / data_type 序列）一致时跳过；同名异定义时重新注册纠正并记 WARNING，保证本插件画布创建的节点引脚 id 与 function 层 op 输出键（`image_out`）一致。热重载（重复 import / 重复调用）不产生重复注册/异常。注册表数据结构本身放在 `NODE_DEFINITIONS`（模块级常量，可安全重复构建）。
 
 ### 1.6 序列化与持久化
 
@@ -77,7 +79,7 @@ plugin/blueprint_opencv/
 ├── function/                     # 纯 Python 业务层（禁 PySide6）
 │   ├── __init__.py
 │   ├── constants.py              # 命名常量：引脚 id、分类 accent、状态枚举值、默认尺寸等
-│   ├── node_catalog.py           # NODE_DEFINITIONS 注册表 + register_all_node_types()（幂等）
+│   ├── node_catalog.py           # NODE_DEFINITIONS 注册表 + registration_payloads()（纯数据，注册动作在 ui/node_bootstrap）
 │   ├── param_schema.py           # 参数 schema 类型定义与校验（供属性面板/引擎共用）
 │   ├── image_codec.py            # numpy ↔ PNG 字节 编解码（imencode/imdecode）、尺寸归一
 │   ├── executor.py               # PipelineExecutor：exec 拓扑排序 + 数据流求值 + 状态回调
@@ -201,7 +203,7 @@ class NodeDefinition:
     description: str          # 节点一句话说明（菜单提示）
 ```
 
-`register_all_node_types()` 遍历 `NODE_DEFINITIONS`，逐项查 `register_node_type` 幂等注册，accent 按分类常量取色。
+`registration_payloads()` 遍历 `NODE_DEFINITIONS` 生成 `register_node_type(**payload)` 载荷，accent 按分类常量取色；注册动作由 `ui/node_bootstrap.ensure_node_types_registered()` 执行（幂等 + 同名冲突纠正，见 §1.5）。
 
 ---
 
@@ -292,7 +294,7 @@ classDiagram
     class node_catalog {
         <<module>>
         NODE_DEFINITIONS list
-        register_all_node_types() void
+        registration_payloads() list
     }
     class image_codec {
         <<module>>

@@ -3,8 +3,11 @@
 
 职责：把 ``function.node_catalog.NODE_DEFINITIONS`` 中的注册数据
 （引脚 / 标题 / 分类 / 描述）经 UIKit ``register_node_type`` 注册进
-蓝图注册表，并保证**幂等**——已注册过的 ``type_name`` 直接跳过，
-热重载（重复 import / 重复调用）不产生重复注册或异常。
+蓝图注册表，并保证**幂等 + 同名冲突纠正**——既有 spec 与本插件
+定义一致时直接跳过（热重载不产生重复注册或异常）；同名但引脚
+定义不一致时（被其他插件/demo 覆盖注册，如 ui_demo 蓝图演示页的
+in/out/img 引脚）重新注册纠正并记 WARNING，保证本插件画布创建
+的节点引脚 id 与 function 层 op 契约一致。
 
 设计说明：
 - 注册数据（NODE_DEFINITIONS）由 function 层提供（SPEC §3.8）；
@@ -46,20 +49,45 @@ _MODULE = get_name()
 
 
 def ensure_node_types_registered() -> int:
-    """把节点目录中尚未注册的类型注册进 UIKit（幂等）。
+    """把节点目录中的类型注册进 UIKit（幂等 + 同名冲突纠正）。
+
+    UIKit ``NodeRegistry`` 是全局单例，其他插件（如 ui_demo 的蓝图
+    演示页）可能用同名 ``type_name`` 注册引脚定义不同的 spec 并覆盖
+    本插件的注册；若仅按「已注册即跳过」处理，本插件画布随后创建的
+    节点会带上外来引脚 id（如 in/out/img），与 function 层 op 的
+    输出键（image_out）不匹配，运行即报「上游节点缺少输出引脚」。
+    因此本函数只在既有 spec 与本插件定义**一致**时跳过；同名异定义
+    （冲突）时重新注册纠正并记 WARNING。
 
     返回:
-        本次新注册的类型数量（已注册跳过，重复调用返回 0）。
+        本次新注册或纠正的类型数量（全部一致时返回 0）。
     """
     registry = NodeRegistry.instance()
     registered = 0
     for definition in NODE_DEFINITIONS:
-        if registry.spec(definition.type_name) is not None:
-            continue  # 幂等：先查后注册
+        spec = registry.spec(definition.type_name)
+        if spec is not None and _spec_matches(spec, definition):
+            continue  # 幂等：同名同定义跳过，重复调用不产生重复注册
+        if spec is not None:
+            _logger.warning(
+                _MODULE,
+                f"节点类型 {definition.type_name} 被他处同名注册覆盖，"
+                "已纠正回本插件定义")
         _register_definition(definition)
         registered += 1
-    _logger.info(_MODULE, f"节点类型注册完成：本次新注册 {registered} 个")
+    _logger.info(_MODULE, f"节点类型注册完成：本次新注册/纠正 {registered} 个")
     return registered
+
+
+def _spec_matches(spec, definition) -> bool:
+    """判定注册表既有 spec 的引脚定义是否与本插件目录一致。"""
+    return (_pin_keys(spec.inputs) == _pin_keys(definition.inputs)
+            and _pin_keys(spec.outputs) == _pin_keys(definition.outputs))
+
+
+def _pin_keys(pins: List[Dict[str, Any]]) -> List[tuple]:
+    """取引脚 ``(id, data_type)`` 序列，用于定义一致性比较。"""
+    return [(pin["id"], pin.get("data_type", "any")) for pin in pins]
 
 
 def param_schema_of(type_name: str) -> List[Dict[str, Any]]:
