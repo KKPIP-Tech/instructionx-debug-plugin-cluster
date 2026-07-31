@@ -83,6 +83,8 @@ _SAVE_AS_LABEL = "存档名称："
 #: 重名覆盖确认对话框文案
 _OVERWRITE_TITLE = "覆盖存档"
 _OVERWRITE_TEXT = "已存在同名存档「{name}」，确定覆盖吗？"
+#: 启动自动加载的默认存档名（与 service.load_graph 的缺省 name 一致）
+_DEFAULT_GRAPH_NAME = "default"
 
 _logger = LoggerManager()
 _MODULE = get_name()
@@ -134,6 +136,9 @@ class MainWidget(QWidget):
         self.setObjectName("BlueprintOpenCVWidget")
         self._service = service
         self._run_order: List[str] = []
+        #: 当前蓝图对应的存档名（未保存过的新图 / 预置图为 None，
+        #: 「保存」按钮据此决定覆盖写入还是退化为另存为）
+        self._current_graph_name: Optional[str] = None
         self.graph = BlueprintGraph()
         self.graph.node_added.connect(apply_catalog_defaults)
         self.canvas = BlueprintCanvas(self.graph, self)
@@ -250,6 +255,7 @@ class MainWidget(QWidget):
         """连接工具条 / 画布 / 存档列表 / service 信号到对应槽（全部 UI 线程）。"""
         self._toolbar.run_requested.connect(self._run_pipeline)
         self._toolbar.stop_requested.connect(self._stop_pipeline)
+        self._toolbar.save_current_requested.connect(self._save_graph)
         self._toolbar.save_requested.connect(self._save_graph_as)
         self._toolbar.fit_requested.connect(self.canvas.fit_view)
         self.graph_list_panel.save_as_requested.connect(self._save_graph_as)
@@ -278,19 +284,32 @@ class MainWidget(QWidget):
         if result.get("success"):
             self._toolbar.set_status(_STATUS_STOPPING)
 
+    def _save_graph(self) -> None:
+        """保存：覆盖写入当前存档；无当前存档（新图/预置图）退化为另存为。"""
+        if self._current_graph_name is None:
+            self._save_graph_as()
+            return
+        self._persist_graph(self._current_graph_name)
+
     def _save_graph_as(self) -> None:
         """另存为：命名对话框 → 重名覆盖确认 → 委托 service 持久化。"""
         name = self._prompt_graph_name()
         if name is None or not self._confirm_overwrite(name):
             return
+        if self._persist_graph(name):
+            self._current_graph_name = name
+
+    def _persist_graph(self, name: str) -> bool:
+        """推快照并委托 service 保存，成功刷新列表与状态；返回是否成功。"""
         self._push_graph_snapshot()
         result = self._service.save_graph(name)
         if not result.get("success"):
             self._report_failure("保存失败", result)
-            return
+            return False
         self.graph_list_panel.refresh()
         count = result.get("data", {}).get("node_count", len(self.graph.nodes()))
-        self._toolbar.set_status(f"已保存为「{name}」（{count} 个节点）")
+        self._toolbar.set_status(f"已保存「{name}」（{count} 个节点）")
+        return True
 
     def _prompt_graph_name(self) -> Optional[str]:
         """弹存档命名对话框；取消或空名返回 None。"""
@@ -321,8 +340,9 @@ class MainWidget(QWidget):
             self._toolbar.set_status("加载成功，但未能取回图数据（见日志）")
             return
         self.restore_graph(data)
-        suffix = "（存档缺失 / 损坏，已回退示例图）" if result.get(
-            "data", {}).get("fallback") else ""
+        fallback = bool(result.get("data", {}).get("fallback"))
+        self._current_graph_name = None if fallback else name
+        suffix = "（存档缺失 / 损坏，已回退示例图）" if fallback else ""
         self._toolbar.set_status(f"已加载「{name}」{suffix}")
 
     def _load_initial_graph(self) -> None:
@@ -332,6 +352,7 @@ class MainWidget(QWidget):
             "data", {}).get("fallback")
         if loaded:
             self.restore_graph(self._service.current_graph)
+            self._current_graph_name = _DEFAULT_GRAPH_NAME
             return
         self.build_preset_graph()
 
