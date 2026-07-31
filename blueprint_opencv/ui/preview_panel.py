@@ -42,6 +42,24 @@ _logger = LoggerManager()
 _MODULE = get_name()
 
 
+class _PlainImageView(ImageView):
+    """去除悬停「预览」蒙层与手型光标的 ImageView。
+
+    预览对话框内的图片本身已是预览结果，再叠加悬停蒙层（暗色遮罩 +
+    「预览」字样）属于冗余引导；进入/离开事件跳过蒙层标记即可。
+    """
+
+    def __init__(self, source=None, parent: QWidget = None) -> None:
+        super().__init__(source, parent=parent)
+        self.setCursor(Qt.ArrowCursor)
+
+    def enterEvent(self, event) -> None:
+        QWidget.enterEvent(self, event)  # 不置 _hovered，蒙层不触发
+
+    def leaveEvent(self, event) -> None:
+        QWidget.leaveEvent(self, event)
+
+
 class PreviewPanel(QWidget):
     """预览区控件：ImageView + 结果信息（尺寸 / 通道 / 耗时）。
 
@@ -94,7 +112,7 @@ class PreviewPanel(QWidget):
         dialog = Dialog(self, title=_PREVIEW_DIALOG_TITLE,
                         ok_text=_PREVIEW_DIALOG_OK, show_cancel=False)
         pixmap = self._scaled_for_dialog()
-        view = ImageView(pixmap)
+        view = _PlainImageView(pixmap)
         view.setFixedSize(pixmap.size())  # 对话框内容区贴合图片实际尺寸
         dialog.set_content(view)
         dialog.exec()
