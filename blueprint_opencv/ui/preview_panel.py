@@ -8,13 +8,13 @@
 显示前按预览上限等比缩放（仅影响显示，不影响管线数据）。
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
-from InstructionX_UIKit.components import ImageView
+from InstructionX_UIKit.components import Dialog, ImageView
 from InstructionX_UIKit.theme import set_property
 
 from utils.logging_tools import LoggerManager, get_name
@@ -31,6 +31,12 @@ _HINT_DECODE_FAILED = "预览图解码失败（非有效 PNG 数据）。"
 #: 空态占位透明像素尺寸（ImageView 对 null pixmap 会显示「加载失败」
 #: 占位插画，空态改用 1×1 透明像素保持干净的空白区域）
 _EMPTY_PIXMAP_SIZE = 1
+#: 点击放大预览对话框的显示上限（超出等比缩小，仅影响显示）
+_PREVIEW_DIALOG_MAX_WIDTH = 1024
+_PREVIEW_DIALOG_MAX_HEIGHT = 768
+#: 预览对话框标题与按钮文案
+_PREVIEW_DIALOG_TITLE = "预览"
+_PREVIEW_DIALOG_OK = "关闭"
 
 _logger = LoggerManager()
 _MODULE = get_name()
@@ -53,7 +59,10 @@ class PreviewPanel(QWidget):
         super().__init__(parent)
         self._image_view = ImageView()
         self._info_label = QLabel()
+        #: 当前结果的原始分辨率 pixmap（点击放大预览用；空态为 None）
+        self._current_pixmap: Optional[QPixmap] = None
         self._build_layout()
+        self._image_view.clicked.connect(self._open_preview_dialog)
         self.show_empty()
 
     def show_result(self, png_bytes: bytes, info: Dict[str, Any]) -> None:
@@ -68,13 +77,37 @@ class PreviewPanel(QWidget):
             _logger.error(_MODULE, "预览 PNG 解码失败")
             self._info_label.setText(_HINT_DECODE_FAILED)
             return
+        self._current_pixmap = pixmap
         self._image_view.set_source(self._scaled(pixmap))
         self._info_label.setText(self._format_info(info))
 
     def show_empty(self) -> None:
         """回空态：清空图片并显示引导提示。"""
+        self._current_pixmap = None
         self._image_view.set_source(self._transparent_pixmap())
         self._info_label.setText(_HINT_EMPTY)
+
+    def _open_preview_dialog(self) -> None:
+        """点击图片 → 放大预览对话框（原始分辨率，超限等比缩小）。"""
+        if self._current_pixmap is None or self._current_pixmap.isNull():
+            return  # 空态 / 解码失败无图可预览
+        dialog = Dialog(self, title=_PREVIEW_DIALOG_TITLE,
+                        ok_text=_PREVIEW_DIALOG_OK, show_cancel=False)
+        pixmap = self._scaled_for_dialog()
+        view = ImageView(pixmap)
+        view.setFixedSize(pixmap.size())  # 对话框内容区贴合图片实际尺寸
+        dialog.set_content(view)
+        dialog.exec()
+
+    def _scaled_for_dialog(self) -> QPixmap:
+        """对话框显示用 pixmap：超出上限等比缩小（仅显示层）。"""
+        pixmap = self._current_pixmap
+        if pixmap.width() <= _PREVIEW_DIALOG_MAX_WIDTH and \
+                pixmap.height() <= _PREVIEW_DIALOG_MAX_HEIGHT:
+            return pixmap
+        return pixmap.scaled(
+            _PREVIEW_DIALOG_MAX_WIDTH, _PREVIEW_DIALOG_MAX_HEIGHT,
+            Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
     @staticmethod
     def _transparent_pixmap() -> QPixmap:
