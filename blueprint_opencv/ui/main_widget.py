@@ -39,7 +39,11 @@ from InstructionX_UIKit.theme import set_property
 from utils.logging_tools import LoggerManager, get_name
 
 from .graph_list_panel import GraphListPanel
-from .node_bootstrap import apply_catalog_defaults, ensure_node_types_registered
+from .node_bootstrap import (
+    REGISTRY_OWNER,
+    apply_catalog_defaults,
+    ensure_node_types_registered,
+)
 from .node_list_panel import NodeListPanel
 from .preview_panel import PreviewPanel
 from .property_panel import PropertyPanel
@@ -141,7 +145,7 @@ class MainWidget(QWidget):
         self._current_graph_name: Optional[str] = None
         self.graph = BlueprintGraph()
         self.graph.node_added.connect(apply_catalog_defaults)
-        self.canvas = BlueprintCanvas(self.graph, self)
+        self.canvas = BlueprintCanvas(self.graph, self, owner=REGISTRY_OWNER)
         self._toolbar = ToolBar(self)
         self.graph_list_panel = GraphListPanel(service)
         self.node_list_panel = NodeListPanel(self.graph, self.canvas)
@@ -155,8 +159,8 @@ class MainWidget(QWidget):
     def showEvent(self, event) -> None:
         """控件可见时重新断言节点注册（幂等，见 node_bootstrap 模块 docstring）。
 
-        NodeRegistry 是全局单例，用户切换到其他插件页面（如 ui_demo
-        蓝图演示页）可能覆盖同名类型；本控件再次可见时纠正注册，
+        节点注册已限定本插件 owner 命名空间，跨插件同名类型不再互相
+        覆盖；此处重复断言仅作同空间防御（自身旧版注册 / 异常写入），
         保证随后经创建菜单新增的节点引脚契约正确。同时触发节点体区
         重排（见 _refresh_node_bodies）。
         """
