@@ -3,8 +3,10 @@
 
 对外契约：``MainWidget(service, parent=None)``（见 main_widget.py）。
 导入本包即触发节点类型幂等注册（node_bootstrap 经 main_widget 模块级调用）。
+``NodeListPanel`` 按需 re-export（供测试 / 截图脚本直接断言）。
 """
 
 from .main_widget import MainWidget
+from .node_list_panel import NodeListPanel
 
-__all__ = ["MainWidget"]
+__all__ = ["MainWidget", "NodeListPanel"]

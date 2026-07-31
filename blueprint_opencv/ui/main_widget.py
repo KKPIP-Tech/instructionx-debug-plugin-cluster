@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """主界面组装（ui 层）。
 
-``MainWidget`` = 工具条 + ``BlueprintCanvas`` + 右侧固定宽面板
+``MainWidget`` = 工具条 + 左侧节点列表面板 + ``BlueprintCanvas`` + 右侧固定宽面板
 （上：参数面板；下：ImageView 预览区 + 结果信息标签）。
 
 职责边界：
@@ -36,6 +36,7 @@ from InstructionX_UIKit.theme import set_property
 from utils.logging_tools import LoggerManager, get_name
 
 from .node_bootstrap import apply_catalog_defaults, ensure_node_types_registered
+from .node_list_panel import NodeListPanel
 from .preview_panel import PreviewPanel
 from .property_panel import PropertyPanel
 from .toolbar import ToolBar
@@ -47,6 +48,8 @@ __all__ = ["MainWidget"]
 _FALLBACK_RIGHT_PANEL_WIDTH = 320
 #: 插件默认配置文件路径（panel.right_panel_width 等，SPEC §8）
 _CONFIG_PATH = Path(__file__).resolve().parents[1] / "config" / "default.json"
+#: 左侧节点列表面板固定宽（SPEC-node-list-panel §3.3；与右侧 320px 面板对称）
+_LEFT_PANEL_WIDTH = 200
 #: 预置示例图节点（type_name, 场景坐标）：start→加载→高斯→Canny→预览
 #: （load_image 节点体展示长文件路径会明显变宽，其后预留 700 间距不重叠）
 _PRESET_NODES = (
@@ -109,6 +112,7 @@ class MainWidget(QWidget):
 
     公开属性 / 方法:
         ``graph`` / ``canvas``：数据图与画布（供 entrance / 测试访问）；
+        ``node_list_panel``：左侧节点列表面板（测试断言用）；
         ``graph_snapshot()``：当前图序列化 dict（service 取快照用）；
         ``restore_graph(data)``：把图 dict 恢复到画布；
         ``build_preset_graph()``：构建预置示例图。
@@ -123,6 +127,7 @@ class MainWidget(QWidget):
         self.graph.node_added.connect(apply_catalog_defaults)
         self.canvas = BlueprintCanvas(self.graph, self)
         self._toolbar = ToolBar(self)
+        self.node_list_panel = NodeListPanel(self.graph, self.canvas)
         self._property_panel = PropertyPanel()
         self._preview_panel = PreviewPanel()
         self._build_layout()
@@ -182,16 +187,29 @@ class MainWidget(QWidget):
 
     # ------------------------------------------------------------------ 组装
     def _build_layout(self) -> None:
-        """根布局：顶部工具条，主体左画布 + 右侧固定宽面板。"""
+        """根布局：顶部工具条，主体左节点列表 + 画布 + 右侧固定宽面板。"""
         root = QVBoxLayout(self)
         root.setContentsMargins(8, 8, 8, 8)
         root.setSpacing(8)
         root.addWidget(self._toolbar)
         body = QHBoxLayout()
         body.setSpacing(8)
+        body.addWidget(self._build_left_panel())
         body.addWidget(self.canvas, 1)
         body.addWidget(self._build_right_panel())
         root.addLayout(body, 1)
+
+    def _build_left_panel(self) -> QFrame:
+        """左侧固定宽面板：节点列表面板（含小标题，SPEC-node-list-panel §3.4）。"""
+        panel = QFrame()
+        panel.setFrameShape(QFrame.Shape.StyledPanel)
+        panel.setFixedWidth(_LEFT_PANEL_WIDTH)
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(10, 8, 10, 8)
+        layout.setSpacing(6)
+        layout.addWidget(self._section_title("节点"))
+        layout.addWidget(self.node_list_panel, 1)
+        return panel
 
     def _build_right_panel(self) -> QFrame:
         """右侧固定宽面板：上参数面板、下预览区（含小标题）。"""
