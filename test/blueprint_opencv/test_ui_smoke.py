@@ -17,7 +17,21 @@
 from plugin.blueprint_opencv.service import BlueprintOpenCVService
 from plugin.blueprint_opencv.ui.graph_list_panel import GraphListPanel
 from plugin.blueprint_opencv.ui.main_widget import MainWidget
+from plugin.blueprint_opencv.ui.node_bootstrap import ensure_node_types_registered
 from plugin.blueprint_opencv.ui.node_list_panel import NodeListPanel
+
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _assert_node_specs():
+    """每个用例前重新断言节点注册（含同名冲突纠正）。
+
+    全量运行时 ui_demo 套件会把同名类型（load_image 等）覆盖注册为
+    外来引脚定义；本插件的纠正逻辑入口在模块 import 与 showEvent，
+    offscreen 测试两条路径都不触发，需在 fixture 中显式断言。
+    """
+    ensure_node_types_registered()
 
 #: 预置示例图节点类型序列（SPEC-graph-list §1.5）
 _PRESET_TYPE_SEQUENCE = ["start", "load_image", "gaussian_blur", "canny",
