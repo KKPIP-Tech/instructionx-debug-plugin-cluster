@@ -119,7 +119,12 @@ class MainWidget(QWidget):
         layout.setSpacing(0)
 
         tab_widget = Tabs()
-        tab_widget.addTab(self._create_data_tab(), "DataProvider")
+        # 实例级收窄标签头内边距（UIKit 默认左右 16px），使 6 个标签在
+        # 固定宽度内完整显示；仅作用于本实例 tabBar，不影响全局主题
+        tab_widget.tabBar().setStyleSheet(
+            "QTabBar::tab { padding-left: 6px; padding-right: 6px; }"
+        )
+        tab_widget.addTab(self._create_data_tab(), "Data")
         tab_widget.addTab(self._create_task_tab(), "Task")
         tab_widget.addTab(self._create_llm_tab(), "LLM")
         tab_widget.addTab(self._create_api_tab(), "API")
