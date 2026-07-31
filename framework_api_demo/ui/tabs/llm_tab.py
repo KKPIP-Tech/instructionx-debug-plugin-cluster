@@ -308,7 +308,8 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
         group = QGroupBox("工具调用")
         form = QFormLayout()
         form.setSpacing(6)
-        form.addRow("", self._build_tool_buttons_row())
+        for row in self._build_tool_buttons_rows():
+            form.addRow("", row)
         self.tool_message_input = LineEdit(text=TOOL_DEMO_DEFAULT_MESSAGE)
         form.addRow("消息:", self.tool_message_input)
         self.tool_chat_btn = Button("工具对话", variant="primary")
@@ -317,20 +318,22 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
         group.setLayout(form)
         return group
 
-    def _build_tool_buttons_row(self) -> QHBoxLayout:
-        """构建工具注册表操作按钮行：注册 / 注销 / 查看已注册工具"""
-        row = QHBoxLayout()
-        row.setSpacing(8)
+    def _build_tool_buttons_rows(self) -> list:
+        """构建工具注册表操作按钮行（拆为两行，适配收窄后的面板宽度）"""
+        manage_row = QHBoxLayout()
+        manage_row.setSpacing(8)
         self.tool_register_btn = Button("注册演示工具")
         self.tool_register_btn.clicked.connect(self._on_register_tools)
-        row.addWidget(self.tool_register_btn)
+        manage_row.addWidget(self.tool_register_btn)
         self.tool_unregister_btn = Button("注销演示工具", variant="danger")
         self.tool_unregister_btn.clicked.connect(self._on_unregister_tools)
-        row.addWidget(self.tool_unregister_btn)
+        manage_row.addWidget(self.tool_unregister_btn)
+        list_row = QHBoxLayout()
         self.tool_list_btn = Button("查看已注册工具")
         self.tool_list_btn.clicked.connect(self._on_list_tools)
-        row.addWidget(self.tool_list_btn)
-        return row
+        list_row.addWidget(self.tool_list_btn)
+        list_row.addStretch()
+        return [manage_row, list_row]
 
     def _build_llm_embed_group(self) -> QGroupBox:
         group = QGroupBox("嵌入测试")

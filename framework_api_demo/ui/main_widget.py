@@ -20,16 +20,17 @@ from InstructionX_UIKit.components import Button, Tabs, TextArea
 
 from .tabs import APITab, DataTab, InfoTab, LLMTab, MCPTab, TaskTab
 
-# 右侧 Tab 操作面板固定宽度（像素）：保证默认窗口尺寸下 6 个 Tab 的
-# 表单内容完整可见，窗口拉伸时多余空间全部分配给左侧结果面板
-RIGHT_PANEL_FIXED_WIDTH = 420
+# 右侧 Tab 操作面板固定宽度（像素）：各 Tab 的宽按钮行已压缩为多行排布，
+# 按压缩后最宽表单行（标签 + 输入框 + 按钮，约 300px）加边距得出 320px；
+# 窗口拉伸时多余空间全部分配给左侧结果面板
+RIGHT_PANEL_FIXED_WIDTH = 320
 
 
 class MainWidget(QWidget):
     """Framework API Demo 插件主控件
 
     左右分栏布局：左侧显示操作结果与执行日志，右侧为 6 个演示 Tab
-    （DataProvider / Task / LLM / API / Info / MCP）。
+    （DataProvider / Task / LLM / API / Info / MCP），固定宽度 320px。
     控件由 entrance.py 在 _create_widget 中实例化并注入各演示服务。
     """
 
@@ -110,7 +111,7 @@ class MainWidget(QWidget):
         return panel
 
     def _build_right_panel(self) -> QWidget:
-        """构建右侧操作面板（实例化各演示 Tab 类，固定宽度防截断）"""
+        """构建右侧操作面板（实例化各演示 Tab 类，固定宽度 320px 防截断）"""
         panel = QWidget()
         panel.setFixedWidth(RIGHT_PANEL_FIXED_WIDTH)
         layout = QVBoxLayout(panel)

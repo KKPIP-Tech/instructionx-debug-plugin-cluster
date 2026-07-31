@@ -96,7 +96,8 @@ class TaskTab(BaseTab):
         self.tasks_list.setMaximumHeight(100)
         layout.addWidget(self.tasks_list)
 
-        layout.addLayout(self._build_task_action_row())
+        for row in self._build_task_action_rows():
+            layout.addLayout(row)
 
         self.clear_tasks_btn = Button("清理已完成任务")
         self.clear_tasks_btn.clicked.connect(self._on_clear_tasks)
@@ -105,24 +106,22 @@ class TaskTab(BaseTab):
         group.setLayout(layout)
         return group
 
-    def _build_task_action_row(self) -> QHBoxLayout:
-        """构建任务操作按钮行（取消/停止长期/查询状态，作用于列表选中项）"""
-        row = QHBoxLayout()
-        row.setSpacing(8)
-
+    def _build_task_action_rows(self) -> list:
+        """构建任务操作按钮行（拆为两行，适配收窄后的面板宽度，作用于列表选中项）"""
+        manage_row = QHBoxLayout()
+        manage_row.setSpacing(8)
         self.cancel_task_btn = Button("取消任务")
         self.cancel_task_btn.clicked.connect(self._on_cancel_task)
-        row.addWidget(self.cancel_task_btn)
-
+        manage_row.addWidget(self.cancel_task_btn)
         self.stop_long_btn = Button("停止长期任务")
         self.stop_long_btn.clicked.connect(self._on_stop_long_task)
-        row.addWidget(self.stop_long_btn)
-
+        manage_row.addWidget(self.stop_long_btn)
+        status_row = QHBoxLayout()
         self.status_btn = Button("查询状态")
         self.status_btn.clicked.connect(self._on_query_status)
-        row.addWidget(self.status_btn)
-
-        return row
+        status_row.addWidget(self.status_btn)
+        status_row.addStretch()
+        return [manage_row, status_row]
 
     def _build_scheduled_control_group(self) -> QGroupBox:
         group = QGroupBox("定时任务控制")

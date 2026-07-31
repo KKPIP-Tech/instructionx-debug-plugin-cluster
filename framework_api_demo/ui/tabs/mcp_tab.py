@@ -72,20 +72,27 @@ class MCPTab(BaseTab):
         self.server_status_text.setMaximumHeight(90)
         layout.addWidget(self.server_status_text)
 
-        btn_row = QHBoxLayout()
-        self.start_server_btn = Button("启动 Server", variant="primary")
-        self.start_server_btn.clicked.connect(self._on_start_server)
-        btn_row.addWidget(self.start_server_btn)
-        self.stop_server_btn = Button("停止 Server")
-        self.stop_server_btn.clicked.connect(self._on_stop_server)
-        btn_row.addWidget(self.stop_server_btn)
-        self.refresh_status_btn = Button("刷新状态")
-        self.refresh_status_btn.clicked.connect(self._on_refresh_status)
-        btn_row.addWidget(self.refresh_status_btn)
-        layout.addLayout(btn_row)
+        for row in self._build_server_button_rows():
+            layout.addLayout(row)
 
         group.setLayout(layout)
         return group
+
+    def _build_server_button_rows(self) -> list:
+        """构建 Server 控制按钮行（拆为两行，适配收窄后的面板宽度）"""
+        control_row = QHBoxLayout()
+        self.start_server_btn = Button("启动 Server", variant="primary")
+        self.start_server_btn.clicked.connect(self._on_start_server)
+        control_row.addWidget(self.start_server_btn)
+        self.stop_server_btn = Button("停止 Server")
+        self.stop_server_btn.clicked.connect(self._on_stop_server)
+        control_row.addWidget(self.stop_server_btn)
+        refresh_row = QHBoxLayout()
+        self.refresh_status_btn = Button("刷新状态")
+        self.refresh_status_btn.clicked.connect(self._on_refresh_status)
+        refresh_row.addWidget(self.refresh_status_btn)
+        refresh_row.addStretch()
+        return [control_row, refresh_row]
 
     def _build_bridge_group(self) -> QGroupBox:
         """桥接工具分组：说明文案 + 本插件自动桥接的 MCP 工具清单"""
@@ -128,20 +135,8 @@ class MCPTab(BaseTab):
         )
         layout.addWidget(self.remote_config_text)
 
-        btn_row = QHBoxLayout()
-        self.connect_btn = Button("连接", variant="primary")
-        self.connect_btn.clicked.connect(self._on_connect_remote)
-        btn_row.addWidget(self.connect_btn)
-        self.disconnect_btn = Button("断开")
-        self.disconnect_btn.clicked.connect(self._on_disconnect_remote)
-        btn_row.addWidget(self.disconnect_btn)
-        self.list_servers_btn = Button("刷新列表")
-        self.list_servers_btn.clicked.connect(self._on_list_remote_servers)
-        btn_row.addWidget(self.list_servers_btn)
-        self.list_tools_btn = Button("查看工具")
-        self.list_tools_btn.clicked.connect(self._on_list_remote_tools)
-        btn_row.addWidget(self.list_tools_btn)
-        layout.addLayout(btn_row)
+        for row in self._build_remote_button_rows():
+            layout.addLayout(row)
 
         self.remote_list = ListWidget()
         self.remote_list.setMaximumHeight(90)
@@ -149,6 +144,24 @@ class MCPTab(BaseTab):
 
         group.setLayout(layout)
         return group
+
+    def _build_remote_button_rows(self) -> list:
+        """构建远程操作按钮行（连接/断开 与 刷新列表/查看工具 各一行，适配窄面板）"""
+        conn_row = QHBoxLayout()
+        self.connect_btn = Button("连接", variant="primary")
+        self.connect_btn.clicked.connect(self._on_connect_remote)
+        conn_row.addWidget(self.connect_btn)
+        self.disconnect_btn = Button("断开")
+        self.disconnect_btn.clicked.connect(self._on_disconnect_remote)
+        conn_row.addWidget(self.disconnect_btn)
+        view_row = QHBoxLayout()
+        self.list_servers_btn = Button("刷新列表")
+        self.list_servers_btn.clicked.connect(self._on_list_remote_servers)
+        view_row.addWidget(self.list_servers_btn)
+        self.list_tools_btn = Button("查看工具")
+        self.list_tools_btn.clicked.connect(self._on_list_remote_tools)
+        view_row.addWidget(self.list_tools_btn)
+        return [conn_row, view_row]
 
     # ------------------------------------------------------------------
     #  公共辅助

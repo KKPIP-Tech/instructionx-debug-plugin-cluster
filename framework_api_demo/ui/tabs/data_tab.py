@@ -152,7 +152,7 @@ class DataTab(BaseTab):
         return group
 
     def _build_pubsub_group(self) -> QGroupBox:
-        """构建发布订阅演示分组（订阅/发布/取消订阅/查看事件/活跃实例）"""
+        """构建发布订阅演示分组（按钮拆为两行，适配收窄后的面板宽度）"""
         group = QGroupBox("发布订阅（Pub/Sub）")
         form = QFormLayout()
         form.setSpacing(6)
@@ -163,30 +163,37 @@ class DataTab(BaseTab):
         self.pubsub_value_input = LineEdit(text="hello", placeholder="value")
         form.addRow("值:", self.pubsub_value_input)
 
+        form.addRow("", self._build_pubsub_op_row())
+        form.addRow("", self._build_pubsub_manage_row())
+
+        group.setLayout(form)
+        return group
+
+    def _build_pubsub_op_row(self) -> QHBoxLayout:
+        """构建发布订阅操作行：订阅 / 发布 / 取消订阅"""
         row = QHBoxLayout()
         btn_subscribe = Button("订阅", variant="primary")
         btn_subscribe.clicked.connect(self._on_subscribe)
         row.addWidget(btn_subscribe)
-
         btn_publish = Button("发布")
         btn_publish.clicked.connect(self._on_publish)
         row.addWidget(btn_publish)
-
         btn_unsubscribe = Button("取消订阅")
         btn_unsubscribe.clicked.connect(self._on_unsubscribe)
         row.addWidget(btn_unsubscribe)
+        return row
 
+    def _build_pubsub_manage_row(self) -> QHBoxLayout:
+        """构建发布订阅管理行：查看事件 / 活跃实例"""
+        row = QHBoxLayout()
         btn_events = Button("查看事件")
         btn_events.clicked.connect(self._on_show_events)
         row.addWidget(btn_events)
-
         btn_active = Button("活跃实例")
         btn_active.clicked.connect(self._on_get_active_instance)
         row.addWidget(btn_active)
-        form.addRow("", row)
-
-        group.setLayout(form)
-        return group
+        row.addStretch()
+        return row
 
     # ------------------------------------------------------------------
     #  事件处理
