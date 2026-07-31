@@ -21,6 +21,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 import os
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QLabel
 
 from InstructionX_UIKit.blueprint import BlueprintNode, NodeRegistry, register_node_type
@@ -50,6 +51,10 @@ CATEGORY_ACCENTS: Dict[str, str] = {
 
 #: 模块名（日志用，get_name() 在模块级取一次即可）
 _MODULE = get_name()
+
+#: 文件路径体区标签固定宽度（px）：与 NodeWidget MIN_W=160、两侧边距
+#: 2*PAD_X=20 匹配，使含路径节点的宽度固定为 160 不随文件名膨胀
+_PATH_LABEL_WIDTH = 140
 
 
 def ensure_node_types_registered() -> int:
@@ -140,6 +145,9 @@ def _make_path_body_builder(definition) -> Optional[Callable]:
 
     def build_body(node: BlueprintNode, container) -> None:
         label = QLabel(container)
+        # 固定体区宽度使节点宽度与文件名长度解耦（NodeWidget 按体区
+        # sizeHint 计算节点宽），超长文件名中间省略，完整路径入 tooltip
+        label.setFixedWidth(_PATH_LABEL_WIDTH)
         label.setToolTip(str(node.properties.get(field["key"], "")))
         _refresh_path_label(label, node, field)
         node.changed.connect(lambda: _refresh_path_label(label, node, field))
@@ -161,7 +169,10 @@ def _refresh_path_label(label: QLabel, node: BlueprintNode,
     """按当前 properties 刷新体区文件名显示（空路径显示占位提示）。"""
     path = str(node.properties.get(field["key"], "") or "")
     name = os.path.basename(path) if path else "（未设置）"
-    label.setText(f"{field.get('label', field['key'])}: {name}")
+    text = f"{field.get('label', field['key'])}: {name}"
+    elided = label.fontMetrics().elidedText(
+        text, Qt.TextElideMode.ElideMiddle, _PATH_LABEL_WIDTH)
+    label.setText(elided)
     label.setToolTip(path)
 
 
