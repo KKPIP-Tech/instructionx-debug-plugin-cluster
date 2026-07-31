@@ -22,6 +22,7 @@ from .constants import (DEFAULT_MAX_NODES, RUN_STATUS_DONE, RUN_STATUS_ERROR,
                         RUN_STATUS_IDLE, RUN_STATUS_RUNNING,
                         RUN_STATUS_STOPPING, NodeExecutionError)
 from .executor import ExecutorCallbacks, PipelineExecutor
+from .graph_migration import migrate_graph_dict
 from .node_catalog import NodeDefinition, defs_by_type
 
 
@@ -35,7 +36,8 @@ class PipelineController:
 
     def __init__(self, node_defs: Optional[Dict[str, NodeDefinition]] = None,
                  max_nodes: int = DEFAULT_MAX_NODES):
-        self._executor = PipelineExecutor(node_defs or defs_by_type())
+        self._node_defs = node_defs or defs_by_type()
+        self._executor = PipelineExecutor(self._node_defs)
         self._max_nodes = int(max_nodes)
         self._graph: Optional[dict] = None
         self._stop_event = threading.Event()
@@ -50,9 +52,15 @@ class PipelineController:
     # ------------------------------------------------------------------
 
     def update_graph(self, graph_dict: dict) -> None:
-        """更新当前图快照（运行前由 service 从画布 ``to_dict()`` 取）。"""
+        """更新当前图快照（运行前由 service 从画布 ``to_dict()`` 取）。
+
+        快照入存前先执行存档引脚迁移（幂等）：污染期保存的旧存档
+        （in/out/img 引脚）在此被纠正为标准引脚定义，保证运行路径
+        永远拿到干净图；干净图迁移无改动、零开销返回。
+        """
+        migrated, _changed = migrate_graph_dict(graph_dict, self._node_defs)
         with self._lock:
-            self._graph = graph_dict
+            self._graph = migrated
 
     # ------------------------------------------------------------------
     # 运行控制

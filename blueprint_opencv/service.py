@@ -27,7 +27,7 @@ from utils.logging_tools import LoggerManager
 # 经包模块间接引用 function 层：本模块命名空间中只保留 BlueprintOpenCVService
 # 一个类，确保 PluginManager 按「类名以 Service 结尾」规则挑选时命中本类
 from .function import executor as executor_module
-from .function import node_catalog, pipeline_controller
+from .function import graph_migration, node_catalog, pipeline_controller
 from .function.constants import NodeExecutionError
 
 # 日志模块标识
@@ -166,12 +166,18 @@ class BlueprintOpenCVService(QObject):
 
         加载结果写入图快照并经 PipelineController 同步；UI 随后读取
         current_graph 并 canvas.from_dict 恢复画布。
+
+        读出存档后先执行引脚迁移（幂等）：污染期保存的旧存档引脚在此
+        被纠正为标准定义，保证 UI 恢复的画布与运行路径都拿到干净图；
+        controller 的 update_graph 入口会再迁移一次，幂等无改动。
         """
         graph_name = name or DEFAULT_GRAPH_NAME
         graph_dict = self._read_saved_graph(graph_name)
         fallback = graph_dict is None
         if fallback:
             graph_dict = self._read_preset_graph()
+        graph_dict, _migrated = graph_migration.migrate_graph_dict(
+            graph_dict, node_catalog.defs_by_type())
         self.update_graph(graph_dict)
         return {"success": True, "data": {"name": graph_name, "fallback": fallback}}
 
