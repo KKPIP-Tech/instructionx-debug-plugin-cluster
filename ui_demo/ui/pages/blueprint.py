@@ -49,7 +49,8 @@ from InstructionX_UIKit.theme import set_property
 from .common import code_label, hint_label
 from .playground import ParamForm
 
-__all__ = ["create_page", "register_demo_node_types", "PROPERTY_SCHEMAS"]
+__all__ = ["create_page", "register_demo_node_types", "PROPERTY_SCHEMAS",
+           "REGISTRY_OWNER"]
 
 #: offscreen 下降级读写当前工作目录的该文件（不弹文件对话框）
 FALLBACK_JSON = "blueprint_demo.json"
@@ -207,8 +208,14 @@ def build_transformer_body(node, container) -> None:
 
 
 # ---------------------------------------------------------------------------
-# 节点类型注册（模块级；重复 import 时同名覆盖，安全）
+# 节点类型注册（模块级；注册在本页 owner 命名空间内，重复 import 时同空间
+# 覆盖安全，且不会污染其他插件的同名类型）
 # ---------------------------------------------------------------------------
+
+#: 注册表命名空间标识（UIKit NodeRegistry owner）：本页节点类型注册 /
+#: 画布创建均限定该空间，与其他插件（如 blueprint_opencv）同名类型
+#: 互不覆盖
+REGISTRY_OWNER = "ui-demo"
 
 _EXEC_IN = {"id": "in", "name": "进入", "data_type": "exec"}
 _EXEC_OUT = {"id": "out", "name": "退出", "data_type": "exec"}
@@ -219,6 +226,7 @@ def register_demo_node_types() -> None:
 
     库内置 ``start``（流程）之外注册 12 种；其中 resize / cnn /
     gaussian_blur / transformer 带 ``body_builder`` 属性编辑体。
+    全部注册在 ``REGISTRY_OWNER`` 命名空间内。
     """
     # -- 输入 -------------------------------------------------------------
     register_node_type(
@@ -227,6 +235,7 @@ def register_demo_node_types() -> None:
         outputs=[dict(_EXEC_OUT),
                  {"id": "img", "name": "图像", "data_type": "image"}],
         accent="primary", description="从磁盘加载图像（image 输出）",
+        owner=REGISTRY_OWNER,
     )
     register_node_type(
         "noise", "随机噪声", "输入",
@@ -234,6 +243,7 @@ def register_demo_node_types() -> None:
         outputs=[dict(_EXEC_OUT),
                  {"id": "tensor", "name": "噪声", "data_type": "tensor"}],
         accent="primary", description="生成随机噪声张量（tensor 输出）",
+        owner=REGISTRY_OWNER,
     )
     # -- 处理 -------------------------------------------------------------
     register_node_type(
@@ -244,6 +254,7 @@ def register_demo_node_types() -> None:
                  {"id": "img", "name": "图像", "data_type": "image"}],
         accent="warning", body_builder=build_resize_body,
         description="调整图像尺寸（宽 / 高 / 插值可编辑）",
+        owner=REGISTRY_OWNER,
     )
     register_node_type(
         "normalize", "归一化", "处理",
@@ -252,6 +263,7 @@ def register_demo_node_types() -> None:
         outputs=[dict(_EXEC_OUT),
                  {"id": "tensor", "name": "张量", "data_type": "tensor"}],
         accent="warning", description="图像归一化为张量（预处理）",
+        owner=REGISTRY_OWNER,
     )
     register_node_type(
         "gaussian_blur", "高斯模糊", "处理",
@@ -261,6 +273,7 @@ def register_demo_node_types() -> None:
                  {"id": "img", "name": "图像", "data_type": "image"}],
         accent="warning", body_builder=build_blur_body,
         description="高斯模糊（半径 Slider 可调）",
+        owner=REGISTRY_OWNER,
     )
     register_node_type(
         "edge_detect", "边缘检测", "处理",
@@ -269,6 +282,7 @@ def register_demo_node_types() -> None:
         outputs=[dict(_EXEC_OUT),
                  {"id": "img", "name": "边缘图", "data_type": "image"}],
         accent="warning", description="从张量提取边缘（后处理）",
+        owner=REGISTRY_OWNER,
     )
     # -- 模型 -------------------------------------------------------------
     register_node_type(
@@ -279,6 +293,7 @@ def register_demo_node_types() -> None:
                  {"id": "tensor", "name": "特征", "data_type": "tensor"}],
         accent="danger", body_builder=build_cnn_body,
         description="卷积骨干（层数 / 通道数可编辑）",
+        owner=REGISTRY_OWNER,
     )
     register_node_type(
         "transformer", "Transformer 模块", "模型",
@@ -288,6 +303,7 @@ def register_demo_node_types() -> None:
                  {"id": "tensor", "name": "特征", "data_type": "tensor"}],
         accent="danger", body_builder=build_transformer_body,
         description="注意力模块（层数 / 头数可编辑）",
+        owner=REGISTRY_OWNER,
     )
     register_node_type(
         "fusion", "融合", "模型",
@@ -297,6 +313,7 @@ def register_demo_node_types() -> None:
         outputs=[dict(_EXEC_OUT),
                  {"id": "tensor", "name": "融合", "data_type": "tensor"}],
         accent="danger", description="两路 tensor 加权融合",
+        owner=REGISTRY_OWNER,
     )
     # -- 输出 -------------------------------------------------------------
     register_node_type(
@@ -304,12 +321,14 @@ def register_demo_node_types() -> None:
         inputs=[dict(_EXEC_IN),
                 {"id": "img", "name": "图像", "data_type": "image"}],
         accent="success", description="把结果写出到磁盘",
+        owner=REGISTRY_OWNER,
     )
     register_node_type(
         "log_output", "日志输出", "输出",
         inputs=[dict(_EXEC_IN),
                 {"id": "msg", "name": "消息", "data_type": "any", "multi": True}],
         accent="success", description="打印任意数据到日志",
+        owner=REGISTRY_OWNER,
     )
     # -- 工具 -------------------------------------------------------------
     register_node_type(
@@ -319,6 +338,7 @@ def register_demo_node_types() -> None:
         outputs=[dict(_EXEC_OUT),
                  {"id": "any_out", "name": "透传", "data_type": "any"}],
         accent="#7A6FC0", description="统计上游耗时并透传数据",
+        owner=REGISTRY_OWNER,
     )
 
 
@@ -396,7 +416,7 @@ class BlueprintDemoPage(QWidget):
         self.graph = BlueprintGraph()
         # 先接默认属性槽，保证 NodeWidget 构建时 properties 已就位
         self.graph.node_added.connect(apply_defaults)
-        self.canvas = BlueprintCanvas(self.graph, self)
+        self.canvas = BlueprintCanvas(self.graph, self, owner=REGISTRY_OWNER)
 
         root = QVBoxLayout(self)
         root.setContentsMargins(20, 18, 20, 16)
