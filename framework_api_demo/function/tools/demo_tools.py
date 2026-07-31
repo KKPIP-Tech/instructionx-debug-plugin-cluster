@@ -56,6 +56,10 @@ def calculate(expression: str) -> str:
         value = _eval_node(tree.body)
     except ValueError as e:
         return f"错误: {e}"
+    except ArithmeticError as e:
+        # 除零等算术错误（ZeroDivisionError 等）同样按约定转为中文错误串，
+        # 不得穿透 handler 抛给 ToolCallExecutor
+        return f"错误: 算术运算失败: {e}"
     return str(value)
 
 
