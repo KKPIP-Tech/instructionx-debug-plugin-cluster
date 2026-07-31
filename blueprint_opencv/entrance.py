@@ -16,9 +16,9 @@ from core.interfaces import PluginServices
 from core.plugin.plugin_interface import IPlugin
 from utils.logging_tools import LoggerManager
 
-from .function import node_catalog
 from .service import BlueprintOpenCVService
 from .ui.main_widget import MainWidget
+from .ui.node_bootstrap import ensure_node_types_registered
 
 # 日志模块标识
 LOG_TAG = "BlueprintOpenCV"
@@ -68,9 +68,9 @@ class BlueprintOpenCVPlugin(IPlugin):
     # ------------------------------------------------------------------
 
     def _register_node_types(self):
-        """注册全部节点类型（register_all_node_types 幂等，热重载安全）"""
+        """注册全部节点类型（ui.node_bootstrap 幂等先查后注册，热重载安全）"""
         try:
-            node_catalog.register_all_node_types()
+            ensure_node_types_registered()
         except Exception as e:
             self._logger.error(
                 LOG_TAG, f"注册节点类型失败: {e}\n{traceback.format_exc()}",

@@ -16,17 +16,19 @@ get_last_result_info）注册为跨插件 API 并同步为 MCP 工具。
 import json
 import traceback
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 from PySide6.QtCore import QObject, Signal
 
 from core.data.data_provider import DataProvider, DataProviderError
+from core.task.background_task import BackgroundTaskManager
 from utils.logging_tools import LoggerManager
 
 # 经包模块间接引用 function 层：本模块命名空间中只保留 BlueprintOpenCVService
 # 一个类，确保 PluginManager 按「类名以 Service 结尾」规则挑选时命中本类
 from .function import executor as executor_module
 from .function import node_catalog, pipeline_controller
+from .function.constants import NodeExecutionError
 
 # 日志模块标识
 LOG_TAG = "BlueprintOpenCV"
@@ -47,6 +49,9 @@ ASSET_PATH_PREFIX = "assets/plugins"
 # 预置示例图资产路径（相对插件目录，见 SPEC §8 assets.preset_graph）
 PRESET_GRAPH_RELATIVE_PATH = "assets/preset_graph.json"
 
+# 管线执行后台任务名（register_async_task 的 name 参数）
+RUN_TASK_NAME = "blueprint_opencv.run_pipeline"
+
 # 空图结构（与 BlueprintCanvas.to_dict 格式一致；预置示例图缺失时的最终回退）
 EMPTY_GRAPH: Dict[str, Any] = {
     "graph": {"nodes": [], "edges": []},
@@ -59,8 +64,8 @@ class BlueprintOpenCVService(QObject):
 
     构造函数前四个参数全部可选，兼容 PluginManager 的递减注入
     （(plugin_id, data_provider, llm_service, task_manager) 逐级裁减）。
-    llm_service / task_manager 仅为兼容注入签名而接收——管线执行由
-    PipelineController 内部经 BackgroundTaskManager 提交工作线程。
+    llm_service 仅为兼容注入签名而接收；task_manager 用于把管线执行
+    提交到框架线程池（缺省回退 BackgroundTaskManager 单例）。
 
     线程模型：run_pipeline / stop_pipeline 可被任意线程（UI / MCP）调用；
     执行回调在工作线程触发，此处直接 emit Qt 信号，由 Qt 自动排队到
@@ -85,6 +90,7 @@ class BlueprintOpenCVService(QObject):
         super().__init__(parent)
         self._plugin_id = plugin_id or DEFAULT_PLUGIN_ID
         self._data_provider = data_provider or DataProvider()
+        self._task_manager = task_manager
         self._controller = pipeline_controller.PipelineController()
         # 当前图快照（canvas.to_dict 格式）：UI 经 update_graph 同步，
         # 保存/运行以此为数据源
@@ -95,20 +101,38 @@ class BlueprintOpenCVService(QObject):
     # ------------------------------------------------------------------
 
     def run_pipeline(self) -> Dict[str, Any]:
-        """运行当前图管线（异步，工作线程执行）
+        """运行当前图管线（异步，提交 BackgroundTaskManager 工作线程执行）
 
-        Returns:
-            {"success": True, "data": {"started": True}}；
-            校验失败（无 start 节点 / exec 链成环 / 已在运行）时
-            {"success": False, "error": 中文原因}
+        运行前校验（无 start / exec 链成环 / 节点数超限）同步完成，失败
+        立即返回中文错误；校验通过后 cv2 处理在工作线程执行，结果经 Qt
+        信号封送回 UI（SPEC §1.3 / §7）。
         """
-        started = self._controller.start_run(self._build_callbacks())
+        try:
+            started = self._controller.submit_run(
+                self._build_callbacks(), self._submit_background)
+        except NodeExecutionError as e:
+            return {"success": False, "error": str(e)}
+        except Exception as e:
+            self._log_error("提交管线后台任务", e)
+            return {"success": False, "error": f"提交后台任务失败: {e}"}
         if not started:
-            return {"success": False, "error": (
-                "无法启动运行：请确认图中存在 start 节点、exec 链无环、"
-                "节点数未超上限且当前无运行中的管线"
-            )}
+            return {"success": False,
+                    "error": "已有运行中的管线，请先停止或等待完成"}
         return {"success": True, "data": {"started": True}}
+
+    def _submit_background(self, work: Callable[[], None]) -> None:
+        """把管线执行提交到框架线程池（SPEC §1.3，service 层注入调度）。
+
+        注意：BackgroundTaskManager.register_sync_task 是在调用方线程
+        内联执行的（见 core/task/background_task.py），只有
+        register_async_task 才真正进入框架线程池，故此处用后者；
+        结果封送不依赖任务 callback，由本类 Qt 信号完成。
+        """
+        task_manager = self._task_manager or BackgroundTaskManager()
+        task_id = task_manager.register_async_task(
+            self._plugin_id, RUN_TASK_NAME, work)
+        if task_id is None:
+            raise RuntimeError("后台任务管理器已关闭，无法提交管线执行")
 
     def stop_pipeline(self) -> Dict[str, Any]:
         """请求停止当前运行（协作式，当前节点完成后中断）"""
@@ -119,6 +143,7 @@ class BlueprintOpenCVService(QObject):
         """将当前图快照序列化并经 DataProvider 持久化到插件私有资产区"""
         graph_name = name or DEFAULT_GRAPH_NAME
         try:
+            self._ensure_storage_dir()
             content = json.dumps(self._graph_snapshot, ensure_ascii=False).encode("utf-8")
             self._data_provider.save_asset(
                 self._plugin_id, self._asset_filename(graph_name), content,
@@ -129,6 +154,12 @@ class BlueprintOpenCVService(QObject):
         return {"success": True, "data": {
             "name": graph_name, "node_count": self._node_count(self._graph_snapshot),
         }}
+
+    def _ensure_storage_dir(self) -> None:
+        """确保图存档子目录存在（save_asset 只建插件根目录，不建嵌套子目录）。"""
+        storage_dir = (Path(self._data_provider.assets_dir)
+                       / self._plugin_id / GRAPH_STORAGE_NAMESPACE)
+        storage_dir.mkdir(parents=True, exist_ok=True)
 
     def load_graph(self, name: str = DEFAULT_GRAPH_NAME) -> Dict[str, Any]:
         """从 DataProvider 恢复指定图；不存在/损坏时回退预置示例图

@@ -18,6 +18,36 @@ PLUGIN_DEPENDENCIES = {
     "numpy": ">=1.24.0",
 }
 
+# 插件详细描述（独立常量，保持 description 属性体简洁）
+_PLUGIN_DESCRIPTION = """
+Blueprint OpenCV 是一个基于 InstructionX_UIKit Blueprint 组件的
+OpenCV 节点化图像处理蓝图编辑器，同时作为 Blueprint 用法的官方样板插件。
+
+主要能力：
+- 20 个内置节点：输入（加载图片/生成噪声/纯色）、基础（灰度/反色/缩放/
+  翻转/旋转）、滤波（高斯/中值/双边）、阈值与边缘（固定/自适应/Canny）、
+  形态学、调整（亮度对比度/锐化/HSV）、输出（预览/保存图片）
+- exec/data 双链语义：exec 链决定执行顺序，image 链决定数据流向，
+  上游未求值时按需递归求值并按节点缓存
+- 参数编辑走右侧属性面板：按节点 param_schema 动态重建表单，
+  修改即时写回 node.properties 并随图序列化
+- 工作线程执行：cv2 处理经 BackgroundTaskManager 提交线程池，
+  结果（PNG 字节 + 元数据）经 Qt 信号跨线程排队封送回 UI
+- 图持久化：canvas.to_dict 序列化后经 DataProvider 保存/恢复，
+  损坏存档自动回退预置示例图
+- service_api 六方法供跨插件 / MCP 调用（运行、停止、保存、加载、
+  列出节点类型、查询最近运行结果）
+"""
+
+# save_graph / load_graph 共用的图名参数声明（service_api 契约）
+_GRAPH_NAME_PARAM = {
+    "name": {
+        "type": "str",
+        "description": "图名（存档 key，缺省 default）",
+        "required": False,
+    },
+}
+
 
 class BlueprintOpenCVPluginInfo(IPluginInfo):
     """Blueprint OpenCV 插件元数据"""
@@ -50,29 +80,19 @@ class BlueprintOpenCVPluginInfo(IPluginInfo):
     @property
     def description(self) -> str:
         """插件详细描述"""
-        return """
-        Blueprint OpenCV 是一个基于 InstructionX_UIKit Blueprint 组件的
-        OpenCV 节点化图像处理蓝图编辑器，同时作为 Blueprint 用法的官方样板插件。
-
-        主要能力：
-        - 20 个内置节点：输入（加载图片/生成噪声/纯色）、基础（灰度/反色/缩放/
-          翻转/旋转）、滤波（高斯/中值/双边）、阈值与边缘（固定/自适应/Canny）、
-          形态学、调整（亮度对比度/锐化/HSV）、输出（预览/保存图片）
-        - exec/data 双链语义：exec 链决定执行顺序，image 链决定数据流向，
-          上游未求值时按需递归求值并按节点缓存
-        - 参数编辑走右侧属性面板：按节点 param_schema 动态重建表单，
-          修改即时写回 node.properties 并随图序列化
-        - 工作线程执行：cv2 处理经 BackgroundTaskManager 提交线程池，
-          结果（PNG 字节 + 元数据）经 Qt 信号跨线程排队封送回 UI
-        - 图持久化：canvas.to_dict 序列化后经 DataProvider 保存/恢复，
-          损坏存档自动回退预置示例图
-        - service_api 六方法供跨插件 / MCP 调用（运行、停止、保存、加载、
-          列出节点类型、查询最近运行结果）
-        """
+        return _PLUGIN_DESCRIPTION
 
     @property
     def service_api(self) -> Dict[str, Any]:
         """Service API 定义（六个方法，与 service.py 实现逐一一致）"""
+        return {
+            **self._api_run_methods(),
+            **self._api_graph_methods(),
+            **self._api_info_methods(),
+        }
+
+    def _api_run_methods(self) -> Dict[str, Any]:
+        """运行控制类 service_api 声明（run_pipeline / stop_pipeline）。"""
         return {
             "run_pipeline": self._api(
                 "运行当前图管线（异步，工作线程执行）",
@@ -84,28 +104,26 @@ class BlueprintOpenCVPluginInfo(IPluginInfo):
                 {},
                 {"type": "dict", "description": '{"success": bool, "data": {"stopping": bool}}'},
             ),
+        }
+
+    def _api_graph_methods(self) -> Dict[str, Any]:
+        """图持久化类 service_api 声明（save_graph / load_graph）。"""
+        return {
             "save_graph": self._api(
                 "将当前图序列化并经 DataProvider 持久化",
-                {
-                    "name": {
-                        "type": "str",
-                        "description": "图名（存档 key，缺省 default）",
-                        "required": False,
-                    },
-                },
+                dict(_GRAPH_NAME_PARAM),
                 {"type": "dict", "description": '{"success": bool, "data": {"name": str, "node_count": int}}'},
             ),
             "load_graph": self._api(
                 "从 DataProvider 恢复指定图到画布；不存在/损坏时回退示例图",
-                {
-                    "name": {
-                        "type": "str",
-                        "description": "图名（存档 key，缺省 default）",
-                        "required": False,
-                    },
-                },
+                dict(_GRAPH_NAME_PARAM),
                 {"type": "dict", "description": '{"success": bool, "data": {"name": str, "fallback": bool}}'},
             ),
+        }
+
+    def _api_info_methods(self) -> Dict[str, Any]:
+        """查询类 service_api 声明（list_node_types / get_last_result_info）。"""
+        return {
             "list_node_types": self._api(
                 "列出全部已注册节点类型（Blueprint 样板/动态表单场景使用）",
                 {},

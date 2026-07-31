@@ -93,11 +93,18 @@ class PropertyPanel(QScrollArea):
 
     # ------------------------------------------------------------------ 内部
     def _clear_content(self) -> None:
-        """解除绑定并移除全部内容控件（不补提示）。"""
+        """解除绑定并移除全部内容控件（不补提示）。
+
+        先 hide 再 deleteLater：deleteLater 在事件循环处理 DeferredDelete
+        后才真正销毁，期间控件虽已脱离布局仍会按旧几何残留绘制
+        （select_nodes 会连发空选 / 单选两次 selection_changed，残留
+        肉眼可见），hide 立即消除该视觉残留。
+        """
         self._unbind_node()
         while self._host_layout.count():
             item = self._host_layout.takeAt(0)
             if item.widget() is not None:
+                item.widget().hide()
                 item.widget().deleteLater()
 
     def _unbind_node(self) -> None:

@@ -68,12 +68,52 @@ class PipelineController:
             NodeExecutionError: 图未设置 / 校验失败（无 start、成环、
             超节点上限），此时状态回 idle。
         """
-        graph = self._begin_run()
+        graph = self._prepare_run()
         if graph is None:
             return False
+        self._execute(graph, callbacks)
+        return True
+
+    def submit_run(self, callbacks: ExecutorCallbacks,
+                   submit: Callable[[Callable[[], None]], None]) -> bool:
+        """校验通过后把执行经 ``submit`` 提交到工作线程（SPEC §1.3）。
+
+        ``submit`` 为线程调度注入（service 层封装 BackgroundTaskManager），
+        保持本层不依赖框架任务系统。返回 True 表示已提交、False 表示已有
+        运行在进行中；校验失败抛 ``NodeExecutionError``（状态回 idle），
+        submit 自身抛出的异常同样回 idle 后原样上抛。
+        """
+        graph = self._prepare_run()
+        if graph is None:
+            return False
+        try:
+            submit(lambda: self._execute(graph, callbacks))
+        except Exception:
+            with self._lock:
+                self._status = RUN_STATUS_IDLE  # 提交失败回 idle，避免卡死 running
+            raise
+        return True
+
+    def _prepare_run(self) -> Optional[dict]:
+        """进入 running 状态并完成运行前校验；已有运行时返回 None。"""
+        graph = self._begin_run()
+        if graph is None:
+            return None
         self._pre_validate(graph)
-        summary = self._executor.run(graph, self._stop_event,
-                                     self._wrap_callbacks(callbacks))
+        return graph
+
+    def _execute(self, graph: dict, callbacks: ExecutorCallbacks) -> None:
+        """对已完成校验的图执行一轮管线并落状态（同步，工作线程调用）。
+
+        工作线程中的非预期异常必须兜底：转为 error 汇总并经
+        on_run_finished 上报，避免 UI 永久停留在「运行中」。
+        """
+        try:
+            summary = self._executor.run(graph, self._stop_event,
+                                         self._wrap_callbacks(callbacks))
+        except Exception as exc:
+            summary = self._unexpected_summary(exc)
+            callbacks.on_run_finished(summary)  # 异常路径也要通知运行结束
         with self._lock:
             self._last_summary = summary
             self._status = summary["status"]
@@ -81,7 +121,16 @@ class PipelineController:
             get_name(),
             f"管线运行结束: status={summary['status']}, "
             f"total_ms={summary['total_ms']:.1f}, nodes={summary['node_count']}")
-        return True
+
+    @staticmethod
+    def _unexpected_summary(exc: Exception) -> dict:
+        """把执行期非预期异常转为 error 汇总并补发 on_run_finished。"""
+        return {
+            "status": RUN_STATUS_ERROR,
+            "total_ms": 0.0,
+            "node_count": 0,
+            "errors": [{"node_id": "", "message": f"管线执行异常: {exc}"}],
+        }
 
     def request_stop(self) -> None:
         """请求停止当前运行（协作式：当前节点执行完后中断）。"""

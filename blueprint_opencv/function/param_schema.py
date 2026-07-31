@@ -104,17 +104,9 @@ def require_prop(props: Dict[str, Any], key: str) -> Any:
 def resolve_props(schema: List[dict], props: Dict[str, Any]) -> Dict[str, Any]:
     """按 schema 合并默认值并逐项校验，返回可交给 op 的完整 props。
 
-    参数:
-        schema: 参数 schema 列表（各构建辅助函数的产物）。
-        props: 节点 ``properties`` 原始 dict（可缺键 / 类型不严格）。
-
-    返回:
-        以 schema key 为键、经类型转换与范围校验后的新 dict；
-        ``props`` 中 schema 未声明的多余键被忽略。
-
-    异常:
-        NodeExecutionError: 类型转换失败、越界、choice 值非法、
-        color 格式非法等情况（中文原因）。
+    以 schema key 为键产出经类型转换与范围校验的新 dict；``props`` 中
+    schema 未声明的多余键被忽略。类型转换失败 / 越界 / 取值非法时抛
+    ``NodeExecutionError``（中文原因）。
     """
     resolved: Dict[str, Any] = {}
     for spec in schema:

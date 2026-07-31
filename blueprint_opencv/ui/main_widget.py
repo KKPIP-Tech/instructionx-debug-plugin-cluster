@@ -16,6 +16,7 @@
   （exec 链 + image 链），图加载 / 恢复前的开箱内容。
 """
 
+import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -41,15 +42,19 @@ from .toolbar import ToolBar
 
 __all__ = ["MainWidget"]
 
-#: 右侧固定面板宽（本插件分工契约 300px；SPEC §8 配置 320 由配置层接管后覆盖）
-_RIGHT_PANEL_WIDTH = 300
+#: 右侧固定面板宽兜底值（SPEC §8 panel.right_panel_width = 320；
+#: 实际取值优先读 config/default.json，配置缺失 / 损坏时回退本常量）
+_FALLBACK_RIGHT_PANEL_WIDTH = 320
+#: 插件默认配置文件路径（panel.right_panel_width 等，SPEC §8）
+_CONFIG_PATH = Path(__file__).resolve().parents[1] / "config" / "default.json"
 #: 预置示例图节点（type_name, 场景坐标）：start→加载→高斯→Canny→预览
+#: （load_image 节点体展示长文件路径会明显变宽，其后预留 700 间距不重叠）
 _PRESET_NODES = (
     ("start", (40.0, 180.0)),
-    ("load_image", (300.0, 180.0)),
-    ("gaussian_blur", (560.0, 180.0)),
-    ("canny", (840.0, 180.0)),
-    ("preview", (1120.0, 180.0)),
+    ("load_image", (440.0, 180.0)),
+    ("gaussian_blur", (1140.0, 180.0)),
+    ("canny", (1540.0, 180.0)),
+    ("preview", (1940.0, 180.0)),
 )
 #: 库内置 start 节点的 exec 输出引脚 id 为 "out"（见 UIKit blueprint/registry.py），
 #: 其余节点按 SPEC §3.0 约定为 exec_in / exec_out、image_in / image_out
@@ -68,6 +73,25 @@ _STATUS_STOPPING = "正在停止（当前节点执行完后中断）…"
 
 _logger = LoggerManager()
 _MODULE = get_name()
+
+
+def _load_right_panel_width() -> int:
+    """读取 config/default.json 的 panel.right_panel_width（SPEC §8 配置为准）。
+
+    配置缺失 / 损坏 / 键不存在时记 WARNING 并回退 320（SPEC 约定值）。
+    """
+    try:
+        with open(_CONFIG_PATH, "r", encoding="utf-8") as f:
+            return int(json.load(f)["panel"]["right_panel_width"])
+    except (OSError, ValueError, KeyError, TypeError) as e:
+        _logger.warning(
+            _MODULE,
+            f"读取面板宽度配置失败（回退 {_FALLBACK_RIGHT_PANEL_WIDTH}px）: {e}")
+        return _FALLBACK_RIGHT_PANEL_WIDTH
+
+
+#: 右侧固定面板宽（配置层接管，见 _load_right_panel_width）
+_RIGHT_PANEL_WIDTH = _load_right_panel_width()
 
 # 模块级幂等注册：把 function.node_catalog 的节点定义注册进 UIKit
 # （先查后注册，热重载重复 import 不产生重复项，SPEC §1.5）
@@ -263,25 +287,21 @@ class MainWidget(QWidget):
 
     # ------------------------------------------------------------------ 内部
     def _push_graph_snapshot(self) -> None:
-        """把当前图快照推给 service（``update_graph`` 为 service 层补充接口）。
+        """把当前图快照推给 service（``update_graph``，service 层补充接口）。
 
         SPEC §7 的 service_api 未含图快照入参，而 §4.1 要求运行前取
-        ``canvas.to_dict()`` 快照；此处按 service 层的 ``update_graph``
-        补充方法对接，缺失时记 WARNING（service 层落地后自然生效）。
+        ``canvas.to_dict()`` 快照；service.update_graph 同步快照到
+        service 与 PipelineController，保存 / 运行以此为数据源。
         """
-        updater = getattr(self._service, "update_graph", None)
-        if callable(updater):
-            updater(self.graph_snapshot())
-        else:
-            _logger.warning(_MODULE, "service 缺少 update_graph 方法，图快照未同步")
+        self._service.update_graph(self.graph_snapshot())
 
     def _pull_graph_snapshot(self) -> Optional[Dict[str, Any]]:
-        """从 service 取回已加载的图 dict（``get_graph_dict`` 补充接口）。"""
-        getter = getattr(self._service, "get_graph_dict", None)
-        if callable(getter):
-            return getter()
-        _logger.warning(_MODULE, "service 缺少 get_graph_dict 方法，无法取回图数据")
-        return None
+        """从 service 取回已加载的图 dict（``current_graph`` 属性）。"""
+        graph = getattr(self._service, "current_graph", None)
+        if not isinstance(graph, dict):
+            _logger.warning(_MODULE, "service 缺少 current_graph 属性，无法取回图数据")
+            return None
+        return graph
 
     def _report_failure(self, title: str, result: Dict[str, Any]) -> None:
         """操作失败：中文弹窗告知 + ERROR 日志（面向用户的错误两者都要）。"""

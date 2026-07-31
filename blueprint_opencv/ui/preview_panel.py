@@ -28,6 +28,9 @@ _PREVIEW_MAX_HEIGHT = 720
 #: 空态提示与解码失败提示
 _HINT_EMPTY = "运行管线后，preview 节点的结果将显示在这里。"
 _HINT_DECODE_FAILED = "预览图解码失败（非有效 PNG 数据）。"
+#: 空态占位透明像素尺寸（ImageView 对 null pixmap 会显示「加载失败」
+#: 占位插画，空态改用 1×1 透明像素保持干净的空白区域）
+_EMPTY_PIXMAP_SIZE = 1
 
 _logger = LoggerManager()
 _MODULE = get_name()
@@ -70,8 +73,15 @@ class PreviewPanel(QWidget):
 
     def show_empty(self) -> None:
         """回空态：清空图片并显示引导提示。"""
-        self._image_view.set_source(QPixmap())
+        self._image_view.set_source(self._transparent_pixmap())
         self._info_label.setText(_HINT_EMPTY)
+
+    @staticmethod
+    def _transparent_pixmap() -> QPixmap:
+        """构造 1×1 透明像素（空态占位，规避「加载失败」占位插画）。"""
+        pixmap = QPixmap(_EMPTY_PIXMAP_SIZE, _EMPTY_PIXMAP_SIZE)
+        pixmap.fill(Qt.transparent)
+        return pixmap
 
     # ------------------------------------------------------------------ 内部
     def _build_layout(self) -> None:
