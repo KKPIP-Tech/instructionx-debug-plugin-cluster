@@ -20,6 +20,10 @@ from InstructionX_UIKit.components import Button, Tabs, TextArea
 
 from .tabs import APITab, DataTab, InfoTab, LLMTab, MCPTab, TaskTab
 
+# 右侧 Tab 操作面板固定宽度（像素）：保证默认窗口尺寸下 6 个 Tab 的
+# 表单内容完整可见，窗口拉伸时多余空间全部分配给左侧结果面板
+RIGHT_PANEL_FIXED_WIDTH = 420
+
 
 class MainWidget(QWidget):
     """Framework API Demo 插件主控件
@@ -57,13 +61,13 @@ class MainWidget(QWidget):
     # ------------------------------------------------------------------
 
     def _build_widget_layout(self):
-        """构建主控件左右分栏布局"""
+        """构建主控件左右分栏布局（右侧固定宽度，左侧弹性）"""
         layout = QHBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
         layout.setSpacing(12)
 
-        layout.addWidget(self._build_left_panel(), stretch=2)
-        layout.addWidget(self._build_right_panel(), stretch=1)
+        layout.addWidget(self._build_left_panel(), stretch=1)
+        layout.addWidget(self._build_right_panel(), stretch=0)
 
     def _build_left_panel(self) -> QWidget:
         """构建左侧输出面板"""
@@ -106,8 +110,9 @@ class MainWidget(QWidget):
         return panel
 
     def _build_right_panel(self) -> QWidget:
-        """构建右侧操作面板（实例化各演示 Tab 类）"""
+        """构建右侧操作面板（实例化各演示 Tab 类，固定宽度防截断）"""
         panel = QWidget()
+        panel.setFixedWidth(RIGHT_PANEL_FIXED_WIDTH)
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
