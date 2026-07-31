@@ -1,0 +1,11 @@
+{
+    "id": "blueprint-opencv",
+    "name": "Blueprint OpenCV",
+    "version": "alpha.0.1.0",
+    "main": "entrance.py",
+    "description": "基于 InstructionX_UIKit Blueprint 的 OpenCV 节点化图像处理蓝图编辑器：20 个节点、exec/data 双链执行引擎、工作线程处理与跨线程预览封送。",
+    "author": "InstructionX Team",
+    "homepage": "https://github.com/KKPIP-Tech/InstructionX",
+    "keywords": ["instructionx", "plugin", "blueprint", "opencv", "image", "node-editor"],
+    "dependencies": {"opencv-python": ">=4.8.0", "numpy": ">=1.24.0"}
+}
