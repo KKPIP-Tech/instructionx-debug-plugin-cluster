@@ -3,9 +3,10 @@ Blueprint OpenCV 服务接口层
 
 本模块的 BlueprintOpenCVService 是 information.py 中 service_api 声明的
 实际实现实体：PluginManager 自动注册机制按「类名以 Service 结尾」规则
-从本模块挑选该类，实例化后把六个 service_api 方法（run_pipeline /
-stop_pipeline / save_graph / load_graph / list_node_types /
-get_last_result_info）注册为跨插件 API 并同步为 MCP 工具。
+从本模块挑选该类，实例化后把九个 service_api 方法（run_pipeline /
+stop_pipeline / save_graph / load_graph / list_graphs / delete_graph /
+rename_graph / list_node_types / get_last_result_info）注册为跨插件 API
+并同步为 MCP 工具。
 
 本类为 QObject 门面：持有 PipelineController 与当前图快照，定义 Qt 信号
 用于工作线程 → UI 线程的结果封送（emit 由 Qt 自动排队到接收方所在线程，
@@ -15,6 +16,7 @@ get_last_result_info）注册为跨插件 API 并同步为 MCP 工具。
 
 import json
 import traceback
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
@@ -42,6 +44,9 @@ DEFAULT_PLUGIN_ID = "blueprint-opencv"
 DEFAULT_GRAPH_NAME = "default"
 GRAPH_STORAGE_NAMESPACE = "graphs"
 GRAPH_FILE_SUFFIX = ".json"
+
+#: 图名非法字符（Windows 文件名禁用字符，SPEC-graph-list §1.4）
+INVALID_NAME_CHARS = '<>:"/\\|?*'
 
 # DataProvider.save_asset 返回的资源相对路径前缀（见 data_provider.py 实现）
 ASSET_PATH_PREFIX = "assets/plugins"
@@ -157,9 +162,64 @@ class BlueprintOpenCVService(QObject):
 
     def _ensure_storage_dir(self) -> None:
         """确保图存档子目录存在（save_asset 只建插件根目录，不建嵌套子目录）。"""
-        storage_dir = (Path(self._data_provider.assets_dir)
-                       / self._plugin_id / GRAPH_STORAGE_NAMESPACE)
-        storage_dir.mkdir(parents=True, exist_ok=True)
+        self._storage_dir().mkdir(parents=True, exist_ok=True)
+
+    def _storage_dir(self) -> Path:
+        """图存档目录路径（插件资产区 graphs/ 子目录，SPEC-graph-list §3.1）。"""
+        return (Path(self._data_provider.assets_dir)
+                / self._plugin_id / GRAPH_STORAGE_NAMESPACE)
+
+    def list_graphs(self) -> Dict[str, Any]:
+        """枚举全部已保存图存档（名称 + 节点数 + 大小 + 修改时间）
+
+        目录不存在（尚未保存过）返回空列表；单个存档损坏仅使其
+        node_count 为 None，不拖垮整体枚举。
+        """
+        try:
+            storage_dir = self._storage_dir()
+            if not storage_dir.is_dir():
+                return {"success": True, "data": {"graphs": []}}
+            graphs = [self._graph_file_meta(p) for p in sorted(
+                storage_dir.glob(f"*{GRAPH_FILE_SUFFIX}"))]
+        except OSError as e:
+            self._log_error("列出图存档", e)
+            return {"success": False, "error": f"列出图存档失败: {e}"}
+        return {"success": True, "data": {"graphs": graphs}}
+
+    def delete_graph(self, name: str) -> Dict[str, Any]:
+        """删除指定图存档；名非法 / 存档不存在返回中文错误"""
+        error = self._validate_graph_name(name)
+        if error:
+            return {"success": False, "error": error}
+        path = self._storage_dir() / f"{name}{GRAPH_FILE_SUFFIX}"
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            return {"success": False, "error": f"存档不存在: {name}"}
+        except OSError as e:
+            self._log_error("删除图存档", e)
+            return {"success": False, "error": f"删除图存档失败: {e}"}
+        return {"success": True, "data": {"name": name}}
+
+    def rename_graph(self, old_name: str, new_name: str) -> Dict[str, Any]:
+        """重命名图存档；名非法 / 旧档不存在 / 新名冲突返回中文错误"""
+        for candidate in (old_name, new_name):
+            error = self._validate_graph_name(candidate)
+            if error:
+                return {"success": False, "error": error}
+        old_path = self._storage_dir() / f"{old_name}{GRAPH_FILE_SUFFIX}"
+        new_path = self._storage_dir() / f"{new_name}{GRAPH_FILE_SUFFIX}"
+        if not old_path.is_file():
+            return {"success": False, "error": f"存档不存在: {old_name}"}
+        if new_path.exists():
+            return {"success": False, "error": f"已存在同名存档: {new_name}"}
+        try:
+            old_path.rename(new_path)
+        except OSError as e:
+            self._log_error("重命名图存档", e)
+            return {"success": False, "error": f"重命名图存档失败: {e}"}
+        return {"success": True,
+                "data": {"old_name": old_name, "new_name": new_name}}
 
     def load_graph(self, name: str = DEFAULT_GRAPH_NAME) -> Dict[str, Any]:
         """从 DataProvider 恢复指定图；不存在/损坏时回退预置示例图
@@ -266,6 +326,35 @@ class BlueprintOpenCVService(QObject):
     def _asset_filename(name: str) -> str:
         """组装图存档文件名（命名空间子目录 + 图名 + 扩展名）"""
         return f"{GRAPH_STORAGE_NAMESPACE}/{name}{GRAPH_FILE_SUFFIX}"
+
+    def _graph_file_meta(self, path: Path) -> Dict[str, Any]:
+        """单个存档文件的元信息（SPEC-graph-list §1.3；节点数读取失败为 None）。"""
+        stat = path.stat()
+        modified = datetime.fromtimestamp(stat.st_mtime)
+        return {
+            "name": path.stem,
+            "node_count": self._read_graph_node_count(path),
+            "size_bytes": stat.st_size,
+            "modified_at": modified.isoformat(sep=" ", timespec="seconds"),
+        }
+
+    def _read_graph_node_count(self, path: Path) -> Optional[int]:
+        """读取存档文件的节点数；损坏 / 不可读时记 WARNING 并返回 None。"""
+        try:
+            with open(path, "rb") as f:
+                return self._node_count(json.loads(f.read().decode("utf-8")))
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
+            self._logger.warning(LOG_TAG, f"读取存档节点数失败: {path.name}: {e}")
+            return None
+
+    @staticmethod
+    def _validate_graph_name(name: str) -> Optional[str]:
+        """校验图名合法性（SPEC §1.4）；合法返回 None，否则返回中文错误原因。"""
+        if not name or not name.strip():
+            return "图名不能为空"
+        if any(char in name for char in INVALID_NAME_CHARS):
+            return f"图名含非法字符（{INVALID_NAME_CHARS}）"
+        return None
 
     @staticmethod
     def _node_count(graph_dict: Dict[str, Any]) -> int:

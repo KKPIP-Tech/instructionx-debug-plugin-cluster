@@ -2,7 +2,7 @@
 Blueprint OpenCV 插件元数据
 
 基于 InstructionX_UIKit Blueprint 的 OpenCV 节点化图像处理蓝图编辑器。
-service_api 声明的六个方法由 service.py 的 BlueprintOpenCVService 实现，
+service_api 声明的九个方法由 service.py 的 BlueprintOpenCVService 实现，
 框架自动注册为跨插件 API 并同步为 MCP 工具。
 """
 
@@ -34,9 +34,9 @@ OpenCV 节点化图像处理蓝图编辑器，同时作为 Blueprint 用法的�
 - 工作线程执行：cv2 处理经 BackgroundTaskManager 提交线程池，
   结果（PNG 字节 + 元数据）经 Qt 信号跨线程排队封送回 UI
 - 图持久化：canvas.to_dict 序列化后经 DataProvider 保存/恢复，
-  损坏存档自动回退预置示例图
-- service_api 六方法供跨插件 / MCP 调用（运行、停止、保存、加载、
-  列出节点类型、查询最近运行结果）
+  支持多命名存档（另存为/加载/重命名/删除），损坏存档自动回退预置示例图
+- service_api 九方法供跨插件 / MCP 调用（运行、停止、保存、加载、
+  存档枚举/重命名/删除、列出节点类型、查询最近运行结果）
 """
 
 # save_graph / load_graph 共用的图名参数声明（service_api 契约）
@@ -84,7 +84,7 @@ class BlueprintOpenCVPluginInfo(IPluginInfo):
 
     @property
     def service_api(self) -> Dict[str, Any]:
-        """Service API 定义（六个方法，与 service.py 实现逐一一致）"""
+        """Service API 定义（九个方法，与 service.py 实现逐一一致）"""
         return {
             **self._api_run_methods(),
             **self._api_graph_methods(),
@@ -107,7 +107,7 @@ class BlueprintOpenCVPluginInfo(IPluginInfo):
         }
 
     def _api_graph_methods(self) -> Dict[str, Any]:
-        """图持久化类 service_api 声明（save_graph / load_graph）。"""
+        """图持久化类 service_api 声明（save/load/list/delete/rename_graph）。"""
         return {
             "save_graph": self._api(
                 "将当前图序列化并经 DataProvider 持久化",
@@ -118,6 +118,30 @@ class BlueprintOpenCVPluginInfo(IPluginInfo):
                 "从 DataProvider 恢复指定图到画布；不存在/损坏时回退示例图",
                 dict(_GRAPH_NAME_PARAM),
                 {"type": "dict", "description": '{"success": bool, "data": {"name": str, "fallback": bool}}'},
+            ),
+            **self._api_graph_manage_methods(),
+        }
+
+    def _api_graph_manage_methods(self) -> Dict[str, Any]:
+        """存档管理类 service_api 声明（list/delete/rename_graph，SPEC-graph-list §3.5）。"""
+        return {
+            "list_graphs": self._api(
+                "枚举全部已保存图存档（名称/节点数/大小/修改时间）",
+                {},
+                {"type": "dict", "description": '{"success": bool, "data": {"graphs": [{"name", "node_count", "size_bytes", "modified_at"}, ...]}}'},
+            ),
+            "delete_graph": self._api(
+                "删除指定图存档；存档不存在返回中文错误",
+                {"name": {"type": "str", "description": "图名（存档 key）", "required": True}},
+                {"type": "dict", "description": '{"success": bool, "data": {"name": str}}，失败时含 "error"（中文原因）'},
+            ),
+            "rename_graph": self._api(
+                "重命名图存档；重名冲突/存档不存在返回中文错误",
+                {
+                    "old_name": {"type": "str", "description": "原图名", "required": True},
+                    "new_name": {"type": "str", "description": "新图名", "required": True},
+                },
+                {"type": "dict", "description": '{"success": bool, "data": {"old_name": str, "new_name": str}}，失败时含 "error"（中文原因）'},
             ),
         }
 

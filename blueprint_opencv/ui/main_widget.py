@@ -1,19 +1,21 @@
 # -*- coding: utf-8 -*-
 """主界面组装（ui 层）。
 
-``MainWidget`` = 工具条 + 左侧节点列表面板 + ``BlueprintCanvas`` + 右侧固定宽面板
-（上：参数面板；下：ImageView 预览区 + 结果信息标签）。
+``MainWidget`` = 工具条 + 左侧固定宽面板（上：蓝图存档列表；下：节点列表）
++ ``BlueprintCanvas`` + 右侧固定宽面板（上：参数面板；下：ImageView 预览区
++ 结果信息标签）。
 
 职责边界：
 - 只做视图组装与事件分发，业务动作全部委托 ``BlueprintOpenCVService``
-  （run/stop/save/load，签名见 SPEC §7），槽函数直接转发、≤5 行；
+  （run/stop/save/load/存档管理，签名见 SPEC §7 与 SPEC-graph-list §3.1），
+  槽函数直接转发、≤5 行；
 - service 的 Qt 信号（``preview_ready`` / ``node_status_changed`` /
   ``run_finished``）由工作线程自动排队到 UI 线程的槽中执行，
   QPixmap 只在预览面板的 UI 线程槽里创建（SPEC §1.3）；
 - ``node_status_changed`` 驱动 ``canvas.execution()`` 的
   start / finish / fail，并按已执行节点序列 ``set_path`` 高亮路径；
-- 预置示例图：start→load_image→gaussian_blur→canny→preview
-  （exec 链 + image 链），图加载 / 恢复前的开箱内容。
+- 启动加载：存在 default 存档则恢复它，否则构建预置示例图
+  （start→load_image→gaussian_blur→canny→preview，SPEC-graph-list §1.5）。
 """
 
 import json
@@ -24,6 +26,7 @@ from PySide6.QtCore import QPointF
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
+    QInputDialog,
     QLabel,
     QMessageBox,
     QVBoxLayout,
@@ -35,6 +38,7 @@ from InstructionX_UIKit.theme import set_property
 
 from utils.logging_tools import LoggerManager, get_name
 
+from .graph_list_panel import GraphListPanel
 from .node_bootstrap import apply_catalog_defaults, ensure_node_types_registered
 from .node_list_panel import NodeListPanel
 from .preview_panel import PreviewPanel
@@ -73,6 +77,12 @@ _FILE_PATH_KEY = "file_path"
 #: 状态标签文案
 _STATUS_READY = "就绪"
 _STATUS_STOPPING = "正在停止（当前节点执行完后中断）…"
+#: 另存为命名对话框文案
+_SAVE_AS_TITLE = "另存为蓝图"
+_SAVE_AS_LABEL = "存档名称："
+#: 重名覆盖确认对话框文案
+_OVERWRITE_TITLE = "覆盖存档"
+_OVERWRITE_TEXT = "已存在同名存档「{name}」，确定覆盖吗？"
 
 _logger = LoggerManager()
 _MODULE = get_name()
@@ -112,7 +122,8 @@ class MainWidget(QWidget):
 
     公开属性 / 方法:
         ``graph`` / ``canvas``：数据图与画布（供 entrance / 测试访问）；
-        ``node_list_panel``：左侧节点列表面板（测试断言用）；
+        ``node_list_panel`` / ``graph_list_panel``：左侧节点 / 存档列表
+            面板（测试断言用）；
         ``graph_snapshot()``：当前图序列化 dict（service 取快照用）；
         ``restore_graph(data)``：把图 dict 恢复到画布；
         ``build_preset_graph()``：构建预置示例图。
@@ -127,13 +138,13 @@ class MainWidget(QWidget):
         self.graph.node_added.connect(apply_catalog_defaults)
         self.canvas = BlueprintCanvas(self.graph, self)
         self._toolbar = ToolBar(self)
+        self.graph_list_panel = GraphListPanel(service)
         self.node_list_panel = NodeListPanel(self.graph, self.canvas)
         self._property_panel = PropertyPanel()
         self._preview_panel = PreviewPanel()
         self._build_layout()
         self._connect_signals()
-        if not self.graph.nodes():
-            self.build_preset_graph()
+        self._load_initial_graph()
 
     # ------------------------------------------------------------------ 对外
     def showEvent(self, event) -> None:
@@ -187,7 +198,7 @@ class MainWidget(QWidget):
 
     # ------------------------------------------------------------------ 组装
     def _build_layout(self) -> None:
-        """根布局：顶部工具条，主体左节点列表 + 画布 + 右侧固定宽面板。"""
+        """根布局：顶部工具条，主体左侧面板（蓝图+节点）+ 画布 + 右侧面板。"""
         root = QVBoxLayout(self)
         root.setContentsMargins(8, 8, 8, 8)
         root.setSpacing(8)
@@ -200,15 +211,17 @@ class MainWidget(QWidget):
         root.addLayout(body, 1)
 
     def _build_left_panel(self) -> QFrame:
-        """左侧固定宽面板：节点列表面板（含小标题，SPEC-node-list-panel §3.4）。"""
+        """左侧固定宽面板：上「蓝图」存档列表、下「节点」节点列表（2:3）。"""
         panel = QFrame()
         panel.setFrameShape(QFrame.Shape.StyledPanel)
         panel.setFixedWidth(_LEFT_PANEL_WIDTH)
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(10, 8, 10, 8)
         layout.setSpacing(6)
+        layout.addWidget(self._section_title("蓝图"))
+        layout.addWidget(self.graph_list_panel, 2)
         layout.addWidget(self._section_title("节点"))
-        layout.addWidget(self.node_list_panel, 1)
+        layout.addWidget(self.node_list_panel, 3)
         return panel
 
     def _build_right_panel(self) -> QFrame:
@@ -234,12 +247,13 @@ class MainWidget(QWidget):
         return label
 
     def _connect_signals(self) -> None:
-        """连接工具条 / 画布 / service 信号到对应槽（全部 UI 线程）。"""
+        """连接工具条 / 画布 / 存档列表 / service 信号到对应槽（全部 UI 线程）。"""
         self._toolbar.run_requested.connect(self._run_pipeline)
         self._toolbar.stop_requested.connect(self._stop_pipeline)
-        self._toolbar.save_requested.connect(self._save_graph)
-        self._toolbar.load_requested.connect(self._load_graph)
+        self._toolbar.save_requested.connect(self._save_graph_as)
         self._toolbar.fit_requested.connect(self.canvas.fit_view)
+        self.graph_list_panel.save_as_requested.connect(self._save_graph_as)
+        self.graph_list_panel.load_requested.connect(self._load_graph_by_name)
         self.canvas.selection_changed.connect(self._on_selection_changed)
         self._service.preview_ready.connect(self._on_preview_ready)
         self._service.node_status_changed.connect(self._on_node_status)
@@ -264,19 +278,41 @@ class MainWidget(QWidget):
         if result.get("success"):
             self._toolbar.set_status(_STATUS_STOPPING)
 
-    def _save_graph(self) -> None:
-        """保存图：推快照后委托 service 持久化（DataProvider）。"""
+    def _save_graph_as(self) -> None:
+        """另存为：命名对话框 → 重名覆盖确认 → 委托 service 持久化。"""
+        name = self._prompt_graph_name()
+        if name is None or not self._confirm_overwrite(name):
+            return
         self._push_graph_snapshot()
-        result = self._service.save_graph()
+        result = self._service.save_graph(name)
         if not result.get("success"):
             self._report_failure("保存失败", result)
             return
+        self.graph_list_panel.refresh()
         count = result.get("data", {}).get("node_count", len(self.graph.nodes()))
-        self._toolbar.set_status(f"已保存（{count} 个节点）")
+        self._toolbar.set_status(f"已保存为「{name}」（{count} 个节点）")
 
-    def _load_graph(self) -> None:
-        """加载图：委托 service 恢复，成功后取回图 dict 刷新画布。"""
-        result = self._service.load_graph()
+    def _prompt_graph_name(self) -> Optional[str]:
+        """弹存档命名对话框；取消或空名返回 None。"""
+        name, ok = QInputDialog.getText(self, _SAVE_AS_TITLE, _SAVE_AS_LABEL)
+        if not ok or not name.strip():
+            return None
+        return name.strip()
+
+    def _confirm_overwrite(self, name: str) -> bool:
+        """重名时弹覆盖确认；不重名或用户确认返回 True。"""
+        result = self._service.list_graphs()
+        names = {meta.get("name")
+                 for meta in result.get("data", {}).get("graphs", [])}
+        if name not in names:
+            return True
+        answer = QMessageBox.question(
+            self, _OVERWRITE_TITLE, _OVERWRITE_TEXT.format(name=name))
+        return answer == QMessageBox.StandardButton.Yes
+
+    def _load_graph_by_name(self, name: str) -> None:
+        """加载指定存档：委托 service 恢复，成功后取回图 dict 刷新画布。"""
+        result = self._service.load_graph(name)
         if not result.get("success"):
             self._report_failure("加载失败", result)
             return
@@ -287,7 +323,17 @@ class MainWidget(QWidget):
         self.restore_graph(data)
         suffix = "（存档缺失 / 损坏，已回退示例图）" if result.get(
             "data", {}).get("fallback") else ""
-        self._toolbar.set_status(f"已加载{suffix}")
+        self._toolbar.set_status(f"已加载「{name}」{suffix}")
+
+    def _load_initial_graph(self) -> None:
+        """启动加载：存在 default 存档则恢复，否则构建预置示例图（既有回退）。"""
+        result = self._service.load_graph()
+        loaded = result.get("success") and not result.get(
+            "data", {}).get("fallback")
+        if loaded:
+            self.restore_graph(self._service.current_graph)
+            return
+        self.build_preset_graph()
 
     # ------------------------------------------------------------------ service 信号槽
     def _on_preview_ready(self, png_bytes: bytes, info: Dict[str, Any]) -> None:
