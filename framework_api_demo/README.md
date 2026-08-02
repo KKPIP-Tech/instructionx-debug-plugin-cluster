@@ -128,6 +128,6 @@ framework_api_demo/
 
 ## 版本
 
-- **版本**: release.1.0.1
+- **版本**: release.1.0.2
 - **开发者**: InstructionX
 - **许可**: 免费
