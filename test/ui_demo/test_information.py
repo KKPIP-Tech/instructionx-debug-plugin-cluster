@@ -21,13 +21,13 @@ class TestPluginInfoContract:
         """每个用例构造独立的元数据实例。"""
         self.info = UiDemoPluginInfo()
 
-    def test_version_is_release_1_0_1(self) -> None:
-        """版本号应为 release.1.0.1 的正式版 PluginVersion。"""
+    def test_version_is_release_1_0_2(self) -> None:
+        """版本号应为 release.1.0.2 的正式版 PluginVersion。"""
         version = self.info.version
         assert isinstance(version, PluginVersion)
         assert version.version_type is VersionType.RELEASE
-        assert (version.major, version.minor, version.patch) == (1, 0, 1)
-        assert str(version) == "release.1.0.1"
+        assert (version.major, version.minor, version.patch) == (1, 0, 2)
+        assert str(version) == "release.1.0.2"
 
     def test_plugin_type_id(self) -> None:
         """插件类型标识应为 ui-demo（与目录名对应的 kebab-case）。"""

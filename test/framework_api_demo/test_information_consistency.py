@@ -76,9 +76,9 @@ class TestPluginMetadata:
     """插件元数据基本字段"""
 
     def test_version_string(self):
-        """版本应为 release.1.0.1"""
+        """版本应为 release.1.0.2"""
         version = FrameworkAPIDemoPluginInfo().version
-        assert str(version) == "release.1.0.1"
+        assert str(version) == "release.1.0.2"
 
     def test_plugin_type_id(self):
         """插件类型标识应稳定为 framework-api-demo"""
