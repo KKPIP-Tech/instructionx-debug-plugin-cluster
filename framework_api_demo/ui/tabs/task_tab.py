@@ -17,6 +17,11 @@ from utils.thread_utils import run_in_ui_thread
 
 from .base_tab import BaseTab
 
+#: 列表项类型标记（存于 item 的 UserRole+1），用于按类型分发操作按钮
+_KIND_TASK = "task"
+_KIND_SCHEDULED = "scheduled"
+_KIND_LONG = "long"
+
 
 class TaskTab(BaseTab):
     """后台任务演示 Tab
@@ -205,8 +210,21 @@ class TaskTab(BaseTab):
 
     def _on_cancel_task(self):
         task_id = self._selected_task_id()
-        if task_id:
-            self._show_op_result("取消任务", self.task_service.cancel_task_demo(task_id))
+        if not task_id:
+            return
+        kind = self._selected_task_kind()
+        if kind == _KIND_SCHEDULED:
+            # 定时任务不归 cancel_task 管（仅覆盖运行中的普通任务），
+            # 「取消」语义对应从调度中注销
+            self._show_op_result(
+                "注销定时任务", self.task_service.unregister_scheduled(task_id))
+            self._on_query_tasks()
+            return
+        if kind == _KIND_LONG:
+            Message.warning(self._message_parent,
+                            "长期任务请使用「停止长期任务」按钮")
+            return
+        self._show_op_result("取消任务", self.task_service.cancel_task_demo(task_id))
 
     def _on_stop_long_task(self):
         task_id = self._selected_task_id()
@@ -246,22 +264,24 @@ class TaskTab(BaseTab):
     # ------------------------------------------------------------------
 
     def _populate_tasks_list(self, result: dict):
-        """填充任务列表，task_id 存入 item 的 UserRole 数据"""
+        """填充任务列表，task_id 与类型标记存入 item 数据"""
         self.tasks_list.clear()
         for task in result.get("tasks", []):
-            self._add_task_item(f"{task['name']} [{task['status']}]", task["task_id"])
+            self._add_task_item(
+                f"{task['name']} [{task['status']}]", task["task_id"], _KIND_TASK)
         for task in result.get("scheduled_tasks", []):
             status = "运行中" if task["enabled"] else "已禁用"
             text = f"[定时] {task['name']} ({task['interval']}s) [{status}]"
-            self._add_task_item(text, task["task_id"])
+            self._add_task_item(text, task["task_id"], _KIND_SCHEDULED)
         for task in result.get("long_running_tasks", []):
             text = f"[长期] {task['name']} [{task['status']}]"
-            self._add_task_item(text, task["task_id"])
+            self._add_task_item(text, task["task_id"], _KIND_LONG)
 
-    def _add_task_item(self, text: str, task_id: str):
-        """向列表添加一行，并把 task_id 绑定到 UserRole"""
+    def _add_task_item(self, text: str, task_id: str, kind: str):
+        """向列表添加一行，并把 task_id 与类型标记绑定到 item 数据"""
         item = QListWidgetItem(text)
         item.setData(Qt.ItemDataRole.UserRole, task_id)
+        item.setData(Qt.ItemDataRole.UserRole + 1, kind)
         self.tasks_list.addItem(item)
 
     def _selected_task_id(self) -> Optional[str]:
@@ -271,6 +291,13 @@ class TaskTab(BaseTab):
             return item.data(Qt.ItemDataRole.UserRole)
         Message.warning(self._message_parent, "请先在任务列表中选中一项")
         return None
+
+    def _selected_task_kind(self) -> Optional[str]:
+        """取当前列表选中项的类型标记（task/scheduled/long）"""
+        item = self.tasks_list.currentItem()
+        if item is None:
+            return None
+        return item.data(Qt.ItemDataRole.UserRole + 1)
 
     def _scheduled_target_id(self) -> Optional[str]:
         """取定时任务控制目标 ID：输入框优先，留空时回退列表选中项"""
