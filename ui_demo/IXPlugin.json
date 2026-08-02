@@ -1,9 +1,9 @@
 {
     "id": "ui-demo",
     "name": "UI Demo",
-    "version": "release.1.0.0",
+    "version": "release.1.0.1",
     "main": "entrance.py",
-    "description": "UI 控件演示插件用于展示所有控件效果。包含按钮、输入框、复选框、单选按钮、滑块、进度条、下拉框等多种 Qt 控件的样式演示。",
+    "description": "InstructionX_UIKit 组件橱窗：以导航树分页演示设计令牌、12 个布局预设、57 个组件、属性/自绘动画、原生图表与蓝图节点图，每页附最小用法示例，是插件开发的 UI 参考。",
     "author": "InstructionX Team",
-    "keywords": ["instructionx", "plugin", "ui", "demo", "widget"]
+    "keywords": ["instructionx", "plugin", "ui", "demo", "uikit", "components"]
 }

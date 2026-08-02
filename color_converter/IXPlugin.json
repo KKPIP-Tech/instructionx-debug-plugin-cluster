@@ -1,9 +1,0 @@
-{
-    "id": "color-converter",
-    "name": "Color Converter",
-    "version": "release.1.0.0",
-    "main": "entrance.py",
-    "description": "颜色转换插件提供颜色格式转换工具，包括：HEX 颜色转 RGB 格式。适用于在设计工作、开发调试、颜色管理等多种场景。",
-    "author": "InstructionX Team",
-    "keywords": ["color", "conversion", "utility", "hex", "rgb"]
-}

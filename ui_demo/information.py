@@ -1,19 +1,19 @@
-"""
-UI 控件演示插件元数据
-"""
+# -*- coding: utf-8 -*-
+"""UI Demo 插件元数据（InstructionX_UIKit 组件橱窗）。"""
+
+from typing import Any, Dict, Optional
 
 from core.interfaces import IPluginInfo
-from core.plugin.plugin_version import PluginVersion
 from core.plugin.plugin_icon import PluginIcon
-from typing import Dict, Any, Optional
+from core.plugin.plugin_version import PluginVersion
 
 
 class UiDemoPluginInfo(IPluginInfo):
-    """UI 控件演示插件元数据"""
+    """UI Demo 插件元数据：组件橱窗定位与对外 service_api 描述。"""
 
     @property
     def version(self) -> PluginVersion:
-        return PluginVersion.from_string("release.1.0.0")
+        return PluginVersion.from_string("release.1.0.1")
 
     @property
     def developer(self) -> str:
@@ -34,21 +34,21 @@ class UiDemoPluginInfo(IPluginInfo):
     @property
     def description(self) -> str:
         return """
-        UI 控件演示插件用于展示所有控件效果。
-        包含按钮、输入框、复选框、单选按钮、滑块、进度条、
-        菜单、工具栏、标签页、列表、表格等常用控件的演示。
+        InstructionX_UIKit 组件橱窗：以导航树分页演示设计令牌、
+        12 个布局预设、57 个组件、属性/自绘动画、原生图表与蓝图节点图，
+        每页附最小用法示例，是插件开发的 UI 参考。
         """
 
     @property
     def service_api(self) -> Dict[str, Any]:
         return {
             "get_control_list": {
-                "description": "获取所有可演示的控件列表",
+                "description": "获取全部可演示的 UIKit 组件/页面清单（分类 · 名称）",
                 "parameters": {},
                 "returns": {
                     "type": "list",
-                    "description": "控件列表"
-                }
+                    "description": "组件清单（字符串列表，按导航树顺序）",
+                },
             }
         }
 
@@ -58,11 +58,11 @@ class UiDemoPluginInfo(IPluginInfo):
 
     @property
     def skill_description(self) -> str:
-        return "展示所有控件"
+        return "UIKit 组件橱窗"
 
     @property
     def tags(self) -> Optional[list[str]]:
-        return ["ui", "demo", "controls"]
+        return ["ui", "demo", "uikit", "components"]
 
     @property
     def dependencies(self) -> Dict[str, str]:

@@ -1,9 +1,0 @@
-{
-    "id": "image-compressor",
-    "name": "Image Compressor",
-    "version": "release.1.0.0",
-    "main": "entrance.py",
-    "description": "图片压缩插件提供图片处理工具，包括：图片压缩（支持调整质量参数）、获取图片信息（文件大小、尺寸等）。",
-    "author": "InstructionX Team",
-    "keywords": ["instructionx", "plugin", "image", "compressor", "utility"]
-}

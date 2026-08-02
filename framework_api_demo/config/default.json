@@ -1,12 +1,4 @@
 {
-  "plugin": {
-    "name": "framework_api_demo",
-    "version": "1.0.0"
-  },
-  "ui": {
-    "margins": [16, 16, 16, 16],
-    "spacing": 12
-  },
   "task": {
     "default_interval": 60,
     "interval_range": [5, 3600]
@@ -16,5 +8,19 @@
     "plugin_id_hex_length": 8,
     "sync_task_seconds": 1,
     "async_task_seconds": 2
+  },
+  "mcp": {
+    "remote_demo": {
+      "_comment": "远程演示服务器示例配置（占位）：stdio 需把 command/args 改为实际 MCP Server 启动命令；streamable-http 需填 url",
+      "server_id": "demo",
+      "name": "Demo MCP Server",
+      "transport": "stdio",
+      "command": "python",
+      "args": ["-c", "print('placeholder: replace with a real MCP server command')"],
+      "env": null,
+      "url": null,
+      "auth_token": null,
+      "enabled": true
+    }
   }
 }

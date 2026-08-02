@@ -1,38 +1,12 @@
-"""
-UI 演示插件服务
-"""
+# -*- coding: utf-8 -*-
+"""UI Demo 插件服务层（对框架的接口门面，仅委托 function/ 实现）。"""
+
+from .function.services.core_service import CoreService
 
 
-class Service:
-    """UI 演示服务类"""
+class Service(CoreService):
+    """UI Demo 服务类（框架自动注册跨插件 API 的入口）。
 
-    def __init__(self):
-        self.control_list = [
-            "QPushButton - 按钮",
-            "QLineEdit - 单行输入框",
-            "QTextEdit - 富文本编辑",
-            "QPlainTextEdit - 纯文本编辑",
-            "QComboBox - 下拉框",
-            "QCheckBox - 复选框",
-            "QRadioButton - 单选按钮",
-            "QSlider - 滑块",
-            "QProgressBar - 进度条",
-            "QSpinBox - 整数选择框",
-            "QDoubleSpinBox - 浮点数选择框",
-            "QGroupBox - 分组框",
-            "QTabWidget - 标签页",
-            "QListWidget - 列表视图",
-            "QTableWidget - 表格视图",
-            "QTreeWidget - 树视图",
-            "QMenuBar - 菜单栏",
-            "QMenu - 菜单",
-            "QToolBar - 工具栏",
-            "QScrollArea - 滚动区域",
-            "QSplitter - 分割器",
-            "QStackedWidget - 堆叠窗口",
-            "QFrame - 框架",
-        ]
-
-    def get_control_list(self) -> list:
-        """获取所有可演示的控件列表"""
-        return self.control_list
+    继承 ``CoreService`` 的全部公开方法；构造函数保持无参，
+    兼容框架 Service 签名分析的全部 5 种实例化组合。
+    """

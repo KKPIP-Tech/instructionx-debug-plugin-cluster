@@ -1,9 +1,0 @@
-{
-    "id": "task-manager",
-    "name": "Task Manager",
-    "version": "release.1.0.0",
-    "main": "entrance.py",
-    "description": "任务管理器插件提供完整的任务管理功能，包括：创建、编辑和删除任务，任务状态跟踪（待办、进行中、已完成），优先级设置，截止日期管理等功能。",
-    "author": "InstructionX Team",
-    "keywords": ["instructionx", "plugin", "task", "manager", "productivity"]
-}
