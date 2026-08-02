@@ -55,7 +55,7 @@ class BlueprintOpenCVPluginInfo(IPluginInfo):
     @property
     def version(self) -> PluginVersion:
         """插件版本"""
-        return PluginVersion.from_string("alpha.0.1.0")
+        return PluginVersion.from_string("release.1.0.1")
 
     @property
     def developer(self) -> str:

@@ -16,7 +16,7 @@
 
 ## 项目简介
 
-本仓库包含 **InstructionX 框架**的官方插件集合，当前保留 Framework API Demo 与 UI Demo 两个示例插件，用于演示框架核心 API 与 InstructionX_UIKit 组件体系。
+本仓库包含 **InstructionX 框架**的官方插件集合：Framework API Demo（框架核心 API 演示）、UI Demo（InstructionX_UIKit 组件体系展示）与 Blueprint OpenCV（蓝图节点化 OpenCV 图像处理）。三个插件版本与仓库 Git Tag 统一。
 
 ### 主要特性
 
@@ -34,6 +34,7 @@
 |------|-----|------|
 | **Framework API Demo** | `framework-api-demo` | 框架所有核心 API 的完整演示，包括 DataProvider、BackgroundTaskManager、LLMProvider、PluginManager、LoggerManager |
 | **UI Demo** | `ui-demo` | InstructionX_UIKit 组件体系展示，包括基础控件、输入、展示、反馈、布局、动画、图表、蓝图节点图等 |
+| **Blueprint OpenCV** | `blueprint-opencv` | 蓝图节点化 OpenCV 图像处理：拖拉拽节点、参数调节、实时预览、蓝图工作流存档管理 |
 
 ---
 
@@ -285,9 +286,20 @@ class MyAwesomePlugin(IPlugin):
 
 ```
 plugin/
-├── IXRepo.json                          # 仓库配置（定义 2 个插件）
+├── IXRepo.json                          # 仓库配置（定义 3 个插件）
 ├── PLUGIN_STRUCTURE_GUIDE.md            # 插件结构规范
 ├── README.md                            # 本文件
+│
+├── blueprint_opencv/                    # 蓝图节点化 OpenCV 图像处理
+│   ├── entrance.py                      # 入口（胶水层）
+│   ├── service.py                       # 对外接口层
+│   ├── information.py                   # 插件元数据
+│   ├── function/                        # 业务逻辑（节点目录/执行引擎）
+│   ├── ui/                              # 视图层（蓝图画布/列表面板）
+│   ├── config/                          # 配置文件
+│   ├── assets/                          # 示例图片
+│   ├── docs/                            # 插件文档（PRD/SPEC）
+│   └── IXPlugin.json
 │
 ├── framework_api_demo/                  # 框架 API 演示（含详细 README）
 │   ├── entrance.py                      # 入口（胶水层）

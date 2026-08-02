@@ -1,6 +1,6 @@
 {
     "name": "InstructionX Official Plugins",
-    "description": "InstructionX 官方测试插件集合，仅保留 Framework API Demo 与 UI Demo 两个示例插件。",
+    "description": "InstructionX 官方插件集合：Framework API Demo（框架全 API 演示）、UI Demo（UIKit 组件展示）、Blueprint OpenCV（蓝图节点化图像处理）。三个插件版本与仓库 Git Tag 统一。",
     "plugins": [
         {"id": "framework-api-demo", "name": "Framework API Demo", "path": "framework_api_demo/"},
         {"id": "ui-demo", "name": "UI Demo", "path": "ui_demo/"},
