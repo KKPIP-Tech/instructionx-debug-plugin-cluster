@@ -2,7 +2,7 @@
 Framework API Demo 框架信息服务
 
 提供框架版本与可用 API 清单信息，并演示框架 utils 工具：
-LoggerManager 五级日志、thread_utils 线程封送、FontMap 字体查询、
+LoggerManager 五级日志、thread_utils 线程封送、
 load_image_as_base64 图片转 Base64。
 """
 
@@ -10,7 +10,6 @@ import base64
 from typing import Any, Callable, Dict
 
 from core.version import get_instructionx_version_string
-from utils.font_map import FontFamily, FontInfo, FontMap, FontVariant
 from utils.image_utils import load_image_as_base64
 from utils.logging_tools import get_name
 from utils.thread_utils import is_ui_thread, run_in_ui_thread, run_in_ui_thread_sync
@@ -126,36 +125,6 @@ class FrameworkInfoService(Service):
                 self.logger.error(get_name(), f"线程演示回调处理失败: {e}")
 
         return on_completed
-
-    # ------------------------------------------------------------------
-    #  FontMap 字体查询演示
-    # ------------------------------------------------------------------
-
-    def demo_font_map(self) -> Dict[str, Any]:
-        """演示 FontMap.all_fonts() 与 FontMap.get() 字体查询
-
-        返回:
-            可用字体清单（family/variant/weight/relative_path）与一个示例 FontInfo
-        """
-        fonts = FontMap.all_fonts()
-        sample = FontMap.get(FontFamily.SMILEY_SANS, FontVariant.OBLIQUE)
-        return {
-            "success": True,
-            "font_count": len(fonts),
-            "fonts": [self._font_info_to_dict(f) for f in fonts],
-            "sample": self._font_info_to_dict(sample) if sample else None,
-        }
-
-    @staticmethod
-    def _font_info_to_dict(info: FontInfo) -> Dict[str, Any]:
-        """把 FontInfo 转换为可 JSON 序列化的字典"""
-        return {
-            "family": info.family.value,
-            "variant": info.variant.value,
-            "weight": info.weight,
-            "relative_path": info.relative_path,
-            "absolute_path": info.absolute_path,
-        }
 
     # ------------------------------------------------------------------
     #  load_image_as_base64 图片转 Base64 演示
