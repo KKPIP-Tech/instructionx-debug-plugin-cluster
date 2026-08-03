@@ -1,7 +1,7 @@
 # Framework API Demo 插件 — 核心实现文档
 
 - 修改日期：2026-07-30
-- 对应版本：release.1.0.2
+- 对应版本：release.1.0.3
 
 > 历史说明：旧版本的服务层曾集中于 `function/services/core_service.py` 单文件，
 > 已在框架全 API 覆盖改造（2026-07-30，见 `docs/req/2026-07-30/`）中
@@ -57,7 +57,7 @@ get_usage_stats / validate_provider。
 
 ### `FrameworkInfoService`
 返回框架信息，并演示 LoggerManager 五级日志、thread_utils 线程封送、
-FontMap 字体查询与 image_utils.load_image_as_base64。
+image_utils.load_image_as_base64。
 
 ### `MCPDemoService`
 封装内置 MCP Server 生命周期（固定 streamable-http，避免 stdio 阻塞 UI）、

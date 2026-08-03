@@ -53,7 +53,6 @@ Framework API Demo 插件用于演示 InstructionX 框架提供的核心 API 接
 
 - `LoggerManager` 五级日志（`debug()` / `info()` / `warning()` / `error()` / `critical()`）
 - 线程封送（`is_ui_thread()` / `run_in_ui_thread()` / `run_in_ui_thread_sync()`）
-- FontMap 字体查询（`FontMap.all_fonts()` / `FontMap.get()`）
 - 图片转 Base64（`image_utils.load_image_as_base64()`）
 - 主题跟随（`ThemeManager.theme_changed` 信号监听）
 
@@ -128,6 +127,6 @@ framework_api_demo/
 
 ## 版本
 
-- **版本**: release.1.0.2
+- **版本**: release.1.0.3
 - **开发者**: InstructionX
 - **许可**: 免费

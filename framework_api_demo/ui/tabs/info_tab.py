@@ -92,12 +92,9 @@ class InfoTab(BaseTab):
         return group
 
     def _build_asset_group(self) -> QGroupBox:
-        """构建「字体与资源」分组：FontMap 字体查询与图片转 Base64"""
-        group = QGroupBox("字体与资源（FontMap / image_utils）")
+        """构建「资源工具」分组：image_utils 图片转 Base64"""
+        group = QGroupBox("资源工具（image_utils）")
         layout = QVBoxLayout()
-        self.font_map_btn = Button("列出字体", variant="primary")
-        self.font_map_btn.clicked.connect(self._on_demo_font_map)
-        layout.addWidget(self.font_map_btn)
         self.image_base64_btn = Button("图片转 Base64", variant="primary")
         self.image_base64_btn.clicked.connect(self._on_demo_image_base64)
         layout.addWidget(self.image_base64_btn)
@@ -174,7 +171,6 @@ class InfoTab(BaseTab):
 
 7. utils 工具与主题
    - is_ui_thread() / run_in_ui_thread() / run_in_ui_thread_sync()
-   - FontMap.get() / FontMap.all_fonts()
    - load_image_as_base64()
    - ThemeManager.theme_changed 主题跟随
 """
@@ -202,11 +198,6 @@ class InfoTab(BaseTab):
         """演示线程封送：is_ui_thread 对照经服务任务回传"""
         result = self.info_service.demo_thread_utils()
         self._show_service_result("线程工具演示", result)
-
-    def _on_demo_font_map(self):
-        """列出 FontMap 可用字体"""
-        result = self.info_service.demo_font_map()
-        self._show_service_result("字体查询演示", result)
 
     def _on_demo_image_base64(self):
         """演示图片转 Base64"""
