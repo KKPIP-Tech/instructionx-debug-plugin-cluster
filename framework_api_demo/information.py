@@ -54,7 +54,7 @@ class FrameworkAPIDemoPluginInfo(IPluginInfo):
         - MCPManager / MCPClientManager: 内置 MCP Server 生命周期、
           service_api 自动桥接工具、远程 MCP Server 连接
         - 框架工具: LoggerManager 五级日志、thread_utils 线程封送、
-          FontMap 字体查询、image_utils 图片转 Base64、ThemeManager 主题跟随
+          image_utils 图片转 Base64、ThemeManager 主题跟随
 
         该插件是一个学习工具，帮助开发者了解如何使用框架的各种功能。
         """

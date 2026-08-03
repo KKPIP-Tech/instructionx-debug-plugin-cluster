@@ -57,7 +57,7 @@ get_usage_stats / validate_provider。
 
 ### `FrameworkInfoService`
 返回框架信息，并演示 LoggerManager 五级日志、thread_utils 线程封送、
-FontMap 字体查询与 image_utils.load_image_as_base64。
+image_utils.load_image_as_base64。
 
 ### `MCPDemoService`
 封装内置 MCP Server 生命周期（固定 streamable-http，避免 stdio 阻塞 UI）、
