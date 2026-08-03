@@ -4,11 +4,13 @@
 覆盖 function/services/info_service.py：
 - get_framework_info：框架信息结构；
 - demo_log_levels：五级日志依次调用（logger 替换为记录桩，避免写真实日志文件）；
-- demo_font_map：字体清单与示例字体结构；
 - demo_load_image_base64：1x1 PNG 资源保存→读回 base64 的正常路径，
   以及底层保存抛异常时的错误路径。
 
 数据落盘经隔离 DataProvider 指向 tmp_path，不触碰真实 data/ 目录。
+
+注：原 demo_font_map 用例已随框架删除 utils.font_map（1c1dfdd 移除
+捆绑字体与 FontMap 注册表）一并移除。
 """
 
 import base64
@@ -65,30 +67,6 @@ class TestDemoLogLevels:
         assert result["levels"] == ["debug", "info", "warning", "error", "critical"]
         assert [call[0] for call in recorder.calls] == result["levels"]
         assert all("日志级别演示" in call[2] for call in recorder.calls)
-
-
-class TestDemoFontMap:
-    """demo_font_map 字体查询演示"""
-
-    def test_font_list_structure(self, info_service):
-        """字体清单应与 FontMap.all_fonts() 等长且字段完整"""
-        result = info_service.demo_font_map()
-        assert result["success"] is True
-        assert result["font_count"] == len(result["fonts"])
-        assert result["font_count"] > 0
-        required_keys = {"family", "variant", "weight", "relative_path", "absolute_path"}
-        for font in result["fonts"]:
-            assert required_keys <= set(font)
-
-    def test_sample_font(self, info_service):
-        """示例字体应为 SmileySans 斜体且字段完整（weight 允许为 None）"""
-        result = info_service.demo_font_map()
-        sample = result["sample"]
-        assert sample is not None
-        assert sample["family"] == "SmileySans"
-        assert sample["variant"] == "Oblique"
-        # FontInfo.weight 语义为 int | None（仅 AlibabaPuHuiTi 系列带字重数字）
-        assert sample["weight"] is None or isinstance(sample["weight"], int)
 
 
 class TestDemoLoadImageBase64:
