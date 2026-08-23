@@ -23,6 +23,7 @@
 - **插件热插拔**：无需重启应用即可加载/卸载插件
 - **框架 API 访问**：直接调用 DataProvider、BackgroundTaskManager、LLMProvider 等核心服务
 - **MCP 协议支持**：插件可作为 MCP tools 暴露 API 供外部 LLM 调用
+- **多语言支持（i18n）**：三个插件均提供 `text/zh.xml` 与 `text/en.xml` 语言包，跟随框架语言实时切换，亦可在插件管理对话框中按插件单独设置语言
 - **跨插件通信**：通过 PluginManager 实现插件间方法调用
 - **PySide6 UI**：基于 Qt 的现代化用户界面
 

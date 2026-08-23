@@ -17,6 +17,9 @@ plugin/                                    # 官方插件集根目录
     ├── information.py                    # 元数据（继承 IPluginInfo）
     ├── config/                           # 配置文件
     │   └── default.json
+    ├── text/                             # 语言包目录（可选）：<语言代码>.xml，一个语言一个文件
+    │   ├── zh.xml                        # 默认语言文件（必须覆盖全部键）
+    │   └── en.xml
     ├── ui/                               # UI 组件层
     │   ├── __init__.py
     │   └── main_widget.py                # 主控件
@@ -42,6 +45,7 @@ plugin/                                    # 官方插件集根目录
 | `ui/` | UI 层：所有 Qt 控件相关代码 | 写业务逻辑 |
 | `information.py` | 元数据：版本、作者、描述、service_api | 写运行时逻辑 |
 | `config/` | 配置：所有可配置项，禁止魔法数 | — |
+| `text/` | 语言包：用户可见文案按 `<语言代码>.xml` 组织，经 `services.localization` 取词；框架加载时自动扫描注册 | 在代码中硬编码用户可见文案 |
 
 ## 导入规范
 
