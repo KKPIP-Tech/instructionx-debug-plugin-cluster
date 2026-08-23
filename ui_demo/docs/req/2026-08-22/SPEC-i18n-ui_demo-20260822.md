@@ -1,7 +1,7 @@
 # SPEC：ui_demo 插件多国语言（i18n）适配技术方案
 
 - **创建日期**：2026-08-22
-- **修改日期**：2026-08-22
+- **修改日期**：2026-08-22（增补 §1.5 引脚名固定中文决策）
 
 ## 1. 技术方案与设计决策（Why）
 
@@ -58,11 +58,18 @@ get_language_manager().plugin_language_changed.connect(self._on_plugin_language_
 ### 1.5 蓝图页节点元数据：注册期取词
 
 `register_demo_node_types()` 原在**模块 import 时**以中文字面量注册节点类型
-（类型名/分类/描述/引脚名）。改为 `register_demo_node_types(tr)`：
+（类型名/分类/描述/引脚名）。改为 `register_demo_node_types(tr)`——
+仅类型名/分类/描述取词，引脚名保持固定中文（见下）：
 
 - 注册时机从模块级移到 `create_page` 内（建画布前）；owner 命名空间
   （`REGISTRY_OWNER="ui-demo"`）保证重复注册为同空间覆盖，语言切换重建页面时
   以新语言重新注册即完成刷新；
+- **引脚名为节点定义的内部标识，固定中文原名（"进入"/"退出"/"图像"/"张量" 等）
+  不参与翻译**：UIKit `NodeRegistry.register` 的 `_same_definition` 以
+  inputs/outputs 引脚定义（PinSpec 相等性含 name）比对判定重复注册——
+  引脚名若随语言变化，语言切换重注册时引脚定义不同，触发「重复注册且引脚
+  定义不同，旧定义已被覆盖」WARNING。引脚名固定后，重注册为静默幂等覆盖，
+  而节点 title/category/description/body 标签仍随语言刷新；
 - 节点体 `body_builder`（宽/高/插值等行内标签）改为捕获 `tr` 的闭包工厂；
 - `PROPERTY_SCHEMAS` 第 3 元素由中文标签改为**标签键**，右侧属性面板渲染时经
   页面 `tr` 取词（面板随页面重建而刷新）。
@@ -80,6 +87,8 @@ None 时注册键名，与全局降级语义一致）。
   数据契约，返回内容保持稳定（中文），不随界面语言变化；
 - 图表 option 中的技术枚举值（`"polygon"`、`"bilinear"` 等）、文件路径、
   颜色值、日期时间字符串；
+- 蓝图节点**引脚名**（"进入"/"退出"/"图像"/"张量" 等）：节点定义的内部标识，
+  固定中文原名不参与翻译（原因见 §1.5）；
 - 代码注释与 docstring（保持中文）。
 
 ### 1.7 依赖方向

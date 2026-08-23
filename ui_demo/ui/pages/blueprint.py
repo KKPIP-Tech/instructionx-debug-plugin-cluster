@@ -245,29 +245,32 @@ def build_transformer_body(tr):
 REGISTRY_OWNER = "ui-demo"
 
 
-def _exec_in(tr) -> dict:
-    return {"id": "in", "name": tr("pin.exec_in"), "data_type": "exec"}
+# 引脚名为节点定义的内部标识（NodeRegistry._same_definition 以引脚定义
+# 比对判定重复注册），固定中文原名、不参与翻译——否则语言切换重注册时
+# 引脚定义变化会触发「重复注册且引脚定义不同」的覆盖 WARNING
+def _exec_in() -> dict:
+    return {"id": "in", "name": "进入", "data_type": "exec"}
 
 
-def _exec_out(tr) -> dict:
-    return {"id": "out", "name": tr("pin.exec_out"), "data_type": "exec"}
+def _exec_out() -> dict:
+    return {"id": "out", "name": "退出", "data_type": "exec"}
 
 
 def _register_input_types(tr) -> None:
     """注册输入类节点类型（加载图像 / 随机噪声）。"""
-    img = {"id": "img", "name": tr("pin.image"), "data_type": "image"}
+    img = {"id": "img", "name": "图像", "data_type": "image"}
     register_node_type(
         "load_image", tr("node.load_image.name"), tr("node.cat.input"),
-        inputs=[_exec_in(tr)],
-        outputs=[_exec_out(tr), dict(img)],
+        inputs=[_exec_in()],
+        outputs=[_exec_out(), dict(img)],
         accent="primary", description=tr("node.load_image.desc"),
         owner=REGISTRY_OWNER,
     )
     register_node_type(
         "noise", tr("node.noise.name"), tr("node.cat.input"),
-        inputs=[_exec_in(tr)],
-        outputs=[_exec_out(tr),
-                 {"id": "tensor", "name": tr("pin.noise"),
+        inputs=[_exec_in()],
+        outputs=[_exec_out(),
+                 {"id": "tensor", "name": "噪声",
                   "data_type": "tensor"}],
         accent="primary", description=tr("node.noise.desc"),
         owner=REGISTRY_OWNER,
@@ -276,20 +279,20 @@ def _register_input_types(tr) -> None:
 
 def _register_geometry_types(tr) -> None:
     """注册几何 / 像素预处理节点类型（resize / 归一化）。"""
-    img = {"id": "img", "name": tr("pin.image"), "data_type": "image"}
-    tensor = {"id": "tensor", "name": tr("pin.tensor"), "data_type": "tensor"}
+    img = {"id": "img", "name": "图像", "data_type": "image"}
+    tensor = {"id": "tensor", "name": "张量", "data_type": "tensor"}
     register_node_type(
         "resize", tr("node.resize.name"), tr("node.cat.process"),
-        inputs=[_exec_in(tr), dict(img)],
-        outputs=[_exec_out(tr), dict(img)],
+        inputs=[_exec_in(), dict(img)],
+        outputs=[_exec_out(), dict(img)],
         accent="warning", body_builder=build_resize_body(tr),
         description=tr("node.resize.desc"),
         owner=REGISTRY_OWNER,
     )
     register_node_type(
         "normalize", tr("node.normalize.name"), tr("node.cat.process"),
-        inputs=[_exec_in(tr), dict(img)],
-        outputs=[_exec_out(tr), dict(tensor)],
+        inputs=[_exec_in(), dict(img)],
+        outputs=[_exec_out(), dict(tensor)],
         accent="warning", description=tr("node.normalize.desc"),
         owner=REGISTRY_OWNER,
     )
@@ -297,21 +300,21 @@ def _register_geometry_types(tr) -> None:
 
 def _register_filter_types(tr) -> None:
     """注册滤波类处理节点类型（高斯模糊 / 边缘检测）。"""
-    img = {"id": "img", "name": tr("pin.image"), "data_type": "image"}
-    tensor = {"id": "tensor", "name": tr("pin.tensor"), "data_type": "tensor"}
+    img = {"id": "img", "name": "图像", "data_type": "image"}
+    tensor = {"id": "tensor", "name": "张量", "data_type": "tensor"}
     register_node_type(
         "gaussian_blur", tr("node.gaussian_blur.name"), tr("node.cat.process"),
-        inputs=[_exec_in(tr), dict(img)],
-        outputs=[_exec_out(tr), dict(img)],
+        inputs=[_exec_in(), dict(img)],
+        outputs=[_exec_out(), dict(img)],
         accent="warning", body_builder=build_blur_body(tr),
         description=tr("node.gaussian_blur.desc"),
         owner=REGISTRY_OWNER,
     )
     register_node_type(
         "edge_detect", tr("node.edge_detect.name"), tr("node.cat.process"),
-        inputs=[_exec_in(tr), dict(tensor)],
-        outputs=[_exec_out(tr),
-                 {"id": "img", "name": tr("pin.edge"), "data_type": "image"}],
+        inputs=[_exec_in(), dict(tensor)],
+        outputs=[_exec_out(),
+                 {"id": "img", "name": "边缘图", "data_type": "image"}],
         accent="warning", description=tr("node.edge_detect.desc"),
         owner=REGISTRY_OWNER,
     )
@@ -319,13 +322,13 @@ def _register_filter_types(tr) -> None:
 
 def _register_backbone_type(tr, type_name, body_builder) -> None:
     """注册单个骨干模型节点类型（执行 + tensor 进、tensor 特征出）。"""
-    tensor = {"id": "tensor", "name": tr("pin.tensor"), "data_type": "tensor"}
-    feature = {"id": "tensor", "name": tr("pin.feature"),
+    tensor = {"id": "tensor", "name": "张量", "data_type": "tensor"}
+    feature = {"id": "tensor", "name": "特征",
                "data_type": "tensor"}
     register_node_type(
         type_name, tr(f"node.{type_name}.name"), tr("node.cat.model"),
-        inputs=[_exec_in(tr), tensor],
-        outputs=[_exec_out(tr), feature],
+        inputs=[_exec_in(), tensor],
+        outputs=[_exec_out(), feature],
         accent="danger", body_builder=body_builder,
         description=tr(f"node.{type_name}.desc"),
         owner=REGISTRY_OWNER,
@@ -340,15 +343,15 @@ def _register_backbone_types(tr) -> None:
 
 def _register_fusion_type(tr) -> None:
     """注册融合模型节点类型（两路 tensor 加权融合）。"""
-    tensor_a = {"id": "tensor_a", "name": tr("pin.tensor_a"),
+    tensor_a = {"id": "tensor_a", "name": "张量 A",
                 "data_type": "tensor"}
-    tensor_b = {"id": "tensor_b", "name": tr("pin.tensor_b"),
+    tensor_b = {"id": "tensor_b", "name": "张量 B",
                 "data_type": "tensor"}
-    fused = {"id": "tensor", "name": tr("pin.fusion"), "data_type": "tensor"}
+    fused = {"id": "tensor", "name": "融合", "data_type": "tensor"}
     register_node_type(
         "fusion", tr("node.fusion.name"), tr("node.cat.model"),
-        inputs=[_exec_in(tr), tensor_a, tensor_b],
-        outputs=[_exec_out(tr), fused],
+        inputs=[_exec_in(), tensor_a, tensor_b],
+        outputs=[_exec_out(), fused],
         accent="danger", description=tr("node.fusion.desc"),
         owner=REGISTRY_OWNER,
     )
@@ -356,17 +359,17 @@ def _register_fusion_type(tr) -> None:
 
 def _register_sink_types(tr) -> None:
     """注册输出汇节点类型（保存结果 / 日志输出）。"""
-    img = {"id": "img", "name": tr("pin.image"), "data_type": "image"}
+    img = {"id": "img", "name": "图像", "data_type": "image"}
     register_node_type(
         "save_result", tr("node.save_result.name"), tr("node.cat.output"),
-        inputs=[_exec_in(tr), dict(img)],
+        inputs=[_exec_in(), dict(img)],
         accent="success", description=tr("node.save_result.desc"),
         owner=REGISTRY_OWNER,
     )
     register_node_type(
         "log_output", tr("node.log_output.name"), tr("node.cat.output"),
-        inputs=[_exec_in(tr),
-                {"id": "msg", "name": tr("pin.message"), "data_type": "any",
+        inputs=[_exec_in(),
+                {"id": "msg", "name": "消息", "data_type": "any",
                  "multi": True}],
         accent="success", description=tr("node.log_output.desc"),
         owner=REGISTRY_OWNER,
@@ -375,14 +378,14 @@ def _register_sink_types(tr) -> None:
 
 def _register_probe_type(tr) -> None:
     """注册工具节点类型（性能探针：观测透传）。"""
-    any_in = {"id": "any_in", "name": tr("pin.observe"), "data_type": "any",
+    any_in = {"id": "any_in", "name": "观测", "data_type": "any",
               "multi": True}
-    any_out = {"id": "any_out", "name": tr("pin.passthrough"),
+    any_out = {"id": "any_out", "name": "透传",
                "data_type": "any"}
     register_node_type(
         "perf_probe", tr("node.perf_probe.name"), tr("node.cat.util"),
-        inputs=[_exec_in(tr), any_in],
-        outputs=[_exec_out(tr), any_out],
+        inputs=[_exec_in(), any_in],
+        outputs=[_exec_out(), any_out],
         accent="#7A6FC0", description=tr("node.perf_probe.desc"),
         owner=REGISTRY_OWNER,
     )
