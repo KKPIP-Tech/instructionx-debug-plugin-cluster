@@ -31,16 +31,20 @@ from InstructionX_UIKit.blueprint import BlueprintCanvas, BlueprintGraph
 from InstructionX_UIKit.components import Button, ListWidget
 from InstructionX_UIKit.theme import T, set_property
 
+from core.interfaces import ILocalizationFacade
+
 __all__ = ["NodeListPanel"]
 
 #: 列表行高（两行信息：标题行 + 类型/状态行）
 _ITEM_HEIGHT = 48
 #: 按钮尺寸档（与工具条一致的紧凑风格）
 _BUTTON_SIZE = "sm"
-#: 空态占位文案
-_EMPTY_TEXT = "画布暂无节点"
 #: 状态色点字符
 _STATUS_DOT = "●"
+#: 取词分组名（与 text/zh.xml 一致）
+_GROUP = "node_list"
+#: 节点状态名取词分组
+_GROUP_STATUS = "status"
 #: 节点状态 → 主题令牌键映射（SPEC §1.3，查表替代 if-elif）
 _STATUS_COLOR_KEYS = {
     "idle": "color.text.tertiary",
@@ -52,13 +56,17 @@ _STATUS_COLOR_KEYS = {
 _FALLBACK_COLOR_KEY = "color.text.tertiary"
 #: done 状态键（耗时信息追加判断）
 _STATUS_DONE = "done"
-#: 按钮文案
-_LOCATE_TEXT = "定位"
-_RENAME_TEXT = "重命名"
-_DELETE_TEXT = "删除"
-#: 重命名对话框文案
-_RENAME_TITLE = "重命名节点"
-_RENAME_LABEL = "新标题："
+
+
+def _make_tr(i18n: Optional[ILocalizationFacade]):
+    """生成取词函数；门面未注入时优雅降级返回键名（正常加载始终注入）。"""
+
+    def tr(group: str, key: str, /, **params) -> str:
+        if i18n is None:
+            return key
+        return i18n.tr(group, key, **params)
+
+    return tr
 
 
 class _NodeRow(QWidget):
@@ -69,14 +77,17 @@ class _NodeRow(QWidget):
     列表视口，选中行为与原生列表一致（SPEC §1.2 变通）。
     """
 
-    def __init__(self, node, parent: QWidget = None) -> None:
+    def __init__(self, node, parent: QWidget = None,
+                 i18n: Optional[ILocalizationFacade] = None) -> None:
         """构建两行布局并按节点当前数据初始化。
 
         参数:
             node: ``BlueprintNode``（数据源，仅读取）。
             parent: 父控件。
+            i18n: 插件取词门面（可选；状态名与信息行模板取词用）。
         """
         super().__init__(parent)
+        self._tr = _make_tr(i18n)
         self._dot = QLabel(_STATUS_DOT)
         self._title = QLabel()
         self._info = QLabel()
@@ -109,10 +120,11 @@ class _NodeRow(QWidget):
         for widget in (self, self._dot, self._title, self._info):
             widget.setAttribute(transparent)
 
-    @staticmethod
-    def _info_text(node) -> str:
-        """信息行文案：``类型名 · 状态``，done 时追加耗时。"""
-        text = f"{node.type_name} · {node.status}"
+    def _info_text(self, node) -> str:
+        """信息行文案：``类型名 · 状态名（本地化）``，done 时追加耗时。"""
+        status = self._tr(_GROUP_STATUS, str(node.status))
+        text = self._tr(_GROUP, "row.info", type_name=node.type_name,
+                        status=status)
         if node.status == _STATUS_DONE and node.elapsed_ms is not None:
             text += f" · {node.elapsed_ms:.0f} ms"
         return text
@@ -125,31 +137,54 @@ class NodeListPanel(QWidget):
         graph: ``BlueprintGraph``（数据源，监听增删信号）。
         canvas: ``BlueprintCanvas``（选中同步与定位目标）。
         parent: 父控件。
+        i18n: 插件取词门面（可选，未注入时显示键名兜底）。
 
     公开方法:
         ``row_count()``：当前列表行数（测试断言用）；
+        ``retranslate_ui()``：语言切换后重设静态文案并刷新全部行；
         ``current_node_id()``：列表选中行对应的节点 id（无选中为 None）。
     """
 
     def __init__(self, graph: BlueprintGraph, canvas: BlueprintCanvas,
-                 parent: QWidget = None) -> None:
+                 parent: QWidget = None,
+                 i18n: Optional[ILocalizationFacade] = None) -> None:
         super().__init__(parent)
         self._graph = graph
         self._canvas = canvas
+        self._i18n = i18n
+        self._tr = _make_tr(i18n)
         # node_id -> (列表项, 节点对象)：节点引用用于删除时断开其信号
         self._rows: Dict[str, Tuple[QListWidgetItem, object]] = {}
         self._syncing = False
         self._list = ListWidget(item_height=_ITEM_HEIGHT)
-        self._empty_hint = QLabel(_EMPTY_TEXT)
-        self._locate_button = Button(_LOCATE_TEXT, size=_BUTTON_SIZE)
-        self._rename_button = Button(_RENAME_TEXT, size=_BUTTON_SIZE)
-        self._delete_button = Button(_DELETE_TEXT, size=_BUTTON_SIZE)
+        self._empty_hint = QLabel(self._tr(_GROUP, "empty"))
+        self._build_buttons()
         self._build_layout()
         self._connect_signals()
         for node in graph.nodes():
             self._add_row(node)
         self._sync_empty_state()
         self._update_action_state()
+
+    def _build_buttons(self) -> None:
+        """创建定位 / 重命名 / 删除三个操作按钮（文案经 i18n 取词）。"""
+        self._locate_button = Button(self._tr(_GROUP, "locate"),
+                                     size=_BUTTON_SIZE)
+        self._rename_button = Button(self._tr(_GROUP, "rename"),
+                                     size=_BUTTON_SIZE)
+        self._delete_button = Button(self._tr(_GROUP, "delete"),
+                                     size=_BUTTON_SIZE)
+
+    def retranslate_ui(self) -> None:
+        """语言切换后重设按钮 / 空态文案并刷新全部行（行文案随 refresh）。"""
+        self._locate_button.setText(self._tr(_GROUP, "locate"))
+        self._rename_button.setText(self._tr(_GROUP, "rename"))
+        self._delete_button.setText(self._tr(_GROUP, "delete"))
+        self._empty_hint.setText(self._tr(_GROUP, "empty"))
+        for item, node in self._rows.values():
+            row_widget = self._list.itemWidget(item)
+            if row_widget is not None:
+                row_widget.refresh(node)
 
     # ------------------------------------------------------------------ 对外
     def row_count(self) -> int:
@@ -196,7 +231,7 @@ class NodeListPanel(QWidget):
         item = QListWidgetItem()
         item.setData(Qt.ItemDataRole.UserRole, node.id)
         self._list.addItem(item)
-        self._list.setItemWidget(item, _NodeRow(node))
+        self._list.setItemWidget(item, _NodeRow(node, i18n=self._i18n))
         self._rows[node.id] = (item, node)
         node.status_changed.connect(self._on_node_changed)
         node.changed.connect(self._on_node_changed)
@@ -279,7 +314,8 @@ class NodeListPanel(QWidget):
     def _prompt_rename(self, node) -> None:
         """弹重命名对话框；确认且非空时写回标题并广播变化。"""
         text, ok = QInputDialog.getText(
-            self, _RENAME_TITLE, _RENAME_LABEL, text=node.title)
+            self, self._tr(_GROUP, "dialog.rename_title"),
+            self._tr(_GROUP, "dialog.rename_label"), text=node.title)
         if ok and text.strip():
             node.title = text.strip()
             node.changed.emit()

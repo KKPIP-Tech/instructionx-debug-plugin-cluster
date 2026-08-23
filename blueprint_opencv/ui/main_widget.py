@@ -36,6 +36,8 @@ from PySide6.QtWidgets import (
 from InstructionX_UIKit.blueprint import BlueprintCanvas, BlueprintGraph
 from InstructionX_UIKit.theme import set_property
 
+from core.i18n import get_language_manager
+from core.interfaces import ILocalizationFacade
 from utils.logging_tools import LoggerManager, get_name
 
 from .graph_list_panel import GraphListPanel
@@ -78,17 +80,12 @@ _IMAGE_OUT_PIN = "image_out"
 _SAMPLE_IMAGE_PATH = Path(__file__).resolve().parents[1] / "assets" / "sample.png"
 #: 预置图中 load_image 节点的文件路径参数键
 _FILE_PATH_KEY = "file_path"
-#: 状态标签文案
-_STATUS_READY = "就绪"
-_STATUS_STOPPING = "正在停止（当前节点执行完后中断）…"
-#: 另存为命名对话框文案
-_SAVE_AS_TITLE = "另存为蓝图"
-_SAVE_AS_LABEL = "存档名称："
-#: 重名覆盖确认对话框文案
-_OVERWRITE_TITLE = "覆盖存档"
-_OVERWRITE_TEXT = "已存在同名存档「{name}」，确定覆盖吗？"
 #: 启动自动加载的默认存档名（与 service.load_graph 的缺省 name 一致）
 _DEFAULT_GRAPH_NAME = "default"
+#: 取词分组名（与 text/zh.xml 一致）
+_GROUP_MAIN = "main"
+_GROUP_PANEL = "panel"
+_GROUP_TOOLBAR = "toolbar"
 
 _logger = LoggerManager()
 _MODULE = get_name()
@@ -125,6 +122,10 @@ class MainWidget(QWidget):
             run_pipeline / stop_pipeline / save_graph / load_graph
             及 preview_ready / node_status_changed / run_finished 信号）。
         parent: 父控件。
+        i18n: 插件取词门面（可选；未注入时界面显示键名兜底，
+            正常加载路径框架始终注入）。
+        plugin_id: 插件 UUID（可选；用于比对 plugin_language_changed
+            信号，缺省时框架语言切换仍可刷新）。
 
     公开属性 / 方法:
         ``graph`` / ``canvas``：数据图与画布（供 entrance / 测试访问）；
@@ -135,25 +136,42 @@ class MainWidget(QWidget):
         ``build_preset_graph()``：构建预置示例图。
     """
 
-    def __init__(self, service, parent: QWidget = None) -> None:
+    def __init__(self, service, parent: QWidget = None,
+                 i18n: Optional[ILocalizationFacade] = None,
+                 plugin_id: Optional[str] = None) -> None:
         super().__init__(parent)
         self.setObjectName("BlueprintOpenCVWidget")
         self._service = service
+        self._i18n = i18n
+        self._plugin_id = plugin_id
         self._run_order: List[str] = []
+        #: 面板分区小标题（panel 组键 → 标签，语言切换时统一重设）
+        self._section_labels: Dict[str, QLabel] = {}
         #: 当前蓝图对应的存档名（未保存过的新图 / 预置图为 None，
         #: 「保存」按钮据此决定覆盖写入还是退化为另存为）
         self._current_graph_name: Optional[str] = None
         self.graph = BlueprintGraph()
         self.graph.node_added.connect(apply_catalog_defaults)
         self.canvas = BlueprintCanvas(self.graph, self, owner=REGISTRY_OWNER)
-        self._toolbar = ToolBar(self)
-        self.graph_list_panel = GraphListPanel(service)
-        self.node_list_panel = NodeListPanel(self.graph, self.canvas)
-        self._property_panel = PropertyPanel()
-        self._preview_panel = PreviewPanel()
+        self._build_panels()
         self._build_layout()
         self._connect_signals()
         self._load_initial_graph()
+
+    def _build_panels(self) -> None:
+        """创建工具条与四个子面板（i18n 门面逐级下传）。"""
+        self._toolbar = ToolBar(self, i18n=self._i18n)
+        self.graph_list_panel = GraphListPanel(self._service, i18n=self._i18n)
+        self.node_list_panel = NodeListPanel(self.graph, self.canvas,
+                                             i18n=self._i18n)
+        self._property_panel = PropertyPanel(i18n=self._i18n)
+        self._preview_panel = PreviewPanel(i18n=self._i18n)
+
+    def _tr(self, group: str, key: str, /, **params) -> str:
+        """取插件文案；门面未注入时优雅降级返回键名（正常加载始终注入）。"""
+        if self._i18n is None:
+            return key
+        return self._i18n.tr(group, key, **params)
 
     # ------------------------------------------------------------------ 对外
     def showEvent(self, event) -> None:
@@ -162,10 +180,11 @@ class MainWidget(QWidget):
         节点注册已限定本插件 owner 命名空间，跨插件同名类型不再互相
         覆盖；此处重复断言仅作同空间防御（自身旧版注册 / 异常写入），
         保证随后经创建菜单新增的节点引脚契约正确。同时触发节点体区
-        重排（见 _refresh_node_bodies）。
+        重排（见 _refresh_node_bodies）。注册按当前语言取词，使首次
+        显示即为有效语言。
         """
         super().showEvent(event)
-        ensure_node_types_registered()
+        ensure_node_types_registered(self._i18n)
         self._refresh_node_bodies()
 
     def _refresh_node_bodies(self) -> None:
@@ -227,9 +246,9 @@ class MainWidget(QWidget):
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(10, 8, 10, 8)
         layout.setSpacing(6)
-        layout.addWidget(self._section_title("蓝图"))
+        layout.addWidget(self._section_title("section.graphs"))
         layout.addWidget(self.graph_list_panel, 2)
-        layout.addWidget(self._section_title("节点"))
+        layout.addWidget(self._section_title("section.nodes"))
         layout.addWidget(self.node_list_panel, 3)
         return panel
 
@@ -241,18 +260,19 @@ class MainWidget(QWidget):
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(10, 8, 10, 8)
         layout.setSpacing(6)
-        layout.addWidget(self._section_title("参数"))
+        layout.addWidget(self._section_title("section.params"))
         layout.addWidget(self._property_panel, 3)
-        layout.addWidget(self._section_title("预览"))
+        layout.addWidget(self._section_title("section.preview"))
         layout.addWidget(self._preview_panel, 2)
         return panel
 
-    def _section_title(self, text: str) -> QLabel:
-        """面板分区小标题（加粗）。"""
-        label = QLabel(text)
+    def _section_title(self, key: str) -> QLabel:
+        """面板分区小标题（加粗）；按 panel 组键取词并登记供重翻译。"""
+        label = QLabel(self._tr(_GROUP_PANEL, key))
         font = label.font()
         font.setBold(True)
         label.setFont(font)
+        self._section_labels[key] = label
         return label
 
     def _connect_signals(self) -> None:
@@ -268,6 +288,36 @@ class MainWidget(QWidget):
         self._service.preview_ready.connect(self._on_preview_ready)
         self._service.node_status_changed.connect(self._on_node_status)
         self._service.run_finished.connect(self._on_run_finished)
+        self._connect_language_signals()
+
+    def _connect_language_signals(self) -> None:
+        """连接框架语言信号：框架语言变化与本插件语言覆盖变化均触发重翻译。"""
+        manager = get_language_manager()
+        manager.language_changed.connect(self._retranslate_ui)
+        manager.plugin_language_changed.connect(
+            self._on_plugin_language_changed)
+
+    def _on_plugin_language_changed(self, plugin_id: str, _lang: str) -> None:
+        """插件级语言覆盖变化：仅当目标是本插件时重翻译。"""
+        if self._plugin_id is not None and plugin_id != self._plugin_id:
+            return
+        self._retranslate_ui()
+
+    def _retranslate_ui(self, *_args) -> None:
+        """语言切换后集中重翻译：分区标题、各子面板、节点类型注册。
+
+        节点类型按新语言重注册（同名异定义纠正机制，新建节点与创建
+        菜单立即生效）；画布既有节点标题属实例数据（用户可重命名），
+        不回溯改写；状态栏等动态文案在下次事件生成时自然更新。
+        """
+        for key, label in self._section_labels.items():
+            label.setText(self._tr(_GROUP_PANEL, key))
+        self._toolbar.retranslate_ui()
+        self.graph_list_panel.retranslate_ui()
+        self.node_list_panel.retranslate_ui()
+        self._property_panel.retranslate_ui()
+        self._preview_panel.retranslate_ui()
+        ensure_node_types_registered(self._i18n)
 
     # ------------------------------------------------------------------ 工具条动作（委托 service）
     def _run_pipeline(self) -> None:
@@ -275,18 +325,19 @@ class MainWidget(QWidget):
         self._push_graph_snapshot()
         result = self._service.run_pipeline()
         if not result.get("success"):
-            self._report_failure("运行失败", result)
+            self._report_failure(self._tr(_GROUP_MAIN, "fail.run"), result)
             return
         self.canvas.execution().reset()
         self._run_order = []
         self._toolbar.set_running(True)
-        self._toolbar.set_status("运行中…")
+        self._toolbar.set_status(self._tr(_GROUP_TOOLBAR, "status.running"))
 
     def _stop_pipeline(self) -> None:
         """停止：协作式中断请求，结果由 run_finished 汇总上报。"""
         result = self._service.stop_pipeline()
         if result.get("success"):
-            self._toolbar.set_status(_STATUS_STOPPING)
+            self._toolbar.set_status(self._tr(_GROUP_TOOLBAR,
+                                              "status.stopping"))
 
     def _save_graph(self) -> None:
         """保存：覆盖写入当前存档；无当前存档（新图/预置图）退化为另存为。"""
@@ -308,16 +359,19 @@ class MainWidget(QWidget):
         self._push_graph_snapshot()
         result = self._service.save_graph(name)
         if not result.get("success"):
-            self._report_failure("保存失败", result)
+            self._report_failure(self._tr(_GROUP_MAIN, "fail.save"), result)
             return False
         self.graph_list_panel.refresh()
         count = result.get("data", {}).get("node_count", len(self.graph.nodes()))
-        self._toolbar.set_status(f"已保存「{name}」（{count} 个节点）")
+        self._toolbar.set_status(self._tr(_GROUP_MAIN, "status.saved",
+                                          name=name, count=count))
         return True
 
     def _prompt_graph_name(self) -> Optional[str]:
         """弹存档命名对话框；取消或空名返回 None。"""
-        name, ok = QInputDialog.getText(self, _SAVE_AS_TITLE, _SAVE_AS_LABEL)
+        name, ok = QInputDialog.getText(
+            self, self._tr(_GROUP_MAIN, "dialog.save_as_title"),
+            self._tr(_GROUP_MAIN, "dialog.save_as_label"))
         if not ok or not name.strip():
             return None
         return name.strip()
@@ -330,24 +384,28 @@ class MainWidget(QWidget):
         if name not in names:
             return True
         answer = QMessageBox.question(
-            self, _OVERWRITE_TITLE, _OVERWRITE_TEXT.format(name=name))
+            self, self._tr(_GROUP_MAIN, "dialog.overwrite_title"),
+            self._tr(_GROUP_MAIN, "dialog.overwrite_text", name=name))
         return answer == QMessageBox.StandardButton.Yes
 
     def _load_graph_by_name(self, name: str) -> None:
         """加载指定存档：委托 service 恢复，成功后取回图 dict 刷新画布。"""
         result = self._service.load_graph(name)
         if not result.get("success"):
-            self._report_failure("加载失败", result)
+            self._report_failure(self._tr(_GROUP_MAIN, "fail.load"), result)
             return
         data = self._pull_graph_snapshot()
         if data is None:
-            self._toolbar.set_status("加载成功，但未能取回图数据（见日志）")
+            self._toolbar.set_status(self._tr(_GROUP_MAIN,
+                                              "status.load_no_data"))
             return
         self.restore_graph(data)
         fallback = bool(result.get("data", {}).get("fallback"))
         self._current_graph_name = None if fallback else name
-        suffix = "（存档缺失 / 损坏，已回退示例图）" if fallback else ""
-        self._toolbar.set_status(f"已加载「{name}」{suffix}")
+        suffix = (self._tr(_GROUP_MAIN, "status.load_fallback_suffix")
+                  if fallback else "")
+        self._toolbar.set_status(self._tr(_GROUP_MAIN, "status.loaded",
+                                          name=name, suffix=suffix))
 
     def _load_initial_graph(self) -> None:
         """启动加载：存在 default 存档则恢复，否则构建预置示例图（既有回退）。"""
@@ -385,12 +443,17 @@ class MainWidget(QWidget):
         total_ms = float(summary.get("total_ms", 0.0))
         count = int(summary.get("node_count", 0))
         if status == "done":
-            self._toolbar.set_status(f"运行完成：{count} 个节点 · 总耗时 {total_ms:.0f} ms")
+            self._toolbar.set_status(self._tr(
+                _GROUP_MAIN, "status.run_done", count=count,
+                ms=f"{total_ms:.0f}"))
             return
         errors = summary.get("errors") or []
-        reason = errors[0] if errors else "未知错误"
+        reason = errors[0] if errors else self._tr(_GROUP_MAIN,
+                                                   "error.unknown")
         _logger.error(_MODULE, f"管线运行失败：{reason}")
-        self._toolbar.set_status(f"运行中断：{reason}")
+        self._toolbar.set_status(self._tr(_GROUP_MAIN,
+                                          "status.run_interrupted",
+                                          reason=reason))
 
     def _on_selection_changed(self, node_ids: List[str]) -> None:
         """选中变化 → 参数面板：单选绑定节点，否则回提示态。"""
@@ -416,8 +479,8 @@ class MainWidget(QWidget):
         return graph
 
     def _report_failure(self, title: str, result: Dict[str, Any]) -> None:
-        """操作失败：中文弹窗告知 + ERROR 日志（面向用户的错误两者都要）。"""
-        reason = result.get("error", "未知错误")
+        """操作失败：弹窗告知 + ERROR 日志（面向用户的错误两者都要）。"""
+        reason = result.get("error", self._tr(_GROUP_MAIN, "error.unknown"))
         _logger.error(_MODULE, f"{title}：{reason}")
         QMessageBox.warning(self, title, str(reason))
         self._toolbar.set_status(f"{title}：{reason}")

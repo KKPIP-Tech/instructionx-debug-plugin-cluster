@@ -17,6 +17,7 @@ from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
 from InstructionX_UIKit.components import Dialog, ImageView
 from InstructionX_UIKit.theme import set_property
 
+from core.interfaces import ILocalizationFacade
 from utils.logging_tools import LoggerManager, get_name
 
 __all__ = ["PreviewPanel"]
@@ -25,18 +26,14 @@ __all__ = ["PreviewPanel"]
 #: 配置接管前由本常量承载，缩放仅影响显示不影响数据）
 _PREVIEW_MAX_WIDTH = 960
 _PREVIEW_MAX_HEIGHT = 720
-#: 空态提示与解码失败提示
-_HINT_EMPTY = "运行管线后，preview 节点的结果将显示在这里。"
-_HINT_DECODE_FAILED = "预览图解码失败（非有效 PNG 数据）。"
 #: 空态占位透明像素尺寸（ImageView 对 null pixmap 会显示「加载失败」
 #: 占位插画，空态改用 1×1 透明像素保持干净的空白区域）
 _EMPTY_PIXMAP_SIZE = 1
 #: 点击放大预览对话框的显示上限（超出等比缩小，仅影响显示）
 _PREVIEW_DIALOG_MAX_WIDTH = 1024
 _PREVIEW_DIALOG_MAX_HEIGHT = 768
-#: 预览对话框标题与按钮文案
-_PREVIEW_DIALOG_TITLE = "预览"
-_PREVIEW_DIALOG_OK = "关闭"
+#: 取词分组名（与 text/zh.xml 一致）
+_GROUP = "preview"
 
 _logger = LoggerManager()
 _MODULE = get_name()
@@ -63,25 +60,46 @@ class _PlainImageView(ImageView):
 class PreviewPanel(QWidget):
     """预览区控件：ImageView + 结果信息（尺寸 / 通道 / 耗时）。
 
+    参数:
+        parent: 父控件。
+        i18n: 插件取词门面（可选，未注入时显示键名兜底）。
+
     公开方法:
         ``show_result(png_bytes, info)``：显示一轮 preview 结果；
-        ``show_empty()``：回空态提示（图加载 / 重置时调用）。
+        ``show_empty()``：回空态提示（图加载 / 重置时调用）；
+        ``retranslate_ui()``：语言切换后按当前状态重取信息文案。
     """
 
-    def __init__(self, parent: QWidget = None) -> None:
-        """构建 ImageView 与信息标签，初始为空态。
-
-        参数:
-            parent: 父控件。
-        """
+    def __init__(self, parent: QWidget = None,
+                 i18n: Optional[ILocalizationFacade] = None) -> None:
+        """构建 ImageView 与信息标签，初始为空态。"""
         super().__init__(parent)
+        self._i18n = i18n
         self._image_view = ImageView()
         self._info_label = QLabel()
         #: 当前结果的原始分辨率 pixmap（点击放大预览用；空态为 None）
         self._current_pixmap: Optional[QPixmap] = None
+        #: 最近一次结果的元数据 / 解码失败标志（重翻译时按状态重取文案）
+        self._last_info: Optional[Dict[str, Any]] = None
+        self._decode_failed = False
         self._build_layout()
         self._image_view.clicked.connect(self._open_preview_dialog)
         self.show_empty()
+
+    def _tr(self, key: str, /, **params) -> str:
+        """取插件文案；门面未注入时优雅降级返回键名。"""
+        if self._i18n is None:
+            return key
+        return self._i18n.tr(_GROUP, key, **params)
+
+    def retranslate_ui(self) -> None:
+        """语言切换后按当前状态（空态 / 失败 / 结果）重取信息行文案。"""
+        if self._decode_failed:
+            self._info_label.setText(self._tr("hint.decode_failed"))
+        elif self._last_info is not None:
+            self._info_label.setText(self._format_info(self._last_info))
+        else:
+            self._info_label.setText(self._tr("hint.empty"))
 
     def show_result(self, png_bytes: bytes, info: Dict[str, Any]) -> None:
         """显示 preview 结果（仅可在 UI 线程调用）。
@@ -93,8 +111,11 @@ class PreviewPanel(QWidget):
         pixmap = QPixmap()
         if not pixmap.loadFromData(png_bytes):
             _logger.error(_MODULE, "预览 PNG 解码失败")
-            self._info_label.setText(_HINT_DECODE_FAILED)
+            self._decode_failed = True
+            self._info_label.setText(self._tr("hint.decode_failed"))
             return
+        self._decode_failed = False
+        self._last_info = info
         self._current_pixmap = pixmap
         self._image_view.set_source(self._scaled(pixmap))
         self._info_label.setText(self._format_info(info))
@@ -102,15 +123,17 @@ class PreviewPanel(QWidget):
     def show_empty(self) -> None:
         """回空态：清空图片并显示引导提示。"""
         self._current_pixmap = None
+        self._last_info = None
+        self._decode_failed = False
         self._image_view.set_source(self._transparent_pixmap())
-        self._info_label.setText(_HINT_EMPTY)
+        self._info_label.setText(self._tr("hint.empty"))
 
     def _open_preview_dialog(self) -> None:
         """点击图片 → 放大预览对话框（原始分辨率，超限等比缩小）。"""
         if self._current_pixmap is None or self._current_pixmap.isNull():
             return  # 空态 / 解码失败无图可预览
-        dialog = Dialog(self, title=_PREVIEW_DIALOG_TITLE,
-                        ok_text=_PREVIEW_DIALOG_OK, show_cancel=False)
+        dialog = Dialog(self, title=self._tr("dialog.title"),
+                        ok_text=self._tr("dialog.close"), show_cancel=False)
         pixmap = self._scaled_for_dialog()
         view = _PlainImageView(pixmap)
         view.setFixedSize(pixmap.size())  # 对话框内容区贴合图片实际尺寸
@@ -154,9 +177,11 @@ class PreviewPanel(QWidget):
             Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
     def _format_info(self, info: Dict[str, Any]) -> str:
-        """把 info 元数据格式化为单行结果文案。"""
-        return (
-            f"结果：{info.get('width', '?')}×{info.get('height', '?')}"
-            f" · {info.get('channels', '?')} 通道"
-            f" · 耗时 {float(info.get('elapsed_ms', 0.0)):.0f} ms"
+        """把 info 元数据格式化为单行结果文案（经 i18n 模板取词）。"""
+        return self._tr(
+            "info.result",
+            width=info.get("width", "?"),
+            height=info.get("height", "?"),
+            channels=info.get("channels", "?"),
+            ms=f"{float(info.get('elapsed_ms', 0.0)):.0f}",
         )

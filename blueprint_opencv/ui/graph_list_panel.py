@@ -34,6 +34,7 @@ from PySide6.QtWidgets import (
 from InstructionX_UIKit.components import Button, ListWidget
 from InstructionX_UIKit.theme import set_property
 
+from core.interfaces import ILocalizationFacade
 from utils.logging_tools import LoggerManager, get_name
 
 __all__ = ["GraphListPanel"]
@@ -42,21 +43,8 @@ __all__ = ["GraphListPanel"]
 _ITEM_HEIGHT = 48
 #: 按钮尺寸档（与节点列表 / 工具条一致的紧凑风格）
 _BUTTON_SIZE = "sm"
-#: 空态占位文案
-_EMPTY_TEXT = "暂无已保存蓝图"
-#: 按钮文案
-_SAVE_AS_TEXT = "另存为"
-_LOAD_TEXT = "加载"
-_RENAME_TEXT = "重命名"
-_DELETE_TEXT = "删除"
-#: 重命名对话框文案
-_RENAME_TITLE = "重命名存档"
-_RENAME_LABEL = "新名称："
-#: 删除确认对话框文案
-_DELETE_TITLE = "删除存档"
-_DELETE_TEXT_TEMPLATE = "确定删除存档「{name}」吗？该操作不可撤销。"
-#: 节点数未知时的元信息占位（存档损坏时 node_count 为 None）
-_UNKNOWN_COUNT_TEXT = "?"
+#: 取词分组名（与 text/zh.xml 一致）
+_GROUP = "graph_list"
 #: 存档修改时间格式（service 返回）与列表短格式（栏宽 200px 内防裁断，
 #: 完整时间入 tooltip）
 _MODIFIED_AT_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -66,6 +54,17 @@ _logger = LoggerManager()
 _MODULE = get_name()
 
 
+def _make_tr(i18n: Optional[ILocalizationFacade]):
+    """生成取词函数；门面未注入时优雅降级返回键名（正常加载始终注入）。"""
+
+    def tr(key: str, /, **params) -> str:
+        if i18n is None:
+            return key
+        return i18n.tr(_GROUP, key, **params)
+
+    return tr
+
+
 class _GraphRow(QWidget):
     """存档行控件：名称（第一行，加粗）+ 元信息（第二行，次级色）。
 
@@ -73,18 +72,17 @@ class _GraphRow(QWidget):
     列表视口（同 NodeListPanel 的 _NodeRow 变通，SPEC §3.2）。
     """
 
-    def __init__(self, meta: Dict[str, Any], parent: QWidget = None) -> None:
-        """按存档元信息构建两行布局。
-
-        参数:
-            meta: ``list_graphs`` 单项（name / node_count / size_bytes /
-                modified_at）。
-            parent: 父控件。
-        """
+    def __init__(self, meta: Dict[str, Any], parent: QWidget = None,
+                 i18n: Optional[ILocalizationFacade] = None) -> None:
+        """按存档元信息构建两行布局（meta 为 ``list_graphs`` 单项）。"""
         super().__init__(parent)
         name_label = QLabel(str(meta.get("name", "")))
-        info_label = QLabel(self._info_text(meta))
+        info_label = QLabel(self._info_text(meta, i18n))
         info_label.setToolTip(str(meta.get("modified_at", "")))
+        self._build_layout(name_label, info_label)
+
+    def _build_layout(self, name_label: QLabel, info_label: QLabel) -> None:
+        """装配两行垂直布局并设置鼠标透明（点击穿透到列表视口）。"""
         name_font = name_label.font()
         name_font.setBold(True)
         name_label.setFont(name_font)
@@ -99,11 +97,14 @@ class _GraphRow(QWidget):
             widget.setAttribute(transparent)
 
     @staticmethod
-    def _info_text(meta: Dict[str, Any]) -> str:
-        """元信息行文案：``N 个节点 · 保存时间（短格式）``（节点数未知显示 ?）。"""
+    def _info_text(meta: Dict[str, Any],
+                   i18n: Optional[ILocalizationFacade]) -> str:
+        """元信息行文案（节点数未知时按 row.unknown_count 占位）。"""
+        tr = _make_tr(i18n)
         node_count = meta.get("node_count")
-        count_text = str(node_count) if node_count is not None else _UNKNOWN_COUNT_TEXT
-        return f"{count_text} 个节点 · {_GraphRow._short_time(meta)}"
+        count = str(node_count) if node_count is not None else tr(
+            "row.unknown_count")
+        return tr("row.info", count=count, time=_GraphRow._short_time(meta))
 
     @staticmethod
     def _short_time(meta: Dict[str, Any]) -> str:
@@ -123,6 +124,7 @@ class GraphListPanel(QWidget):
         service: ``BlueprintOpenCVService`` 实例（存档枚举 / 重命名 /
             删除的数据源）。
         parent: 父控件。
+        i18n: 插件取词门面（可选，未注入时显示键名兜底）。
 
     信号:
         load_requested(str): 请求加载指定存档（双击或「加载」按钮）；
@@ -130,6 +132,7 @@ class GraphListPanel(QWidget):
 
     公开方法:
         ``refresh()``：重新枚举存档并重建列表（保留同名选中态）；
+        ``retranslate_ui()``：语言切换后重设静态文案并重建列表行；
         ``current_graph_name()``：选中行的存档名（无选中为 None）；
         ``row_count()``：当前行数（测试断言用）。
     """
@@ -137,17 +140,33 @@ class GraphListPanel(QWidget):
     load_requested = Signal(str)
     save_as_requested = Signal()
 
-    def __init__(self, service, parent: QWidget = None) -> None:
+    def __init__(self, service, parent: QWidget = None,
+                 i18n: Optional[ILocalizationFacade] = None) -> None:
         super().__init__(parent)
         self._service = service
+        self._i18n = i18n
+        self._tr = _make_tr(i18n)
         self._list = ListWidget(item_height=_ITEM_HEIGHT)
-        self._empty_hint = QLabel(_EMPTY_TEXT)
-        self._save_as_button = Button(_SAVE_AS_TEXT, size=_BUTTON_SIZE)
-        self._load_button = Button(_LOAD_TEXT, size=_BUTTON_SIZE)
-        self._rename_button = Button(_RENAME_TEXT, size=_BUTTON_SIZE)
-        self._delete_button = Button(_DELETE_TEXT, size=_BUTTON_SIZE)
+        self._empty_hint = QLabel(self._tr("empty"))
+        self._build_buttons()
         self._build_layout()
         self._connect_signals()
+        self.refresh()
+
+    def _build_buttons(self) -> None:
+        """创建四个存档操作按钮（文案经 i18n 取词）。"""
+        self._save_as_button = Button(self._tr("save_as"), size=_BUTTON_SIZE)
+        self._load_button = Button(self._tr("load"), size=_BUTTON_SIZE)
+        self._rename_button = Button(self._tr("rename"), size=_BUTTON_SIZE)
+        self._delete_button = Button(self._tr("delete"), size=_BUTTON_SIZE)
+
+    def retranslate_ui(self) -> None:
+        """语言切换后重设按钮 / 空态文案并重建列表行（行文案随 refresh）。"""
+        self._save_as_button.setText(self._tr("save_as"))
+        self._load_button.setText(self._tr("load"))
+        self._rename_button.setText(self._tr("rename"))
+        self._delete_button.setText(self._tr("delete"))
+        self._empty_hint.setText(self._tr("empty"))
         self.refresh()
 
     # ------------------------------------------------------------------ 对外
@@ -208,11 +227,11 @@ class GraphListPanel(QWidget):
 
     # ------------------------------------------------------------------ 行构建与选中
     def _add_row(self, meta: Dict[str, Any]) -> None:
-        """追加一行存档（名称存 item ``UserRole``）。"""
+        """追加一行存档（名称存 item ``UserRole``，行文案随当前语言）。"""
         item = QListWidgetItem()
         item.setData(Qt.ItemDataRole.UserRole, str(meta.get("name", "")))
         self._list.addItem(item)
-        self._list.setItemWidget(item, _GraphRow(meta))
+        self._list.setItemWidget(item, _GraphRow(meta, i18n=self._i18n))
 
     def _restore_selection(self, name: Optional[str]) -> None:
         """刷新后恢复同名行的选中态（不存在则保持未选中）。"""
@@ -251,24 +270,26 @@ class GraphListPanel(QWidget):
     def _prompt_rename(self, name: str) -> None:
         """重命名流程：输入新名 → service.rename_graph → 刷新 / 报错。"""
         new_name, ok = QInputDialog.getText(
-            self, _RENAME_TITLE, _RENAME_LABEL, text=name)
+            self, self._tr("dialog.rename_title"),
+            self._tr("dialog.rename_label"), text=name)
         if not ok or not new_name.strip() or new_name.strip() == name:
             return
         result = self._service.rename_graph(name, new_name.strip())
         if not result.get("success"):
-            self._report_error("重命名失败", result.get("error"))
+            self._report_error(self._tr("fail.rename"), result.get("error"))
             return
         self.refresh()
 
     def _confirm_delete(self, name: str) -> None:
         """删除流程：确认 → service.delete_graph → 刷新 / 报错。"""
         answer = QMessageBox.question(
-            self, _DELETE_TITLE, _DELETE_TEXT_TEMPLATE.format(name=name))
+            self, self._tr("dialog.delete_title"),
+            self._tr("dialog.delete_text", name=name))
         if answer != QMessageBox.StandardButton.Yes:
             return
         result = self._service.delete_graph(name)
         if not result.get("success"):
-            self._report_error("删除失败", result.get("error"))
+            self._report_error(self._tr("fail.delete"), result.get("error"))
             return
         self.refresh()
 
