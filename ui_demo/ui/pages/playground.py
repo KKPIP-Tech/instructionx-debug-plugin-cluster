@@ -13,6 +13,8 @@
 QSS 或令牌，亮 / 暗主题切换无需重启即可正确换肤。
 """
 
+from typing import Optional
+
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import (
@@ -32,6 +34,10 @@ from InstructionX_UIKit.components.line_edit import LineEdit
 from InstructionX_UIKit.components.slider import Slider
 from InstructionX_UIKit.components.spin_box import DoubleSpinBox, SpinBox
 from InstructionX_UIKit.theme import T, set_property
+
+from core.interfaces import ILocalizationFacade
+
+from .common import bind_tr
 
 __all__ = [
     "ParamForm",
@@ -302,21 +308,24 @@ class PlaygroundPanel(QFrame):
     ``controls`` 字典暴露各参数主控件，便于测试与外部访问。
 
     参数:
-        title: 面板标题。
+        title: 面板标题（None 时取语言文件 ``playground:panel.default_title``）。
         width: 固定宽度，默认 280。
+        i18n: 取词门面（默认标题与「重置」按钮文案用；可为 None）。
         parent: 父控件。
     """
 
-    def __init__(self, title: str = "参数调节", width: int = 280, parent=None):
+    def __init__(self, title: Optional[str] = None, width: int = 280,
+                 i18n: Optional[ILocalizationFacade] = None, parent=None):
         super().__init__(parent)
         self.setFrameShape(QFrame.Shape.StyledPanel)  # 命中 QSS 卡片边框
         self.setFixedWidth(int(width))
+        tr = bind_tr(i18n, "playground")
 
         lay = QVBoxLayout(self)
         lay.setContentsMargins(12, 10, 12, 10)
         lay.setSpacing(8)
 
-        head = QLabel(title)
+        head = QLabel(title if title is not None else tr("panel.default_title"))
         font = QFont()
         font.setWeight(QFont.Weight(T("font.weight.semibold")))
         head.setFont(font)
@@ -328,7 +337,7 @@ class PlaygroundPanel(QFrame):
 
         btn_row = QHBoxLayout()
         btn_row.addStretch(1)
-        self.reset_button = _small_button("重置")
+        self.reset_button = _small_button(tr("panel.reset"))
         self.reset_button.clicked.connect(self.form.reset)
         btn_row.addWidget(self.reset_button)
         lay.addLayout(btn_row)
@@ -413,12 +422,14 @@ class ParamCard(QFrame):
         demo_height: 演示区最小高度。
         continuous: True 时任何参数变化都会自动重放（连续型动画）。
         on_stop: 重放前对旧句柄的自定义清理（默认调用 ``stop()``）。
+        i18n: 取词门面（「播放」按钮文案用；可为 None）。
         parent: 父控件。
     """
 
     def __init__(self, title: str, demo: QWidget = None, play=None,
                  hint: str = "", demo_height: int = 130,
-                 continuous: bool = False, on_stop=None, parent=None):
+                 continuous: bool = False, on_stop=None, parent=None,
+                 i18n: Optional[ILocalizationFacade] = None):
         super().__init__(parent)
         self.setFrameShape(QFrame.Shape.StyledPanel)  # 命中 QSS 卡片边框
 
@@ -454,7 +465,7 @@ class ParamCard(QFrame):
 
         btn_row = QHBoxLayout()
         btn_row.addStretch(1)
-        self.play_button = _small_button("播放")
+        self.play_button = _small_button(bind_tr(i18n, "playground")("card.play"))
         self.play_button.clicked.connect(self.replay)
         btn_row.addWidget(self.play_button)
         lay.addLayout(btn_row)

@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 """Demo 演示页包：统一导航注册表。
 
-``NAV`` 为有序结构：``[(分类键, 分类标题, [(页面键, 页面标题, 页面工厂), ...]), ...]``。
-每个页面工厂遵循 ``create_page() -> QWidget`` 约定（返回一个完整演示页）。
+``NAV`` 为有序结构：``[(分类键, [(页面键, 页面工厂), ...]), ...]``。
+分类 / 页面标题不落字面量，由 MainWidget 以派生键经取词门面翻译
+（``nav:cat.<分类键>`` / ``nav:page.<页面键>``，见 ``text/zh.xml``）。
+每个页面工厂遵循 ``create_page(i18n=None) -> QWidget`` 约定（返回一个完整演示页）。
 MainWindow 依据 ``NAV`` 构建左侧导航树并懒加载右侧页面。
 
 除布局页（页面内已含「用法」分区）外，本模块在页面工厂外包一层
@@ -26,6 +28,7 @@ from . import (
 from .common import usage_section
 
 #: 页面键 -> 最小调用示例（注入到页面顶部「用法」分区；布局页自带用法，不在此列）
+#: 注意：示例为代码（代码即文档），不参与多语言翻译
 USAGE = {
     # -- 设计令牌 / 基础 --------------------------------------------------
     "tokens": 'from InstructionX_UIKit.theme import T, ThemeManager  # T("color.primary") 取令牌',
@@ -99,13 +102,13 @@ USAGE = {
 
 def _with_usage(key, factory):
     """在页面顶部注入「用法」代码标签（页面需由 make_page 构建）。"""
-    def make():
-        page = factory()
+    def make(i18n=None):
+        page = factory(i18n)
         code = USAGE.get(key)
         if code:
             try:
                 content = page.widget()
-                content.layout().insertWidget(2, usage_section(code))
+                content.layout().insertWidget(2, usage_section(code, i18n))
             except (AttributeError, TypeError):
                 pass  # 非 make_page 结构的页面不注入
         return page
@@ -113,33 +116,33 @@ def _with_usage(key, factory):
 
 
 def _register(pages):
-    """为 (键, 标题, 工厂) 列表中的每个工厂包上用法注入。"""
-    return [(key, title, _with_usage(key, factory)) for key, title, factory in pages]
+    """为 (键, 工厂) 列表中的每个工厂包上用法注入。"""
+    return [(key, _with_usage(key, factory)) for key, factory in pages]
 
 
-#: 导航注册表（顺序即导航树顺序）
+#: 导航注册表（顺序即导航树顺序）：[(分类键, [(页面键, 页面工厂), ...]), ...]
 NAV = [
-    ("tokens", "设计令牌", _register([
-        ("tokens", "设计令牌总览", tokens.create_page),
+    ("tokens", _register([
+        ("tokens", tokens.create_page),
     ])),
-    ("layouts", "布局预设", list(layouts.LAYOUT_PAGES)),  # 布局页自带「用法」分区
-    ("inputs", "组件 · 输入", _register(inputs.INPUT_PAGES)),
-    ("display", "组件 · 展示", _register(display.DISPLAY_PAGES)),
-    ("feedback", "组件 · 反馈", _register(feedback.FEEDBACK_PAGES)),
-    ("anim_property", "动画 · 属性", _register([
-        ("anim_property", "属性动画（28）", anim_property.create_page),
+    ("layouts", list(layouts.LAYOUT_PAGES)),  # 布局页自带「用法」分区
+    ("inputs", _register(inputs.INPUT_PAGES)),
+    ("display", _register(display.DISPLAY_PAGES)),
+    ("feedback", _register(feedback.FEEDBACK_PAGES)),
+    ("anim_property", _register([
+        ("anim_property", anim_property.create_page),
     ])),
-    ("anim_painted", "动画 · 自绘", _register([
-        ("anim_painted", "自绘动画（24）", anim_painted.create_page),
+    ("anim_painted", _register([
+        ("anim_painted", anim_painted.create_page),
     ])),
-    ("basic_widgets", "基础控件", _register([
-        ("basic_widgets", "基础控件全家福", basic_widgets.create_page),
+    ("basic_widgets", _register([
+        ("basic_widgets", basic_widgets.create_page),
     ])),
-    ("charts", "图表", _register([
-        ("charts", "图表（原生引擎）", charts.create_page),
+    ("charts", _register([
+        ("charts", charts.create_page),
     ])),
-    ("blueprint", "蓝图", _register([
-        ("blueprint", "蓝图（节点图）", blueprint.create_page),
+    ("blueprint", _register([
+        ("blueprint", blueprint.create_page),
     ])),
 ]
 

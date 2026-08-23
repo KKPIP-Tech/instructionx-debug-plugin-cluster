@@ -3,7 +3,10 @@
 
 所有可视化均实时读取 ``InstructionX_UIKit.tokens`` 与 ``T()``，亮 / 暗切换后自动换肤。
 色板采用「亮 / 暗对照」：每个语义色同时展示两套主题的取值。
+文案经 ``bind_tr`` 按 ``tokens`` 分组取词（语言切换由 MainWidget 重建本页刷新）。
 """
+
+from typing import Optional
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPen
@@ -19,7 +22,9 @@ from PySide6.QtWidgets import (
 from InstructionX_UIKit import tokens as tk
 from InstructionX_UIKit.theme import T, ThemeManager, apply_shadow, set_property
 
-from .common import Section, col, hint_label, make_page, row
+from core.interfaces import ILocalizationFacade
+
+from .common import Section, bind_tr, col, hint_label, make_page, row
 
 __all__ = ["create_page"]
 
@@ -28,15 +33,16 @@ __all__ = ["create_page"]
 # 色板
 # ---------------------------------------------------------------------------
 
+#: [(色组取词键, [语义色键, ...]), ...]
 _COLOR_GROUPS = [
-    ("背景", ["bg.base", "bg.subtle", "bg.muted", "bg.elevated"]),
-    ("边框", ["border", "border.strong"]),
-    ("文本", ["text.primary", "text.secondary", "text.tertiary", "text.disabled"]),
-    ("主色", ["primary", "primary.hover", "primary.pressed", "primary.subtle", "on.primary"]),
-    ("成功", ["success", "success.hover", "success.subtle"]),
-    ("警告", ["warning", "warning.subtle"]),
-    ("危险", ["danger", "danger.hover", "danger.subtle"]),
-    ("遮罩", ["overlay"]),
+    ("bg", ["bg.base", "bg.subtle", "bg.muted", "bg.elevated"]),
+    ("border", ["border", "border.strong"]),
+    ("text", ["text.primary", "text.secondary", "text.tertiary", "text.disabled"]),
+    ("primary", ["primary", "primary.hover", "primary.pressed", "primary.subtle", "on.primary"]),
+    ("success", ["success", "success.hover", "success.subtle"]),
+    ("warning", ["warning", "warning.subtle"]),
+    ("danger", ["danger", "danger.hover", "danger.subtle"]),
+    ("overlay", ["overlay"]),
 ]
 
 
@@ -72,7 +78,7 @@ class _SplitChip(QFrame):
 class _ColorCard(QFrame):
     """单个语义色卡片：对照色块 + 名称 + 亮 / 暗十六进制。"""
 
-    def __init__(self, key: str, parent=None):
+    def __init__(self, key: str, tr, parent=None):
         super().__init__(parent)
         self.setFrameShape(QFrame.Shape.StyledPanel)
         lay = QVBoxLayout(self)
@@ -86,7 +92,7 @@ class _ColorCard(QFrame):
         name.setFont(f)
         lay.addWidget(name)
         full = f"color.{key}"
-        hex_lab = QLabel(f"亮 {tk.LIGHT[full]}\n暗 {tk.DARK[full]}")
+        hex_lab = QLabel(tr("card.hex", light=tk.LIGHT[full], dark=tk.DARK[full]))
         hex_f = QFont()
         hex_f.setPixelSize(T("font.xs"))
         hex_lab.setFont(hex_f)
@@ -94,16 +100,16 @@ class _ColorCard(QFrame):
         lay.addWidget(hex_lab)
 
 
-def _colors_section() -> QFrame:
-    box = Section("色板（语义色 · 亮 / 暗对照）")
-    for group_name, keys in _COLOR_GROUPS:
-        box.layout().addWidget(hint_label(group_name, role="secondary"))
+def _colors_section(tr) -> QFrame:
+    box = Section(tr("section.colors"))
+    for group_key, keys in _COLOR_GROUPS:
+        box.layout().addWidget(hint_label(tr(f"color_group.{group_key}"), role="secondary"))
         grid_host = QWidget()
         grid = QGridLayout(grid_host)
         grid.setContentsMargins(0, 0, 0, 0)
         grid.setSpacing(10)
         for i, key in enumerate(keys):
-            grid.addWidget(_ColorCard(key), i // 4, i % 4)
+            grid.addWidget(_ColorCard(key, tr), i // 4, i % 4)
         box.layout().addWidget(grid_host)
     return box
 
@@ -112,17 +118,19 @@ def _colors_section() -> QFrame:
 # 字阶 / 字重
 # ---------------------------------------------------------------------------
 
+#: (令牌键, 标签取词键)
 _FONT_SCALES = [
-    ("font.xs", "超小 xs"), ("font.sm", "小号 sm"), ("font.md", "正文 md"),
-    ("font.lg", "大号 lg"), ("font.title.sm", "标题 sm"), ("font.title.md", "标题 md"),
-    ("font.title.lg", "标题 lg"), ("font.display", "展示 display"), ("font.hero", "英雄 hero"),
+    ("font.xs", "scale.xs"), ("font.sm", "scale.sm"), ("font.md", "scale.md"),
+    ("font.lg", "scale.lg"), ("font.title.sm", "scale.title_sm"),
+    ("font.title.md", "scale.title_md"), ("font.title.lg", "scale.title_lg"),
+    ("font.display", "scale.display"), ("font.hero", "scale.hero"),
 ]
 
 _FONT_WEIGHTS = [
-    ("font.weight.regular", "常规 Regular"),
-    ("font.weight.medium", "中等 Medium"),
-    ("font.weight.semibold", "半粗 Semibold"),
-    ("font.weight.bold", "加粗 Bold"),
+    ("font.weight.regular", "weight.regular"),
+    ("font.weight.medium", "weight.medium"),
+    ("font.weight.semibold", "weight.semibold"),
+    ("font.weight.bold", "weight.bold"),
 ]
 
 
@@ -140,7 +148,7 @@ def _scale_line(sample: QLabel, value_text: str, prop: str) -> QWidget:
     return line
 
 
-def _type_section() -> QFrame:
+def _type_section(tr) -> QFrame:
     """字阶 / 字重真实渲染。
 
     注意：全局 QSS 的 ``QWidget { font-size: ... }`` 会覆盖 ``setFont`` 的
@@ -148,19 +156,19 @@ def _type_section() -> QFrame:
     font-weight——实例规则比基座规则更具体，可稳定胜出，同时使
     ``label.font().pixelSize() / weight()`` 与令牌一致，便于自动化校验。
     """
-    box = Section("字体排版（字阶 / 字重）")
-    box.layout().addWidget(hint_label("字阶（各级以真实像素大小渲染）", role="secondary"))
-    for key, label in _FONT_SCALES:
+    box = Section(tr("section.type"))
+    box.layout().addWidget(hint_label(tr("type.scale_hint"), role="secondary"))
+    for key, label_key in _FONT_SCALES:
         px = T(key)
-        sample = QLabel(f"{label} 设计令牌 Typography {px}px")
+        sample = QLabel(tr("type.scale_sample", label=tr(label_key), px=px))
         sample.setStyleSheet(f"font-size: {px}px;")
         sample.setProperty("type_scale", key)
         box.layout().addWidget(_scale_line(sample, f"{key} = {px}px", "type_scale"))
     box.layout().addSpacing(6)
-    box.layout().addWidget(hint_label("字重（真实 QFont weight 渲染）", role="secondary"))
-    for key, label in _FONT_WEIGHTS:
+    box.layout().addWidget(hint_label(tr("type.weight_hint"), role="secondary"))
+    for key, label_key in _FONT_WEIGHTS:
         w = T(key)
-        sample = QLabel(f"{label} 设计系统让界面更一致 Typography 0123456789")
+        sample = QLabel(tr("type.weight_sample", label=tr(label_key)))
         sample.setStyleSheet(f"font-size: {T('font.lg')}px; font-weight: {w};")
         sample.setProperty("type_weight", key)
         box.layout().addWidget(_scale_line(sample, f"{key} = {w}", "type_weight"))
@@ -207,16 +215,16 @@ class _RadiusBox(QWidget):
         p.end()
 
 
-def _spacing_radius_section() -> QFrame:
-    box = Section("间距 / 圆角")
-    box.layout().addWidget(hint_label("间距（4pt 基线，px）", role="secondary"))
+def _spacing_radius_section(tr) -> QFrame:
+    box = Section(tr("section.spacing"))
+    box.layout().addWidget(hint_label(tr("spacing.hint"), role="secondary"))
     for key in ["space.0", "space.05", "space.1", "space.2", "space.3",
                 "space.4", "space.5", "space.6", "space.8", "space.10",
                 "space.12", "space.16"]:
         v = T(key)
         box.layout().addWidget(row(QLabel(f"{key} = {v}px"), _Bar(v)))
     box.layout().addSpacing(6)
-    box.layout().addWidget(hint_label("圆角（px）", role="secondary"))
+    box.layout().addWidget(hint_label(tr("radius.hint"), role="secondary"))
     rad_row = QWidget()
     rad_lay = QHBoxLayout(rad_row)
     rad_lay.setContentsMargins(0, 0, 0, 0)
@@ -235,19 +243,20 @@ def _spacing_radius_section() -> QFrame:
 # 阴影 / 断点 / 动效
 # ---------------------------------------------------------------------------
 
-def _shadow_section() -> QFrame:
-    box = Section("阴影（shadow.sm / md / lg）")
+def _shadow_section(tr) -> QFrame:
+    box = Section(tr("section.shadow"))
     host = QWidget()
     lay = QHBoxLayout(host)
     lay.setContentsMargins(12, 16, 12, 16)
     lay.setSpacing(40)
-    for level, label in (("sm", "sm 小"), ("md", "md 中"), ("lg", "lg 大")):
+    for level, label_key in (("sm", "shadow.sm"), ("md", "shadow.md"),
+                             ("lg", "shadow.lg")):
         card = QFrame()
         card.setFrameShape(QFrame.Shape.StyledPanel)
         card.setFixedSize(140, 90)
         apply_shadow(card, level)
         inner = QVBoxLayout(card)
-        lab = QLabel(label)
+        lab = QLabel(tr(label_key))
         lab.setAlignment(Qt.AlignCenter)
         inner.addWidget(lab)
         lay.addWidget(card, 0, Qt.AlignCenter)
@@ -256,17 +265,18 @@ def _shadow_section() -> QFrame:
     return box
 
 
-def _breakpoint_section() -> QFrame:
-    box = Section("断点（窗口宽度 px）")
+def _breakpoint_section(tr) -> QFrame:
+    box = Section(tr("section.breakpoint"))
     desc = [
         ("xs", "< 640"), ("sm", "640 – 767"), ("md", "768 – 1023"),
         ("lg", "1024 – 1439"), ("xl", "≥ 1440"),
     ]
     for name, rng in desc:
         thr = T(f"breakpoint.{name}")
-        box.layout().addWidget(
-            hint_label(f"{name}：{rng}（起始阈值 {thr}px）", role="secondary"))
-    cur = _CurrentBreakpoint()
+        box.layout().addWidget(hint_label(
+            tr("breakpoint.line", name=name, range=rng, threshold=thr),
+            role="secondary"))
+    cur = _CurrentBreakpoint(tr)
     box.layout().addWidget(cur)
     return box
 
@@ -274,8 +284,9 @@ def _breakpoint_section() -> QFrame:
 class _CurrentBreakpoint(QLabel):
     """实时显示当前窗口宽度对应的断点。"""
 
-    def __init__(self, parent=None):
+    def __init__(self, tr, parent=None):
         super().__init__(parent)
+        self._tr = tr
         self._refresh()
         f = QFont()
         f.setWeight(QFont.Weight(QFont.Bold))
@@ -284,23 +295,24 @@ class _CurrentBreakpoint(QLabel):
     def _refresh(self):
         w = self.window().width() if self.window() else 0
         bp = tk.Breakpoint.from_width(w)
-        self.setText(f"当前窗口宽度 {w}px → 断点 {bp}")
+        self.setText(self._tr("breakpoint.current", width=w, bp=bp))
 
     def resizeEvent(self, event):  # noqa: N802
         super().resizeEvent(event)
         self._refresh()
 
 
-def _motion_section() -> QFrame:
-    box = Section("动效（时长 / 缓动）")
-    box.layout().addWidget(hint_label("时长（ms）", role="secondary"))
+def _motion_section(tr) -> QFrame:
+    box = Section(tr("section.motion"))
+    box.layout().addWidget(hint_label(tr("motion.duration_hint"), role="secondary"))
     for name, ms in tk.DURATION.items():
         bar = _Bar(int(ms / 2))  # 缩放以便观察
         box.layout().addWidget(row(QLabel(f"{name} = {ms}ms"), bar))
     box.layout().addSpacing(6)
-    box.layout().addWidget(hint_label("缓动曲线", role="secondary"))
+    box.layout().addWidget(hint_label(tr("motion.easing_hint"), role="secondary"))
     for name in tk.EASING:
-        box.layout().addWidget(hint_label(f"{name}（QEasingCurve 预设）", role="tertiary"))
+        box.layout().addWidget(hint_label(
+            tr("motion.easing_item", name=name), role="tertiary"))
     return box
 
 
@@ -308,19 +320,15 @@ def _motion_section() -> QFrame:
 # 页面
 # ---------------------------------------------------------------------------
 
-def create_page() -> QWidget:
+def create_page(i18n: Optional[ILocalizationFacade] = None) -> QWidget:
     """设计令牌演示页。"""
+    tr = bind_tr(i18n, "tokens")
     sections = [
-        _colors_section(),
-        _type_section(),
-        _spacing_radius_section(),
-        _shadow_section(),
-        _breakpoint_section(),
-        _motion_section(),
+        _colors_section(tr),
+        _type_section(tr),
+        _spacing_radius_section(tr),
+        _shadow_section(tr),
+        _breakpoint_section(tr),
+        _motion_section(tr),
     ]
-    return make_page(
-        "设计令牌",
-        "整套 UI Kit 的唯一数值事实来源：色彩、字体排版、间距、圆角、阴影、断点与动效。"
-        "色板以亮 / 暗对照展示所有语义色；其余可视化实时读取当前主题令牌。",
-        sections,
-    )
+    return make_page(tr("title"), tr("desc"), sections)

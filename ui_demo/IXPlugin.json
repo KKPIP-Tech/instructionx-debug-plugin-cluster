@@ -1,9 +1,9 @@
 {
     "id": "ui-demo",
-    "name": "UI Demo",
+    "name": {"zh": "UI Demo", "en": "UI Demo"},
     "version": "release.1.0.3",
     "main": "entrance.py",
-    "description": "InstructionX_UIKit 组件橱窗：以导航树分页演示设计令牌、12 个布局预设、57 个组件、属性/自绘动画、原生图表与蓝图节点图，每页附最小用法示例，是插件开发的 UI 参考。",
+    "description": {"zh": "InstructionX_UIKit 组件橱窗：以导航树分页演示设计令牌、12 个布局预设、57 个组件、属性/自绘动画、原生图表与蓝图节点图，每页附最小用法示例，是插件开发的 UI 参考。", "en": "InstructionX_UIKit component showcase: a navigation-tree tour of design tokens, 12 layout presets, 57 components, property/painted animations, the native chart engine and the blueprint node graph. Each page includes a minimal usage example, serving as the UI reference for plugin development."},
     "author": "InstructionX Team",
     "keywords": ["instructionx", "plugin", "ui", "demo", "uikit", "components"]
 }

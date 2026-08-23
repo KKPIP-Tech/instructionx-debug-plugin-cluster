@@ -6,6 +6,8 @@
 保证亮 / 暗主题切换后无需重启即可正确换肤。
 """
 
+from typing import Callable, Optional
+
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPen
 from PySide6.QtWidgets import (
@@ -22,6 +24,8 @@ from PySide6.QtWidgets import (
 from InstructionX_UIKit.theme import T, ThemeManager, set_property
 from InstructionX_UIKit.tokens import MONO_FAMILY
 
+from core.interfaces import ILocalizationFacade
+
 __all__ = [
     "make_page",
     "Section",
@@ -32,7 +36,24 @@ __all__ = [
     "hint_label",
     "code_label",
     "usage_section",
+    "bind_tr",
 ]
+
+
+def bind_tr(i18n: Optional[ILocalizationFacade], group: str) -> Callable[..., str]:
+    """绑定取词门面与分组，返回 ``tr(key, **params)`` 闭包。
+
+    门面未注入时优雅降级返回键名（正常加载路径框架始终注入门面）。
+
+    参数:
+        i18n: 插件取词门面（可为 None）。
+        group: 语言文件内的分组名（一个页面模块一个分组）。
+    """
+    def tr(key: str, /, **params) -> str:
+        if i18n is None:
+            return key
+        return i18n.tr(group, key, **params)
+    return tr
 
 
 def _title_label(text: str) -> QLabel:
@@ -66,14 +87,18 @@ def code_label(code: str) -> QLabel:
     return lab
 
 
-def usage_section(code: str) -> QGroupBox:
+def usage_section(code: str, i18n: Optional[ILocalizationFacade] = None) -> QGroupBox:
     """「用法」分区：展示该演示对应的最小 Kit 调用代码（单行灰字样式）。
 
     用法::
 
         page = make_page(title, desc, [usage_section('Button("确定", variant="primary")'), ...])
+
+    参数:
+        code: 最小调用示例代码（代码即文档，不翻译）。
+        i18n: 取词门面（分区标题用；可为 None）。
     """
-    box = Section("用法")
+    box = Section(bind_tr(i18n, "common")("usage.title"))
     box.layout().addWidget(code_label(code))
     return box
 
@@ -202,10 +227,12 @@ class DemoCard(QFrame):
         play: 点击「播放」时执行的可调用对象（重发动画）。
         hint: 动画的简短说明。
         demo_height: 演示区最小高度。
+        i18n: 取词门面（「播放」按钮文案用；可为 None）。
     """
 
     def __init__(self, title: str, demo: QWidget, play, hint: str = "",
-                 demo_height: int = 130, parent=None):
+                 demo_height: int = 130, parent=None,
+                 i18n: Optional[ILocalizationFacade] = None):
         super().__init__(parent)
         self.setFrameShape(QFrame.Shape.StyledPanel)  # 命中 QSS 卡片边框
 
@@ -231,7 +258,7 @@ class DemoCard(QFrame):
 
         btn_row = QHBoxLayout()
         btn_row.addStretch(1)
-        play_btn = QPushButton("播放")
+        play_btn = QPushButton(bind_tr(i18n, "common")("demo_card.play"))
         set_property(play_btn, "size", "sm")
         play_btn.clicked.connect(self._safe_play)
         btn_row.addWidget(play_btn)

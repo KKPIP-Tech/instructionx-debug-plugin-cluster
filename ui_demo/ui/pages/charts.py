@@ -17,11 +17,14 @@
 变化即按新参数 ``set_option`` 重建图表。卡片由 ``ResponsiveCardGrid``
 按页面宽度以 1~3 列断点自适应排布（同排等宽、整排撑满），组件综合演示
 大图整行撑满。ChartWidget 自身监听 ``theme_changed`` 实时换肤，
-亮 / 暗主题切换无需重建页面。示例数据均为中文语义化数据（月度销量 /
+亮 / 暗主题切换无需重建页面。示例数据均为语义化数据（月度销量 /
 城市天气 / 转化漏斗 / 组织架构等）。
+文案经 ``bind_tr`` 按 ``charts`` 分组取词（示例数据键前缀 ``data.``）。
 """
 
+import datetime as _dt
 import random
+from typing import Optional
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
@@ -37,20 +40,32 @@ from PySide6.QtWidgets import (
 from InstructionX_UIKit.charts import ChartWidget
 from InstructionX_UIKit.theme import T
 
-from .common import Section, hint_label, make_page
+from core.interfaces import ILocalizationFacade
+
+from .common import Section, bind_tr, hint_label, make_page
 from .playground import ParamForm, PlaygroundPanel, add_specs
 
 __all__ = ["create_page", "ChartDemoCard", "ResponsiveCardGrid"]
 
 
 # ---------------------------------------------------------------------------
-# 语义化示例数据（确定性）
+# 语义化示例数据（确定性；文本经取词，数据本身不变）
 # ---------------------------------------------------------------------------
 
-_MONTHS = ["1月", "2月", "3月", "4月", "5月", "6月",
-           "7月", "8月", "9月", "10月", "11月", "12月"]
-_CITIES = ["北京", "上海", "广州", "深圳", "杭州", "成都"]
-_WEEKDAYS = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
+def _months(tr) -> list:
+    """12 个月份标签。"""
+    return [tr(f"data.month.{i}") for i in range(1, 13)]
+
+
+def _cities(tr) -> list:
+    """6 个示例城市标签（象形柱图等用）。"""
+    keys = ("beijing", "shanghai", "guangzhou", "shenzhen", "hangzhou", "chengdu")
+    return [tr(f"data.city.{k}") for k in keys]
+
+
+def _weekdays(tr) -> list:
+    """周一 ~ 周日标签。"""
+    return [tr(f"data.weekday.{i}") for i in range(1, 8)]
 
 
 def _walk(n, seed, lo=2.0, hi=10.0, step=1.6):
@@ -183,18 +198,18 @@ class ResponsiveCardGrid(QWidget):
 # 直角坐标系列构建函数
 # ---------------------------------------------------------------------------
 
-def _build_bar(o):
-    cat = {"type": "category", "data": _MONTHS[:6]}
-    val = {"type": "value", "name": "件"}
-    s1 = {"type": "bar", "name": "线下门店",
+def _build_bar(o, tr):
+    cat = {"type": "category", "data": _months(tr)[:6]}
+    val = {"type": "value", "name": tr("data.unit.piece")}
+    s1 = {"type": "bar", "name": tr("data.series.offline"),
           "data": [120, 132, 101, 134, 156, 230]}
-    s2 = {"type": "bar", "name": "线上商城",
+    s2 = {"type": "bar", "name": tr("data.series.online"),
           "data": [220, 182, 191, 234, 290, 330]}
     for s in (s1, s2):
         s["barWidth"] = o["barWidth"]
         s["barBorderRadius"] = o["radius"]
         if o["stack"]:
-            s["stack"] = "总量"
+            s["stack"] = tr("data.series.total")
     if o["horizontal"]:
         x_axis, y_axis = val, cat
     else:
@@ -208,14 +223,14 @@ def _build_bar(o):
     }
 
 
-def _build_pictorial(o):
+def _build_pictorial(o, tr):
     return {
         "tooltip": {"trigger": "axis"},
         "grid": {"left": 48, "right": 16, "top": 30, "bottom": 30},
-        "xAxis": {"type": "category", "data": _CITIES},
+        "xAxis": {"type": "category", "data": _cities(tr)},
         "yAxis": {"type": "value", "name": "mm"},
         "series": [{
-            "type": "pictorialBar", "name": "年降雨量",
+            "type": "pictorialBar", "name": tr("data.series.rainfall"),
             "symbol": o["symbol"], "symbolRepeat": o["repeat"],
             "symbolSize": o["size"],
             "data": [580, 1200, 1800, 1950, 1450, 950],
@@ -223,11 +238,13 @@ def _build_pictorial(o):
     }
 
 
-def _build_line(o):
+def _build_line(o, tr):
     beijing = [2, 5, 11, 19, 25, 29, 31, 30, 26, 19, 10, 4]
     shanghai = [5, 8, 12, 18, 23, 27, 31, 31, 27, 22, 15, 8]
     series = []
-    for name, data in (("北京", beijing), ("上海", shanghai)):
+    cities = ((tr("data.city.beijing"), beijing),
+              (tr("data.city.shanghai"), shanghai))
+    for name, data in cities:
         s = {"type": "line", "name": name, "data": data,
              "showSymbol": o["symbol"]}
         if o["step"] != "none":
@@ -241,13 +258,13 @@ def _build_line(o):
         "tooltip": {"trigger": "axis"},
         "legend": {"show": True},
         "grid": {"left": 44, "right": 16, "top": 30, "bottom": 46},
-        "xAxis": {"type": "category", "data": _MONTHS},
+        "xAxis": {"type": "category", "data": _months(tr)},
         "yAxis": {"type": "value", "name": "℃"},
         "series": series,
     }
 
 
-def _build_scatter(o):
+def _build_scatter(o, tr):
     rnd = random.Random(20260701)
     data = []
     for _ in range(o["n"]):
@@ -255,27 +272,30 @@ def _build_scatter(o):
         hum = round(rnd.uniform(25, 95), 1)          # 湿度
         aqi = rnd.randint(20, 180)                   # 第三维：AQI
         data.append([temp, hum, aqi] if o["zmap"] else [temp, hum])
-    series = {"type": "scatter", "name": "城市天气样本", "data": data}
+    series = {"type": "scatter", "name": tr("data.series.weather"),
+              "data": data}
     if not o["zmap"]:
         series["symbolSize"] = o["size"]
     return {
         "tooltip": {"trigger": "item"},
         "grid": {"left": 44, "right": 16, "top": 30, "bottom": 34},
-        "xAxis": {"type": "value", "name": "气温℃"},
-        "yAxis": {"type": "value", "name": "湿度%"},
+        "xAxis": {"type": "value", "name": tr("data.axis.temp")},
+        "yAxis": {"type": "value", "name": tr("data.axis.humidity")},
         "series": [series],
     }
 
 
-def _build_effect_scatter(o):
+def _build_effect_scatter(o, tr):
     pts = [[116, 40], [121, 31], [113, 23], [120, 30], [104, 31], [109, 34]]
     return {
         "tooltip": {"trigger": "item"},
         "grid": {"left": 44, "right": 16, "top": 30, "bottom": 34},
-        "xAxis": {"type": "value", "name": "经度", "min": 98, "max": 126},
-        "yAxis": {"type": "value", "name": "纬度", "min": 18, "max": 44},
+        "xAxis": {"type": "value", "name": tr("data.axis.longitude"),
+                  "min": 98, "max": 126},
+        "yAxis": {"type": "value", "name": tr("data.axis.latitude"),
+                  "min": 18, "max": 44},
         "series": [{
-            "type": "effectScatter", "name": "热门签到城市",
+            "type": "effectScatter", "name": tr("data.series.checkin"),
             "symbolSize": o["size"],
             "rippleEffect": {"period": o["period"], "scale": o["scale"]},
             "data": pts,
@@ -283,7 +303,7 @@ def _build_effect_scatter(o):
     }
 
 
-def _build_candlestick(o):
+def _build_candlestick(o, tr):
     rnd = random.Random(955)
     price, data = 12.0, []
     for _ in range(o["n"]):
@@ -294,34 +314,36 @@ def _build_candlestick(o):
         data.append([round(open_, 2), round(close, 2),
                      round(low, 2), round(high, 2)])
         price = close
-    series = {"type": "candlestick", "name": "示例股价", "data": data}
+    series = {"type": "candlestick", "name": tr("data.series.stock"),
+              "data": data}
     if o["width"] > 0:
         series["barWidth"] = o["width"]
     return {
         "tooltip": {"trigger": "axis"},
         "grid": {"left": 48, "right": 16, "top": 30, "bottom": 30},
         "xAxis": {"type": "category",
-                  "data": [f"{i + 1}日" for i in range(o["n"])]},
-        "yAxis": {"type": "value", "name": "元"},
+                  "data": [tr("data.day", n=i + 1) for i in range(o["n"])]},
+        "yAxis": {"type": "value", "name": tr("data.unit.yuan")},
         "series": [series],
     }
 
 
-def _build_boxplot(o):
+def _build_boxplot(o, tr):
     rnd = random.Random(451)
-    groups = [f"{c}组" for c in "ABCDEF"[: o["groups"]]]
+    groups = [tr("data.group", c=c) for c in "ABCDEF"[: o["groups"]]]
     data = []
     for gi in range(o["groups"]):
         vals = sorted(round(rnd.uniform(4, 36), 1) for _ in range(12))
         data.append([vals[0], vals[3], vals[5], vals[8], vals[-1]])
-    series = {"type": "boxplot", "name": "加班工时", "data": data}
+    series = {"type": "boxplot", "name": tr("data.series.overtime"),
+              "data": data}
     if o["width"] > 0:
         series["barWidth"] = o["width"]
     return {
         "tooltip": {"trigger": "item"},
         "grid": {"left": 44, "right": 16, "top": 30, "bottom": 30},
         "xAxis": {"type": "category", "data": groups},
-        "yAxis": {"type": "value", "name": "小时"},
+        "yAxis": {"type": "value", "name": tr("data.unit.hour")},
         "series": [series],
     }
 
@@ -332,12 +354,12 @@ _HEAT_RAMP = {
 }
 
 
-def _build_heatmap_grid(o):
-    hours = [f"{h}时" for h in range(8, 20, 2)]
+def _build_heatmap_grid(o, tr):
+    hours = [tr("data.hour", h=h) for h in range(8, 20, 2)]
     rnd = random.Random(77)
     data = []
     for xi in range(len(hours)):
-        for yi in range(len(_WEEKDAYS)):
+        for yi in range(len(_weekdays(tr))):
             base = 30 if yi < 5 else 8
             peak = 70 if xi in (2, 3) else 0
             data.append([xi, yi, rnd.randint(0, 20) + base + peak])
@@ -345,8 +367,9 @@ def _build_heatmap_grid(o):
         "tooltip": {"trigger": "item"},
         "grid": {"left": 52, "right": 16, "top": 30, "bottom": 30},
         "xAxis": {"type": "category", "data": hours},
-        "yAxis": {"type": "category", "data": _WEEKDAYS},
-        "series": [{"type": "heatmap", "name": "客流量", "data": data}],
+        "yAxis": {"type": "category", "data": _weekdays(tr)},
+        "series": [{"type": "heatmap", "name": tr("data.series.traffic"),
+                    "data": data}],
     }
     if o["visualMap"]:
         opt["visualMap"] = {"min": 0, "max": 120,
@@ -357,7 +380,6 @@ def _build_heatmap_grid(o):
 
 def _year_data(year, seed=9):
     """生成某年约 200 天的随机活跃度（日历热力数据）。"""
-    import datetime as _dt
     rnd = random.Random(seed + year)
     data = []
     day = _dt.date(year, 1, 1)
@@ -368,11 +390,11 @@ def _year_data(year, seed=9):
     return data
 
 
-def _build_heatmap_calendar(o):
+def _build_heatmap_calendar(o, tr):
     opt = {
         "tooltip": {"trigger": "item"},
         "calendar": {"year": int(o["year"]), "cellSize": o["cell"]},
-        "series": [{"type": "heatmap", "name": "代码提交",
+        "series": [{"type": "heatmap", "name": tr("data.series.commits"),
                     "coordinateSystem": "calendar",
                     "data": _year_data(int(o["year"]))}],
     }
@@ -381,8 +403,8 @@ def _build_heatmap_calendar(o):
     return opt
 
 
-def _build_parallel(o):
-    subjects = ["语文", "数学", "英语", "物理", "化学"][: o["dims"]]
+def _build_parallel(o, tr):
+    subjects = [tr(f"data.subject.{i}") for i in range(1, 6)][: o["dims"]]
     rnd = random.Random(33)
     rows = [[rnd.randint(55, 99) for _ in subjects]
             for _ in range(o["n"])]
@@ -390,13 +412,13 @@ def _build_parallel(o):
         "tooltip": {"trigger": "item"},
         "parallelAxis": [{"name": s, "min": 40, "max": 100}
                          for s in subjects],
-        "series": [{"type": "parallel", "name": "学生成绩", "data": rows}],
+        "series": [{"type": "parallel", "name": tr("data.series.scores"),
+                    "data": rows}],
     }
 
 
-def _build_themeriver(o):
-    topics = ["新机发布", "系统更新", "售后服务", "线下活动", "联名合作"]
-    topics = topics[: o["series"]]
+def _build_themeriver(o, tr):
+    topics = [tr(f"data.topic.{i}") for i in range(1, 6)][: o["series"]]
     rnd = random.Random(2026)
     data = []
     for mi in range(o["months"]):
@@ -406,7 +428,8 @@ def _build_themeriver(o):
     return {
         "tooltip": {"trigger": "item"},
         "legend": {"show": True},
-        "series": [{"type": "themeRiver", "name": "话题热度", "data": data}],
+        "series": [{"type": "themeRiver", "name": tr("data.series.topic_heat"),
+                    "data": data}],
     }
 
 
@@ -414,14 +437,18 @@ def _build_themeriver(o):
 # 层级占比系列构建函数
 # ---------------------------------------------------------------------------
 
-def _build_pie(o):
+def _pie_data(tr) -> list:
+    """饼图示例数据：部门预算。"""
+    keys = ("rd", "marketing", "ops", "design", "admin")
+    values = (420, 260, 180, 120, 80)
+    return [{"name": tr(f"data.dept.{k}"), "value": v}
+            for k, v in zip(keys, values)]
+
+
+def _build_pie(o, tr):
     series = {
-        "type": "pie", "name": "部门预算",
-        "data": [
-            {"name": "研发", "value": 420}, {"name": "市场", "value": 260},
-            {"name": "运营", "value": 180}, {"name": "设计", "value": 120},
-            {"name": "行政", "value": 80},
-        ],
+        "type": "pie", "name": tr("data.series.budget"),
+        "data": _pie_data(tr),
         "label": {"show": True, "position": o["labelPos"]},
     }
     if o["donut"]:
@@ -437,17 +464,18 @@ def _build_pie(o):
     }
 
 
-def _build_radar(o):
-    dims = [("功能", 100), ("性能", 100), ("易用", 100),
-            ("稳定", 100), ("生态", 100), ("服务", 100)]
+def _build_radar(o, tr):
+    dims = [(tr(f"data.dim.{i}"), 100) for i in range(1, 7)]
     series = {
-        "type": "radar", "name": "产品评估",
+        "type": "radar", "name": tr("data.series.eval"),
         "indicator": [{"name": n, "max": m} for n, m in dims],
         "shape": o["shape"],
         "splitNumber": o["split"],
         "data": [
-            {"name": "本季度", "value": [82, 90, 70, 88, 60, 76]},
-            {"name": "上季度", "value": [70, 78, 66, 80, 55, 70]},
+            {"name": tr("data.series.quarter_cur"),
+             "value": [82, 90, 70, 88, 60, 76]},
+            {"name": tr("data.series.quarter_prev"),
+             "value": [70, 78, 66, 80, 55, 70]},
         ],
     }
     if o["area"]:
@@ -459,11 +487,11 @@ def _build_radar(o):
     }
 
 
-def _build_gauge(o):
+def _build_gauge(o, tr):
     series = {
-        "type": "gauge", "name": "季度目标完成率",
+        "type": "gauge", "name": tr("data.series.goal"),
         "min": 0, "max": 100,
-        "data": [{"name": "完成率", "value": o["value"]}],
+        "data": [{"name": tr("data.series.rate"), "value": o["value"]}],
         "pointer": {"show": True, "length": "62%"},
         "anchor": {"show": True},
         "detail": {"show": True},
@@ -477,66 +505,75 @@ def _build_gauge(o):
     return {"tooltip": {"show": False}, "series": [series]}
 
 
-def _build_funnel(o):
+def _build_funnel(o, tr):
+    values = (100, 64, 42, 26, 12)
+    data = [{"name": tr(f"data.funnel.{i}"), "value": v}
+            for i, v in enumerate(values, start=1)]
     return {
         "tooltip": {"trigger": "item"},
         "series": [{
-            "type": "funnel", "name": "注册转化",
+            "type": "funnel", "name": tr("data.series.conversion"),
             "sort": o["sort"], "gap": o["gap"],
             "label": {"show": True, "position": o["labelPos"]},
-            "data": [
-                {"name": "访问落地页", "value": 100},
-                {"name": "点击注册", "value": 64},
-                {"name": "填写资料", "value": 42},
-                {"name": "完成认证", "value": 26},
-                {"name": "首次付费", "value": 12},
-            ],
+            "data": data,
         }],
     }
 
 
-def _build_sunburst(o):
+def _sunburst_data(tr) -> list:
+    """旭日图示例数据：营收构成（两级层级）。"""
+    g = lambda k: tr(f"data.sun.{k}")  # noqa: E731 简短别名便于排版
+    return [
+        {"name": g("hardware"), "children": [
+            {"name": g("phone"), "value": 46},
+            {"name": g("tablet"), "value": 22},
+            {"name": g("wearable"), "value": 14}]},
+        {"name": g("software"), "children": [
+            {"name": g("cloud"), "value": 30},
+            {"name": g("appstore"), "value": 18}]},
+        {"name": g("content"), "children": [
+            {"name": g("video"), "value": 12},
+            {"name": g("music"), "value": 8},
+            {"name": g("reading"), "value": 5}]},
+    ]
+
+
+def _build_sunburst(o, tr):
     return {
         "tooltip": {"trigger": "item"},
         "series": [{
-            "type": "sunburst", "name": "营收构成",
+            "type": "sunburst", "name": tr("data.series.revenue"),
             "radius": ["18%", "92%"],
             "label": {"show": o["labels"], "minAngle": o["minAngle"]},
-            "data": [
-                {"name": "硬件", "children": [
-                    {"name": "手机", "value": 46},
-                    {"name": "平板", "value": 22},
-                    {"name": "穿戴", "value": 14}]},
-                {"name": "软件", "children": [
-                    {"name": "云服务", "value": 30},
-                    {"name": "应用商店", "value": 18}]},
-                {"name": "内容", "children": [
-                    {"name": "视频", "value": 12},
-                    {"name": "音乐", "value": 8},
-                    {"name": "阅读", "value": 5}]},
-            ],
+            "data": _sunburst_data(tr),
         }],
     }
 
 
-def _build_treemap(o):
+def _treemap_data(tr) -> list:
+    """矩形树图示例数据：存储占用。"""
+    g = lambda k: tr(f"data.tm.{k}")  # noqa: E731 简短别名便于排版
+    return [
+        {"name": g("video"), "children": [
+            {"name": g("movie"), "value": 46},
+            {"name": g("series"), "value": 30}]},
+        {"name": g("photo"), "children": [
+            {"name": g("camera"), "value": 28},
+            {"name": g("screenshot"), "value": 6}]},
+        {"name": g("app"), "value": 24},
+        {"name": g("doc"), "value": 10},
+        {"name": g("system"), "value": 16},
+    ]
+
+
+def _build_treemap(o, tr):
     return {
         "tooltip": {"trigger": "item"},
         "series": [{
-            "type": "treemap", "name": "存储占用",
+            "type": "treemap", "name": tr("data.series.storage"),
             "gapWidth": o["gap"], "label": {"show": o["labels"]},
             "breadcrumb": {"show": o["crumb"]},
-            "data": [
-                {"name": "视频", "children": [
-                    {"name": "电影", "value": 46},
-                    {"name": "剧集", "value": 30}]},
-                {"name": "照片", "children": [
-                    {"name": "相机相册", "value": 28},
-                    {"name": "截图", "value": 6}]},
-                {"name": "应用", "value": 24},
-                {"name": "文档", "value": 10},
-                {"name": "系统", "value": 16},
-            ],
+            "data": _treemap_data(tr),
         }],
     }
 
@@ -545,105 +582,125 @@ def _build_treemap(o):
 # 关系流向系列构建函数
 # ---------------------------------------------------------------------------
 
-def _build_tree(o):
+def _tree_data(tr) -> list:
+    """树图示例数据：组织架构（三级）。"""
+    g = lambda k: tr(f"data.org.{k}")  # noqa: E731 简短别名便于排版
+    return [{
+        "name": g("ceo"), "children": [
+            {"name": g("tech"), "children": [
+                {"name": g("frontend")}, {"name": g("backend")},
+                {"name": g("algorithm")}]},
+            {"name": g("product"), "children": [
+                {"name": g("product_group")}, {"name": g("design_group")}]},
+            {"name": g("operation"), "children": [
+                {"name": g("market_group")}, {"name": g("service_group")}]},
+        ],
+    }]
+
+
+def _build_tree(o, tr):
     return {
         "tooltip": {"trigger": "item"},
         "series": [{
-            "type": "tree", "name": "组织架构",
+            "type": "tree", "name": tr("data.series.org"),
             "orient": o["orient"], "edge": o["edge"],
             "symbolSize": o["size"],
             "label": {"show": True},
-            "data": [{
-                "name": "总经理", "children": [
-                    {"name": "技术中心", "children": [
-                        {"name": "前端组"}, {"name": "后端组"},
-                        {"name": "算法组"}]},
-                    {"name": "产品中心", "children": [
-                        {"name": "产品组"}, {"name": "设计组"}]},
-                    {"name": "运营中心", "children": [
-                        {"name": "市场组"}, {"name": "客服组"}]},
-                ],
-            }],
+            "data": _tree_data(tr),
         }],
     }
 
 
-def _build_sankey(o):
+def _sankey_data(tr) -> tuple:
+    """桑基图示例数据：能源流向（节点名列表 + 边）。"""
+    g = lambda k: tr(f"data.energy.{k}")  # noqa: E731 简短别名便于排版
+    nodes = [g(k) for k in ("coal", "hydro", "wind", "solar",
+                            "industry", "residential", "transport", "loss")]
+    edges = [("coal", "industry", 46), ("coal", "residential", 12),
+             ("hydro", "industry", 18), ("hydro", "residential", 10),
+             ("wind", "transport", 8), ("wind", "residential", 6),
+             ("solar", "industry", 9), ("solar", "loss", 3),
+             ("coal", "loss", 8)]
+    links = [{"source": g(a), "target": g(b), "value": v}
+             for a, b, v in edges]
+    return nodes, links
+
+
+def _build_sankey(o, tr):
+    nodes, links = _sankey_data(tr)
     return {
         "tooltip": {"trigger": "item"},
         "series": [{
-            "type": "sankey", "name": "能源流向",
+            "type": "sankey", "name": tr("data.series.energy"),
             "nodeWidth": o["nodeWidth"], "nodeGap": o["nodeGap"],
             "layoutIterations": o["iters"],
             "label": {"show": True},
-            "data": [{"name": n} for n in
-                     ("煤炭", "水电", "风电", "光伏",
-                      "工业", "居民", "交通", "损耗")],
-            "links": [
-                {"source": "煤炭", "target": "工业", "value": 46},
-                {"source": "煤炭", "target": "居民", "value": 12},
-                {"source": "水电", "target": "工业", "value": 18},
-                {"source": "水电", "target": "居民", "value": 10},
-                {"source": "风电", "target": "交通", "value": 8},
-                {"source": "风电", "target": "居民", "value": 6},
-                {"source": "光伏", "target": "工业", "value": 9},
-                {"source": "光伏", "target": "损耗", "value": 3},
-                {"source": "煤炭", "target": "损耗", "value": 8},
-            ],
+            "data": [{"name": n} for n in nodes],
+            "links": links,
         }],
     }
 
 
-def _build_graph(o):
+def _graph_data(tr) -> tuple:
+    """关系图示例数据：知识图谱（节点 + 边；芯片节点加大）。"""
+    g = lambda k: tr(f"data.graph.{k}")  # noqa: E731 简短别名便于排版
+    edges = [("chip", "phone"), ("chip", "car"), ("chip", "appliance"),
+             ("os", "phone"), ("os", "ecosystem"), ("ecosystem", "cloud"),
+             ("ai", "cloud"), ("ai", "car"), ("ai", "chip")]
+    links = [{"source": g(a), "target": g(b)} for a, b in edges]
+    return g, links
+
+
+def _build_graph(o, tr):
+    g, links = _graph_data(tr)
+    data = [{"name": g("chip"), "symbolSize": o["size"] + 8}]
+    data += [{"name": g(k)} for k in
+             ("phone", "car", "appliance", "os", "ecosystem", "cloud", "ai")]
     return {
         "tooltip": {"trigger": "item"},
         "series": [{
-            "type": "graph", "name": "知识图谱",
+            "type": "graph", "name": tr("data.series.kg"),
             "layout": o["layout"],
             "force": {"repulsion": o["repulsion"], "seed": 42},
             "symbolSize": o["size"],
             "label": {"show": True},
-            "data": [
-                {"name": "芯片", "symbolSize": o["size"] + 8},
-                {"name": "手机"}, {"name": "汽车"}, {"name": "家电"},
-                {"name": "操作系统"}, {"name": "应用生态"},
-                {"name": "云服务"}, {"name": "人工智能"},
-            ],
-            "links": [
-                {"source": "芯片", "target": "手机"},
-                {"source": "芯片", "target": "汽车"},
-                {"source": "芯片", "target": "家电"},
-                {"source": "操作系统", "target": "手机"},
-                {"source": "操作系统", "target": "应用生态"},
-                {"source": "应用生态", "target": "云服务"},
-                {"source": "人工智能", "target": "云服务"},
-                {"source": "人工智能", "target": "汽车"},
-                {"source": "人工智能", "target": "芯片"},
-            ],
+            "data": data,
+            "links": links,
         }],
     }
 
 
-def _build_lines(o):
-    city = {"北京": (116.4, 39.9), "上海": (121.5, 31.2),
-            "广州": (113.3, 23.1), "深圳": (114.1, 22.5),
-            "成都": (104.1, 30.7), "西安": (108.9, 34.3),
-            "武汉": (114.3, 30.6), "昆明": (102.8, 24.9)}
-    routes = [("北京", "上海"), ("北京", "广州"), ("北京", "成都"),
-              ("上海", "深圳"), ("上海", "武汉"), ("广州", "昆明"),
-              ("成都", "西安"), ("西安", "北京"), ("武汉", "深圳")]
+def _lines_routes(tr) -> list:
+    """线图示例数据：热门航线（城市坐标 + 航线对）。"""
+    g = lambda k: tr(f"data.city.{k}")  # noqa: E731 简短别名便于排版
+    coords = {"beijing": (116.4, 39.9), "shanghai": (121.5, 31.2),
+              "guangzhou": (113.3, 23.1), "shenzhen": (114.1, 22.5),
+              "chengdu": (104.1, 30.7), "xian": (108.9, 34.3),
+              "wuhan": (114.3, 30.6), "kunming": (102.8, 24.9)}
+    city = {g(k): v for k, v in coords.items()}
+    pairs = [("beijing", "shanghai"), ("beijing", "guangzhou"),
+             ("beijing", "chengdu"), ("shanghai", "shenzhen"),
+             ("shanghai", "wuhan"), ("guangzhou", "kunming"),
+             ("chengdu", "xian"), ("xian", "beijing"),
+             ("wuhan", "shenzhen")]
+    return [{"coords": [list(city[g(a)]), list(city[g(b)])]}
+            for a, b in pairs]
+
+
+def _build_lines(o, tr):
     return {
         "tooltip": {"trigger": "item"},
         "grid": {"left": 44, "right": 16, "top": 30, "bottom": 34},
-        "xAxis": {"type": "value", "name": "经度", "min": 98, "max": 126},
-        "yAxis": {"type": "value", "name": "纬度", "min": 18, "max": 44},
+        "xAxis": {"type": "value", "name": tr("data.axis.longitude"),
+                  "min": 98, "max": 126},
+        "yAxis": {"type": "value", "name": tr("data.axis.latitude"),
+                  "min": 18, "max": 44},
         "series": [{
-            "type": "lines", "name": "热门航线",
+            "type": "lines", "name": tr("data.series.routes"),
             "lineStyle": {"width": o["width"], "curveness": o["curveness"]},
             "trailEffect": {"show": o["trail"], "period": 4,
                             "symbolSize": 5},
-            "data": [{"coords": [list(city[a]), list(city[b])]}
-                     for a, b in routes],
+            "data": _lines_routes(tr),
         }],
     }
 
@@ -652,20 +709,20 @@ def _build_lines(o):
 # 坐标系与地图构建函数
 # ---------------------------------------------------------------------------
 
-def _build_grid_mix(o):
-    months = _MONTHS[:8]
+def _build_grid_mix(o, tr):
+    months = _months(tr)[:8]
     series = [
-        {"type": "bar", "name": "销量",
+        {"type": "bar", "name": tr("data.series.sales"),
          "data": [120, 200, 150, 260, 220, 300, 280, 340],
          "barWidth": 0.5, "barBorderRadius": 3},
-        {"type": "line", "name": "均价",
+        {"type": "line", "name": tr("data.series.price"),
          "data": [86, 92, 78, 105, 98, 120, 112, 128],
          "smooth": o["smooth"], "yAxisIndex": 0},
     ]
     if o["area"]:
         series[1]["areaStyle"] = {"opacity": 0.15}
     if o["scatter"]:
-        series.append({"type": "scatter", "name": "促销节点",
+        series.append({"type": "scatter", "name": tr("data.series.promo"),
                        "symbolSize": 14,
                        "data": [[1, 200], [3, 260], [5, 300], [7, 340]]})
     return {
@@ -673,16 +730,17 @@ def _build_grid_mix(o):
         "legend": {"show": True},
         "grid": {"left": 48, "right": 16, "top": 30, "bottom": 46},
         "xAxis": {"type": "category", "data": months},
-        "yAxis": {"type": "value", "name": "量"},
+        "yAxis": {"type": "value", "name": tr("data.unit.amount")},
         "series": series,
     }
 
 
-def _build_polar(o):
-    directions = ["北", "东北", "东", "东南", "南", "西南", "西", "西北"]
+def _build_polar(o, tr):
+    directions = [tr(f"data.dir.{i}") for i in range(1, 9)]
     freq = [12, 8, 15, 22, 18, 9, 6, 10]
     series = {
-        "type": "line", "name": "风向频率", "coordinateSystem": "polar",
+        "type": "line", "name": tr("data.series.wind"),
+        "coordinateSystem": "polar",
         "smooth": o["smooth"],
         "data": [[d, v] for d, v in zip(directions, freq)],
     }
@@ -697,14 +755,14 @@ def _build_polar(o):
     }
 
 
-def _build_single_axis(o):
+def _build_single_axis(o, tr):
     rnd = random.Random(601)
     data = [round(rnd.gauss(75, 12), 1) for _ in range(o["n"])]
     return {
         "tooltip": {"trigger": "item"},
-        "singleAxis": {"left": 40, "right": 40, "name": "分数"},
+        "singleAxis": {"left": 40, "right": 40, "name": tr("data.axis.score")},
         "series": [{
-            "type": "scatter", "name": "期末成绩分布",
+            "type": "scatter", "name": tr("data.series.scores_dist"),
             "coordinateSystem": "singleAxis",
             "symbolSize": o["size"],
             "data": data,
@@ -712,30 +770,29 @@ def _build_single_axis(o):
     }
 
 
-def _build_calendar_coord(o):
+def _build_calendar_coord(o, tr):
     return {
         "tooltip": {"trigger": "item"},
         "calendar": {"year": int(o["year"]), "cellSize": o["cell"]},
         "visualMap": {"min": 0, "max": 12,
                       "inRange": {"colors": _HEAT_RAMP["warm"]},
                       "orient": "vertical"},
-        "series": [{"type": "heatmap", "name": "每日步数(千)",
+        "series": [{"type": "heatmap", "name": tr("data.series.steps"),
                     "coordinateSystem": "calendar",
                     "data": _year_data(int(o["year"]), seed=41)}],
     }
 
 
-def _build_map(o):
+def _build_map(o, tr):
+    values = (82, 36, 95, 71, 58, 44, 27)
+    data = [{"name": tr(f"data.region.{i}"), "value": v}
+            for i, v in enumerate(values, start=1)]
     opt = {
         "tooltip": {"trigger": "item"},
         "series": [{
-            "type": "map", "name": "区域销量", "map": "demo",
-            "data": [
-                {"name": "华北", "value": 82}, {"name": "东北", "value": 36},
-                {"name": "华东", "value": 95}, {"name": "华南", "value": 71},
-                {"name": "华中", "value": 58}, {"name": "西南", "value": 44},
-                {"name": "西北", "value": 27},
-            ],
+            "type": "map", "name": tr("data.series.region_sales"),
+            "map": "demo",
+            "data": data,
         }],
     }
     if o["visualMap"]:
@@ -759,38 +816,50 @@ _COMP_YEARS = {
 }
 
 
-def _comp_series(o, year):
+def _comp_markline(kind, tr):
+    """标线定义：average / max / threshold 三种。"""
+    if kind == "average":
+        return [{"type": "average", "name": tr("data.mark.average")}]
+    if kind == "max":
+        return [{"type": "max", "name": tr("data.mark.max")}]
+    return [{"yAxis": 300, "name": tr("data.mark.threshold")}]
+
+
+def _comp_series(o, year, tr):
     """综合演示某年度的完整系列定义（timeline 帧为 list 替换语义，
     帧内必须携带 type/name/标注，不能只给 data）。"""
     y = _COMP_YEARS[year]
-    bar = {"type": "bar", "name": "月度销量", "data": y["bar"],
-           "barWidth": 0.55, "barBorderRadius": 3}
-    line = {"type": "line", "name": "月度均价", "data": y["line"],
-            "smooth": True,
+    bar = {"type": "bar", "name": tr("data.series.month_sales"),
+           "data": y["bar"], "barWidth": 0.55, "barBorderRadius": 3}
+    line = {"type": "line", "name": tr("data.series.month_price"),
+            "data": y["line"], "smooth": True,
             "markPoint": {"data": [{"type": "max"}, {"type": "min"}]},
-            "markLine": {"data": _comp_markline(o["markLine"])}}
+            "markLine": {"data": _comp_markline(o["markLine"], tr)}}
     if o["markArea"]:
-        line["markArea"] = {"data": [[{"xAxis": "3月"}, {"xAxis": "5月"}]]}
+        months = _months(tr)
+        line["markArea"] = {"data": [[{"xAxis": months[2]},
+                                      {"xAxis": months[4]}]]}
     return [bar, line]
 
 
-def _build_comprehensive(o):
+def _build_comprehensive(o, tr):
     """组件综合：bar+line + mark* + visualMap + dataZoom + brush + toolbox + timeline。"""
     opt = {
-        "title": {"text": "年度销售总览", "subtext": "拖动时间轴切换年度"},
+        "title": {"text": tr("comp.chart_title"),
+                  "subtext": tr("comp.chart_sub")},
         "tooltip": {"trigger": "axis"},
         "legend": {"show": True},
         "grid": {"left": 52, "right": 56, "top": 56, "bottom": 108},
-        "xAxis": {"type": "category", "data": _MONTHS},
-        "yAxis": {"type": "value", "name": "量"},
-        "series": _comp_series(o, "2024"),
+        "xAxis": {"type": "category", "data": _months(tr)},
+        "yAxis": {"type": "value", "name": tr("data.unit.amount")},
+        "series": _comp_series(o, "2024", tr),
         "dataZoom": [{"type": "slider", "start": 0, "end": o["zoomEnd"]},
                      {"type": "inside"}],
         "brush": {"toolbox": ["rect", "clear"],
                   "outOfBrush": {"opacity": 0.35}},
         "toolbox": {"feature": ["saveAsImage", "dataZoom", "restore"]},
         "timeline": {"data": list(_COMP_YEARS), "autoPlay": False},
-        "options": [{"series": _comp_series(o, year)}
+        "options": [{"series": _comp_series(o, year, tr)}
                     for year in _COMP_YEARS],
     }
     if o["visualMap"]:
@@ -800,211 +869,230 @@ def _build_comprehensive(o):
     return opt
 
 
-def _comp_markline(kind):
-    if kind == "average":
-        return [{"type": "average", "name": "均值"}]
-    if kind == "max":
-        return [{"type": "max", "name": "峰值"}]
-    return [{"yAxis": 300, "name": "警戒线"}]
-
-
 # ---------------------------------------------------------------------------
-# 卡片规格表：(标题, 构建函数, 参数规格, 提示)
+# 卡片规格表：(卡片键, 构建函数, 参数规格, 提示键)
+# 参数规格第 3 元素与选项对第 1 元素均为取词键，构建时经 _translate_specs 翻译。
 # ---------------------------------------------------------------------------
 
-_SYMBOL_OPTS = [("矩形", "rect"), ("圆形", "circle"), ("图钉", "pin")]
-_STEP_OPTS = [("无", "none"), ("起点", "start"),
-              ("中点", "middle"), ("终点", "end")]
-_RAMP_OPTS = [("主题蓝", "blue"), ("暖色", "warm")]
-_CELL_OPTS = [("自动", "auto"), ("小 10", 10), ("中 14", 14), ("大 18", 18)]
-_YEAR_OPTS = [("2024 年", 2024), ("2025 年", 2025), ("2026 年", 2026)]
+_SYMBOL_OPTS = [("opt.symbol.rect", "rect"), ("opt.symbol.circle", "circle"),
+                ("opt.symbol.pin", "pin")]
+_STEP_OPTS = [("opt.step.none", "none"), ("opt.step.start", "start"),
+              ("opt.step.middle", "middle"), ("opt.step.end", "end")]
+_RAMP_OPTS = [("opt.ramp.blue", "blue"), ("opt.ramp.warm", "warm")]
+_CELL_OPTS = [("opt.cell.auto", "auto"), ("opt.cell.s", 10),
+              ("opt.cell.m", 14), ("opt.cell.l", 18)]
+_YEAR_OPTS = [("opt.year.2024", 2024), ("opt.year.2025", 2025),
+              ("opt.year.2026", 2026)]
 
 _CARTESIAN_CARDS = [
-    ("bar 柱状图 · 月度销量", _build_bar,
-     [("bool", "stack", "堆叠", False),
-      ("float", "barWidth", "柱宽占比", 0.6, 0.2, 0.9, {"step": 0.1}),
-      ("int", "radius", "圆角", 3, 0, 10),
-      ("bool", "horizontal", "水平条形", False)],
-     "stack / barWidth / barBorderRadius；yAxis 为 category 时自动水平"),
-    ("pictorialBar 象形柱图 · 城市降雨量", _build_pictorial,
-     [("choice", "symbol", "符号", "circle", list(_SYMBOL_OPTS)),
-      ("bool", "repeat", "重复堆叠", True),
-      ("int", "size", "符号尺寸", 12, 6, 24)],
-     "symbol / symbolRepeat / symbolSize"),
-    ("line 折线图 · 月均气温", _build_line,
-     [("bool", "smooth", "平滑", True),
-      ("bool", "area", "面积填充", False),
-      ("choice", "step", "阶梯", "none", list(_STEP_OPTS)),
-      ("bool", "symbol", "数据点", True)],
-     "smooth / areaStyle / step / showSymbol（阶梯开启时覆盖平滑）"),
-    ("scatter 散点图 · 气温×湿度", _build_scatter,
-     [("int", "n", "样本数", 40, 8, 120),
-      ("bool", "zmap", "第三维映射大小", True),
-      ("int", "size", "固定点径", 12, 4, 24)],
-     "symbolSize 固定值或按第三维（AQI）6~24px 映射"),
-    ("effectScatter 涟漪散点 · 热门签到城市", _build_effect_scatter,
-     [("float", "period", "涟漪周期(秒)", 3.0, 1.0, 6.0, {"step": 0.5}),
-      ("float", "scale", "扩散倍数", 2.6, 1.5, 4.0, {"step": 0.1}),
-      ("int", "size", "点径", 12, 6, 20)],
-     "rippleEffect: {period, scale}（QTimer 驱动扩散圆）"),
-    ("candlestick K线 · 示例股价", _build_candlestick,
-     [("int", "n", "交易日数", 30, 10, 60),
-      ("int", "width", "实体宽(0=自动)", 0, 0, 24)],
-     "OHLC 数据；红涨绿跌（colorUp / colorDown 可覆盖）"),
-    ("boxplot 箱线图 · 加班工时分布", _build_boxplot,
-     [("int", "groups", "组数", 4, 2, 6),
-      ("int", "width", "箱体宽(0=自动)", 0, 0, 28)],
-     "数据 [min, Q1, 中位, Q3, max]"),
-    ("heatmap 热力图(grid) · 时段×星期客流量", _build_heatmap_grid,
-     [("bool", "visualMap", "视觉映射", True),
-      ("choice", "ramp", "色带", "blue", list(_RAMP_OPTS))],
-     "配合顶层 visualMap（inRange.colors）或默认主题色带"),
-    ("heatmap 热力图(日历) · 代码提交", _build_heatmap_calendar,
-     [("choice", "year", "年份", 2026, list(_YEAR_OPTS)),
-      ("choice", "cell", "单元格", "auto", list(_CELL_OPTS)),
-      ("bool", "visualMap", "视觉映射", False)],
-     "coordinateSystem: calendar；calendar: {year, cellSize}"),
-    ("parallel 平行坐标 · 学生成绩", _build_parallel,
-     [("int", "dims", "维度数", 5, 3, 5),
-      ("int", "n", "学生数", 6, 3, 12)],
-     "parallelAxis 定义维度；每行数据一条折线穿轴"),
-    ("themeRiver 主题河 · 话题热度", _build_themeriver,
-     [("int", "series", "话题数", 4, 2, 5),
-      ("int", "months", "月数", 8, 4, 12)],
-     "数据 [时间, 值, 系列名]；流带平滑 + 居中基线"),
+    ("bar", _build_bar,
+     [("bool", "stack", "bar.p.stack", False),
+      ("float", "barWidth", "bar.p.bar_width", 0.6, 0.2, 0.9, {"step": 0.1}),
+      ("int", "radius", "bar.p.radius", 3, 0, 10),
+      ("bool", "horizontal", "bar.p.horizontal", False)],
+     "bar.hint"),
+    ("pictorial", _build_pictorial,
+     [("choice", "symbol", "pictorial.p.symbol", "circle", list(_SYMBOL_OPTS)),
+      ("bool", "repeat", "pictorial.p.repeat", True),
+      ("int", "size", "pictorial.p.size", 12, 6, 24)],
+     "pictorial.hint"),
+    ("line", _build_line,
+     [("bool", "smooth", "line.p.smooth", True),
+      ("bool", "area", "line.p.area", False),
+      ("choice", "step", "line.p.step", "none", list(_STEP_OPTS)),
+      ("bool", "symbol", "line.p.symbol", True)],
+     "line.hint"),
+    ("scatter", _build_scatter,
+     [("int", "n", "scatter.p.n", 40, 8, 120),
+      ("bool", "zmap", "scatter.p.zmap", True),
+      ("int", "size", "scatter.p.size", 12, 4, 24)],
+     "scatter.hint"),
+    ("effect_scatter", _build_effect_scatter,
+     [("float", "period", "effect_scatter.p.period", 3.0, 1.0, 6.0,
+       {"step": 0.5}),
+      ("float", "scale", "effect_scatter.p.scale", 2.6, 1.5, 4.0,
+       {"step": 0.1}),
+      ("int", "size", "effect_scatter.p.size", 12, 6, 20)],
+     "effect_scatter.hint"),
+    ("candlestick", _build_candlestick,
+     [("int", "n", "candlestick.p.n", 30, 10, 60),
+      ("int", "width", "candlestick.p.width", 0, 0, 24)],
+     "candlestick.hint"),
+    ("boxplot", _build_boxplot,
+     [("int", "groups", "boxplot.p.groups", 4, 2, 6),
+      ("int", "width", "boxplot.p.width", 0, 0, 28)],
+     "boxplot.hint"),
+    ("heatmap_grid", _build_heatmap_grid,
+     [("bool", "visualMap", "heatmap_grid.p.visual_map", True),
+      ("choice", "ramp", "heatmap_grid.p.ramp", "blue", list(_RAMP_OPTS))],
+     "heatmap_grid.hint"),
+    ("heatmap_calendar", _build_heatmap_calendar,
+     [("choice", "year", "heatmap_calendar.p.year", 2026, list(_YEAR_OPTS)),
+      ("choice", "cell", "heatmap_calendar.p.cell", "auto", list(_CELL_OPTS)),
+      ("bool", "visualMap", "heatmap_calendar.p.visual_map", False)],
+     "heatmap_calendar.hint"),
+    ("parallel", _build_parallel,
+     [("int", "dims", "parallel.p.dims", 5, 3, 5),
+      ("int", "n", "parallel.p.n", 6, 3, 12)],
+     "parallel.hint"),
+    ("themeriver", _build_themeriver,
+     [("int", "series", "themeriver.p.series", 4, 2, 5),
+      ("int", "months", "themeriver.p.months", 8, 4, 12)],
+     "themeriver.hint"),
 ]
 
 _HIERARCHY_CARDS = [
-    ("pie 饼图 · 部门预算", _build_pie,
-     [("bool", "donut", "环形", True),
-      ("choice", "rose", "玫瑰图", "none",
-       [("无", "none"), ("半径", "radius"), ("面积", "area")]),
-      ("choice", "labelPos", "标签位置", "outside",
-       [("外部引线", "outside"), ("内部百分比", "inside"),
-        ("中心总计", "center")])],
-     "radius: [内,外] 环形 / roseType 南丁格尔 / label.position"),
-    ("radar 雷达图 · 产品评估", _build_radar,
-     [("choice", "shape", "形状", "polygon",
-       [("多边形", "polygon"), ("圆形", "circle")]),
-      ("bool", "area", "面积填充", True),
-      ("int", "split", "圈环数", 5, 3, 6)],
-     "indicator: [{name, max}]；多系列各一个多边形"),
-    ("gauge 仪表盘 · 目标完成率", _build_gauge,
-     [("int", "value", "目标值(%)", 72, 0, 100),
-      ("bool", "progress", "进度弧", True),
-      ("bool", "segments", "分段色", True)],
-     "min/max / progress / axisLine 色段 / pointer / detail"),
-    ("funnel 漏斗图 · 注册转化", _build_funnel,
-     [("choice", "sort", "排序", "descending",
-       [("降序", "descending"), ("升序", "ascending"),
-        ("原序", "none")]),
-      ("int", "gap", "层间距", 2, 0, 8),
-      ("choice", "labelPos", "标签", "outer",
-       [("外侧", "outer"), ("层内", "inside")])],
-     "sort / gap / label.position"),
-    ("sunburst 旭日图 · 营收构成", _build_sunburst,
-     [("bool", "labels", "旋转标签", True),
-      ("int", "minAngle", "标签角阈值", 8, 0, 20)],
-     "层级 data: [{name, value, children}]；radius 内孔/外半径"),
-    ("treemap 矩形树图 · 存储占用", _build_treemap,
-     [("bool", "crumb", "路径条", True),
-      ("int", "gap", "间隙", 1, 0, 4),
-      ("bool", "labels", "名称标签", True)],
-     "squarified 布局；breadcrumb / gapWidth / label"),
+    ("pie", _build_pie,
+     [("bool", "donut", "pie.p.donut", True),
+      ("choice", "rose", "pie.p.rose", "none",
+       [("opt.rose.none", "none"), ("opt.rose.radius", "radius"),
+        ("opt.rose.area", "area")]),
+      ("choice", "labelPos", "pie.p.label_pos", "outside",
+       [("opt.label_pos.outside", "outside"), ("opt.label_pos.inside", "inside"),
+        ("opt.label_pos.center", "center")])],
+     "pie.hint"),
+    ("radar", _build_radar,
+     [("choice", "shape", "radar.p.shape", "polygon",
+       [("opt.shape.polygon", "polygon"), ("opt.shape.circle", "circle")]),
+      ("bool", "area", "radar.p.area", True),
+      ("int", "split", "radar.p.split", 5, 3, 6)],
+     "radar.hint"),
+    ("gauge", _build_gauge,
+     [("int", "value", "gauge.p.value", 72, 0, 100),
+      ("bool", "progress", "gauge.p.progress", True),
+      ("bool", "segments", "gauge.p.segments", True)],
+     "gauge.hint"),
+    ("funnel", _build_funnel,
+     [("choice", "sort", "funnel.p.sort", "descending",
+       [("opt.sort.descending", "descending"),
+        ("opt.sort.ascending", "ascending"),
+        ("opt.sort.none", "none")]),
+      ("int", "gap", "funnel.p.gap", 2, 0, 8),
+      ("choice", "labelPos", "funnel.p.label_pos", "outer",
+       [("opt.funnel_label.outer", "outer"),
+        ("opt.funnel_label.inside", "inside")])],
+     "funnel.hint"),
+    ("sunburst", _build_sunburst,
+     [("bool", "labels", "sunburst.p.labels", True),
+      ("int", "minAngle", "sunburst.p.min_angle", 8, 0, 20)],
+     "sunburst.hint"),
+    ("treemap", _build_treemap,
+     [("bool", "crumb", "treemap.p.crumb", True),
+      ("int", "gap", "treemap.p.gap", 1, 0, 4),
+      ("bool", "labels", "treemap.p.labels", True)],
+     "treemap.hint"),
 ]
 
 _RELATION_CARDS = [
-    ("tree 树图 · 组织架构", _build_tree,
-     [("choice", "orient", "方向", "LR",
-       [("左右", "LR"), ("上下", "TB")]),
-      ("choice", "edge", "边样式", "polyline",
-       [("正交折线", "polyline"), ("贝塞尔曲线", "curve")]),
-      ("int", "size", "节点直径", 8, 4, 14)],
-     "orient: LR/TB；edge: polyline/curve"),
-    ("sankey 桑基图 · 能源流向", _build_sankey,
-     [("int", "nodeWidth", "节点宽", 14, 6, 24),
-      ("int", "nodeGap", "节点间距", 10, 4, 20),
-      ("int", "iters", "布局迭代", 6, 0, 12)],
-     "nodes/links；layoutIterations 减少流带交叉"),
-    ("graph 关系图 · 知识图谱", _build_graph,
-     [("choice", "layout", "布局", "force",
-       [("力导", "force"), ("圆环", "circular")]),
-      ("float", "repulsion", "斥力", 1.0, 0.2, 3.0, {"step": 0.2}),
-      ("int", "size", "节点直径", 14, 8, 24)],
-     "layout: force（确定性随机种子）/ circular"),
-    ("lines 线图 · 热门航线", _build_lines,
-     [("float", "curveness", "弯曲度", 0.2, 0.0, 0.5, {"step": 0.05}),
-      ("bool", "trail", "移动亮点", True),
-      ("int", "width", "线宽", 2, 1, 4)],
-     "data: [{coords: [[x1,y1],[x2,y2]]}]；trailEffect 尾迹动画"),
+    ("tree", _build_tree,
+     [("choice", "orient", "tree.p.orient", "LR",
+       [("opt.orient.lr", "LR"), ("opt.orient.tb", "TB")]),
+      ("choice", "edge", "tree.p.edge", "polyline",
+       [("opt.edge.polyline", "polyline"), ("opt.edge.curve", "curve")]),
+      ("int", "size", "tree.p.size", 8, 4, 14)],
+     "tree.hint"),
+    ("sankey", _build_sankey,
+     [("int", "nodeWidth", "sankey.p.node_width", 14, 6, 24),
+      ("int", "nodeGap", "sankey.p.node_gap", 10, 4, 20),
+      ("int", "iters", "sankey.p.iters", 6, 0, 12)],
+     "sankey.hint"),
+    ("graph", _build_graph,
+     [("choice", "layout", "graph.p.layout", "force",
+       [("opt.layout.force", "force"), ("opt.layout.circular", "circular")]),
+      ("float", "repulsion", "graph.p.repulsion", 1.0, 0.2, 3.0,
+       {"step": 0.2}),
+      ("int", "size", "graph.p.size", 14, 8, 24)],
+     "graph.hint"),
+    ("lines", _build_lines,
+     [("float", "curveness", "lines.p.curveness", 0.2, 0.0, 0.5,
+       {"step": 0.05}),
+      ("bool", "trail", "lines.p.trail", True),
+      ("int", "width", "lines.p.width", 2, 1, 4)],
+     "lines.hint"),
 ]
 
 _COORD_CARDS = [
-    ("grid 坐标系 · 柱线点混合", _build_grid_mix,
-     [("bool", "smooth", "折线平滑", True),
-      ("bool", "area", "面积填充", False),
-      ("bool", "scatter", "叠加散点", True)],
-     "xAxis/yAxis + bar/line/scatter 多系列混合"),
-    ("polar 坐标系 · 风向频率折线", _build_polar,
-     [("choice", "shape", "形状", "polygon",
-       [("多边形", "polygon"), ("圆形", "circle")]),
-      ("bool", "area", "面积填充", True),
-      ("bool", "smooth", "平滑", False)],
-     "polar/angleAxis/radiusAxis + line(coordinateSystem=polar)"),
-    ("singleAxis 坐标系 · 成绩分布散点", _build_single_axis,
-     [("int", "n", "样本数", 40, 10, 100),
-      ("int", "size", "点径", 10, 4, 20)],
-     "singleAxis + scatter(coordinateSystem=singleAxis)"),
-    ("calendar 坐标系 · 每日步数热力", _build_calendar_coord,
-     [("choice", "year", "年份", 2026, list(_YEAR_OPTS)),
-      ("choice", "cell", "单元格", "auto", list(_CELL_OPTS))],
-     "calendar: {year, cellSize} + heatmap(coordinateSystem=calendar)"),
-    ("map 地图 · 区域销量（示意数据）", _build_map,
-     [("bool", "visualMap", "视觉映射", True),
-      ("choice", "ramp", "色带", "blue", list(_RAMP_OPTS)),
-      ("choice", "orient", "映射条方向", "vertical",
-       [("纵向", "vertical"), ("横向", "horizontal")])],
-     "map: \"demo\" 内置 7 大区块示意地图；可经 geo.regions 自定义多边形"),
+    ("grid_mix", _build_grid_mix,
+     [("bool", "smooth", "grid_mix.p.smooth", True),
+      ("bool", "area", "grid_mix.p.area", False),
+      ("bool", "scatter", "grid_mix.p.scatter", True)],
+     "grid_mix.hint"),
+    ("polar", _build_polar,
+     [("choice", "shape", "polar.p.shape", "polygon",
+       [("opt.shape.polygon", "polygon"), ("opt.shape.circle", "circle")]),
+      ("bool", "area", "polar.p.area", True),
+      ("bool", "smooth", "polar.p.smooth", False)],
+     "polar.hint"),
+    ("single_axis", _build_single_axis,
+     [("int", "n", "single_axis.p.n", 40, 10, 100),
+      ("int", "size", "single_axis.p.size", 10, 4, 20)],
+     "single_axis.hint"),
+    ("calendar_coord", _build_calendar_coord,
+     [("choice", "year", "calendar_coord.p.year", 2026, list(_YEAR_OPTS)),
+      ("choice", "cell", "calendar_coord.p.cell", "auto", list(_CELL_OPTS))],
+     "calendar_coord.hint"),
+    ("map", _build_map,
+     [("bool", "visualMap", "map.p.visual_map", True),
+      ("choice", "ramp", "map.p.ramp", "blue", list(_RAMP_OPTS)),
+      ("choice", "orient", "map.p.orient", "vertical",
+       [("opt.map_orient.vertical", "vertical"),
+        ("opt.map_orient.horizontal", "horizontal")])],
+     "map.hint"),
 ]
 
 _COMP_SPECS = [
-    ("choice", "markLine", "标线", "average",
-     [("平均线", "average"), ("最大值线", "max"), ("警戒线 300", "threshold")]),
-    ("bool", "markArea", "标域(3~5月)", True),
-    ("bool", "visualMap", "视觉映射", False),
-    ("int", "zoomEnd", "缩放窗口(%)", 100, 20, 100),
+    ("choice", "markLine", "comp.p.mark_line", "average",
+     [("opt.mark_line.average", "average"), ("opt.mark_line.max", "max"),
+      ("opt.mark_line.threshold", "threshold")]),
+    ("bool", "markArea", "comp.p.mark_area", True),
+    ("bool", "visualMap", "comp.p.visual_map", False),
+    ("int", "zoomEnd", "comp.p.zoom_end", 100, 20, 100),
 ]
-
-_COMP_KEYS = ("涉及 option 键：series.markPoint / series.markLine / "
-              "series.markArea / visualMap / dataZoom(slider+inside) / "
-              "brush / toolbox / timeline(+options 三帧)。可交互："
-              "滚轮缩放、滑块窗口、矩形刷选、右上角工具按钮、底部时间轴播放。")
 
 
 # ---------------------------------------------------------------------------
 # 页面组装
 # ---------------------------------------------------------------------------
 
-def _make_cards(specs) -> list:
-    return [ChartDemoCard(title, build, spec, hint=hint)
-            for title, build, spec, hint in specs]
+def _translate_options(item, tr):
+    """choice 规格的选项对（取词键, 值）翻译为（显示文案, 值）。"""
+    if isinstance(item, list) and item and isinstance(item[0], tuple):
+        return [(tr(k), v) for k, v in item]
+    return item
 
 
-def _comprehensive_section() -> Section:
+def _translate_specs(rows, tr) -> list:
+    """把规格行的标签键与 choice 选项键译为当前语言。"""
+    return [(kind, name, tr(label_key),
+             *[_translate_options(item, tr) for item in rest])
+            for kind, name, label_key, *rest in rows]
+
+
+def _make_cards(specs, tr) -> list:
+    """按卡片规格表构建演示卡（标题 / 提示 / 参数标签均取词）。"""
+    return [ChartDemoCard(tr(f"{key}.title"),
+                          lambda o, b=build: b(o, tr),
+                          _translate_specs(spec, tr), hint=tr(hint_key))
+            for key, build, spec, hint_key in specs]
+
+
+def _comprehensive_section(i18n) -> Section:
     """组件综合演示：大图 + 右侧参数面板 + option 键说明。"""
-    box = Section("组件综合演示（标注 / 视觉映射 / 缩放 / 刷选 / 工具箱 / 时间轴）")
+    tr = bind_tr(i18n, "charts")
+    box = Section(tr("comp.sec"))
     host = QWidget()
     lay = QGridLayout(host)
     lay.setContentsMargins(0, 0, 0, 0)
     lay.setSpacing(10)
 
-    card = ChartDemoCard("年度销售总览 · 组件综合", _build_comprehensive,
+    card = ChartDemoCard(tr("comp.card_title"),
+                         lambda o: _build_comprehensive(o, tr),
                          [], hint="", size=(560, 420), auto_apply=False)
     lay.addWidget(card, 0, 0)
 
-    panel = PlaygroundPanel("演示参数", width=252)
+    panel = PlaygroundPanel(tr("comp.panel_title"), width=252, i18n=i18n)
     opts = card.opts
-    add_specs(panel.form, opts, _COMP_SPECS)
+    add_specs(panel.form, opts, _translate_specs(_COMP_SPECS, tr))
     panel.form.changed.connect(lambda *_: card.apply())
     card.apply()
     card.panel = panel  # 便于测试访问
@@ -1014,7 +1102,7 @@ def _comprehensive_section() -> Section:
     side_lay.setContentsMargins(0, 0, 0, 0)
     side_lay.setSpacing(8)
     side_lay.addWidget(panel)
-    side_lay.addWidget(hint_label(_COMP_KEYS, role="tertiary"))
+    side_lay.addWidget(hint_label(tr("comp.keys_note"), role="tertiary"))
     side_lay.addStretch(1)
     lay.addWidget(side, 0, 1)
     lay.setColumnStretch(0, 1)
@@ -1024,25 +1112,25 @@ def _comprehensive_section() -> Section:
     return box
 
 
-def create_page() -> QWidget:
+def create_page(i18n: Optional[ILocalizationFacade] = None) -> QWidget:
     """图表演示页（InstructionX_UIKit.charts 原生引擎全系列）。"""
-    sec_cart = Section("直角坐标系列（11 种 · grid / 平行 / 日历）")
-    sec_cart.layout().addWidget(ResponsiveCardGrid(_make_cards(_CARTESIAN_CARDS)))
+    tr = bind_tr(i18n, "charts")
+    sec_cart = Section(tr("sec.cartesian"))
+    sec_cart.layout().addWidget(
+        ResponsiveCardGrid(_make_cards(_CARTESIAN_CARDS, tr)))
 
-    sec_hier = Section("层级占比系列（6 种）")
-    sec_hier.layout().addWidget(ResponsiveCardGrid(_make_cards(_HIERARCHY_CARDS)))
+    sec_hier = Section(tr("sec.hierarchy"))
+    sec_hier.layout().addWidget(
+        ResponsiveCardGrid(_make_cards(_HIERARCHY_CARDS, tr)))
 
-    sec_rel = Section("关系流向系列（4 种）")
-    sec_rel.layout().addWidget(ResponsiveCardGrid(_make_cards(_RELATION_CARDS)))
+    sec_rel = Section(tr("sec.relation"))
+    sec_rel.layout().addWidget(
+        ResponsiveCardGrid(_make_cards(_RELATION_CARDS, tr)))
 
-    sec_coord = Section("坐标系与地图（4 坐标系 + map 系列）")
-    sec_coord.layout().addWidget(ResponsiveCardGrid(_make_cards(_COORD_CARDS)))
+    sec_coord = Section(tr("sec.coord"))
+    sec_coord.layout().addWidget(
+        ResponsiveCardGrid(_make_cards(_COORD_CARDS, tr)))
 
-    return make_page(
-        "图表",
-        "InstructionX_UIKit.charts 原生图表引擎（纯 QPainter 自绘，无 WebView）："
-        "ECharts 风格 set_option / update_option API，主题感知实时换肤。"
-        "21 个系列各配演示卡（随页面宽度 1~3 列自适应排布），另设四坐标系、"
-        "map 与组件综合演示（大图整行撑满）。参数修改即按新 option 重建图表。",
-        [sec_cart, sec_hier, sec_rel, sec_coord,
-         _comprehensive_section()])
+    return make_page(tr("title"), tr("desc"),
+                     [sec_cart, sec_hier, sec_rel, sec_coord,
+                      _comprehensive_section(i18n)])
