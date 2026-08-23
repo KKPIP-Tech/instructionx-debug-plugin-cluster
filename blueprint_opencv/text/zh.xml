@@ -96,10 +96,6 @@
     <text key="adjust">调整</text>
     <text key="output">输出</text>
   </group>
-  <group name="pins">
-    <text key="pin.exec">执行</text>
-    <text key="pin.image">图像</text>
-  </group>
   <group name="nodes">
     <text key="node.load_image.title">加载图片</text>
     <text key="node.load_image.desc">从文件路径读取图片（BGR 三通道）</text>

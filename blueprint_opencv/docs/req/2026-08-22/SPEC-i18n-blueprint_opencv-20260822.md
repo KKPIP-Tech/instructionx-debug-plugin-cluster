@@ -1,7 +1,7 @@
 # SPEC — blueprint_opencv 多语言（i18n）改造技术方案
 
 - 创建日期：2026-08-22
-- 修改日期：2026-08-22
+- 修改日期：2026-08-22（修正 D5：引脚名不参与翻译，见 D5 修订说明）
 - 对应 PRD：`PRD-i18n-blueprint_opencv-20260822.md`
 
 ## 1. 技术方案总览
@@ -15,7 +15,7 @@
 节点标题 / 描述 / 分类 / 引脚名 / 参数标签的唯一来源是 `function/node_catalog.py` 的 `NODE_DEFINITIONS` 纯数据表（中文字面量）。候选方案：
 
 - **方案 A（采用）**：NODE_DEFINITIONS 保持中文原样作为 zh 源文案；翻译发生在两个 UI 边界——
-  1. `ui/node_bootstrap.py` 把定义注册进 UIKit `NodeRegistry` 时，对 title / category / description / 引脚 name 逐项取词；
+  1. `ui/node_bootstrap.py` 把定义注册进 UIKit `NodeRegistry` 时，对 title / category / description 逐项取词（引脚 name 为内部标识符，不取词，见 D5）；
   2. `ui/property_panel.py` 按 schema 重建表单时，对参数 label 取词（键 `param.{type_name}.{param_key}`）。
 - 方案 B（弃用）：给 node_catalog / BlueprintOpenCVService 增加 i18n 参数。缺点：NODE_DEFINITIONS 是模块级冻结 dataclass 表，注册时机早于门面可用（main_widget 模块级即注册）；改造会扩散到 executor / graph_migration 等全部消费方，违背最小化改动。
 
@@ -40,9 +40,11 @@ choice 参数 options（`gaussian` / `binary` / `fixed`…）与节点状态（`
 
 **已知限制（明示）**：已存在于画布的节点实例标题不随语言切换改写——节点标题是实例数据（用户可经「重命名」修改），改写会覆盖用户命名；新建节点与右键菜单立即使用新语言。存档文件名、状态栏历史消息等动态内容不回溯刷新（生成时已取词）。
 
-### D5：注册幂等比较扩展标题/分类/引脚名
+### D5：注册幂等比较扩展标题/分类；引脚名不参与翻译（2026-08-22 修订）
 
-`node_bootstrap._spec_matches` 原本只比对引脚 `(id, data_type)`。语言切换后同一 type_name 的 title/category/引脚名不同，需要重注册纠正，故一致性比较扩展为「引脚 id/data_type + 引脚 name + title + category」：同语言重复调用仍幂等跳过，语言变化时同名异定义纠正机制自然完成重注册并记 WARNING。WARNING 文案区分「语言切换重注册」属正常路径，日志降级为 INFO（语言切换时）以保持日志语义准确——实现上把「被旧定义覆盖纠正」与「语言切换重注册」统一为重新注册，日志保留 WARNING 但在消息中注明可能由语言切换触发。
+`node_bootstrap._spec_matches` 原本只比对引脚 `(id, data_type)`。语言切换后同一 type_name 的 title/category 不同，需要重注册纠正，故一致性比较扩展为「引脚 id/data_type + title + category」：同语言重复调用幂等跳过；仅标题/分类不同（语言切换）时**静默重注册**——WARNING 只在引脚定义真正被同名异定义覆盖时记录（`_sync_definition` 中区分两条路径）；UIKit `NodeRegistry._same_definition` 只比对 inputs/outputs，引脚稳定后覆盖注册对库侧同样静默幂等，语言切换全程零 WARNING。
+
+**修订说明（Why 引脚名不翻译）**：初版曾把引脚 `name`（执行 / 图像）也纳入翻译，实机验证发现这是缺陷——UIKit `NodeRegistry._same_definition` 比对完整的 `inputs` / `outputs` dict 列表（含 `name` 字段），翻译后语言切换导致引脚定义被判定为「不同」，每次重注册都刷覆盖 WARNING；且引脚名随 `canvas.to_dict()` 序列化进已保存蓝图（存的是注册时的中文原名），翻译会使不同语言下创建的节点引脚名不一致，破坏存档引脚数据的稳定性（`function/graph_migration.py` 的引脚迁移比对以标准定义为基准）。因此注册载荷中引脚 dict 固定使用 `node_catalog` 中文原名原样透传（`_copy_pins`），不做取词；语言文件的 `pins` 分组相应删除。节点 title / category / description 的翻译保留（`_same_definition` 不比对这三项，重注册对库侧静默幂等）。
 
 ### D6：门面未注入时优雅降级
 
@@ -78,7 +80,7 @@ flowchart TD
     ENT -->|i18n 门面| MW[ui.MainWidget]
     ENT -->|i18n 门面| NB[node_bootstrap.ensure_node_types_registered]
     MW -->|i18n 逐级下传| TB[ToolBar] & GL[GraphListPanel] & NL[NodeListPanel] & PP[PropertyPanel] & PV[PreviewPanel]
-    NC[function/node_catalog<br/>NODE_DEFINITIONS 中文源文案] -->|title/category/desc/pins| NB
+    NC[function/node_catalog<br/>NODE_DEFINITIONS 中文源文案] -->|title/category/desc| NB
     NB -->|翻译后注册载荷| UIKIT[UIKit NodeRegistry<br/>owner=blueprint-opencv]
     NC -->|param_schema label| PP
     FW -->|language_changed / plugin_language_changed| MW
@@ -129,7 +131,7 @@ classDiagram
 
 ## 7. 分组 / 键命名约定
 
-- group 按 UI 结构划分：`toolbar` / `panel`（分区标题）/ `main`（MainWidget 状态与对话框）/ `graph_list` / `node_list` / `property` / `preview` / `status`（节点状态名）/ `nodes`（节点标题与描述）/ `categories`（节点分类）/ `pins`（引脚名）/ `params`（参数标签）/ `node_body`（节点体区）。
-- 键名点分、自解释：`nodes` 组内 `node.{type_name}.title` / `node.{type_name}.desc`；`params` 组内 `param.{type_name}.{param_key}`（type_name 消歧：load_image 与 save_image 的 file_path 标签不同）；`categories` 组内 `{category_key}`（category_key 由 node_bootstrap 的「分类中文 → 键」映射表给出：输入→input、基础→basic、滤波→filter、阈值与边缘→threshold、形态学→morphology、调整→adjust、输出→output）；`pins` 组内 `pin.exec` / `pin.image`。
+- group 按 UI 结构划分：`toolbar` / `panel`（分区标题）/ `main`（MainWidget 状态与对话框）/ `graph_list` / `node_list` / `property` / `preview` / `status`（节点状态名）/ `nodes`（节点标题与描述）/ `categories`（节点分类）/ `params`（参数标签）/ `node_body`（节点体区）。引脚名不参与翻译（D5），不设 `pins` 分组。
+- 键名点分、自解释：`nodes` 组内 `node.{type_name}.title` / `node.{type_name}.desc`；`params` 组内 `param.{type_name}.{param_key}`（type_name 消歧：load_image 与 save_image 的 file_path 标签不同）；`categories` 组内 `{category_key}`（category_key 由 node_bootstrap 的「分类中文 → 键」映射表给出：输入→input、基础→basic、滤波→filter、阈值与边缘→threshold、形态学→morphology、调整→adjust、输出→output）。
 - 占位符仅命名式：如 `main.status.saved` = `已保存「{name}」（{count} 个节点）`。
 - zh.xml 为全量参照，en.xml 键集合必须与之完全一致（`check_i18n_completeness.py` 校验）。

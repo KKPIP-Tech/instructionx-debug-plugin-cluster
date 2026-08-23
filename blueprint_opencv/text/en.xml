@@ -95,10 +95,6 @@
     <text key="adjust">Adjustment</text>
     <text key="output">Output</text>
   </group>
-  <group name="pins">
-    <text key="pin.exec">Exec</text>
-    <text key="pin.image">Image</text>
-  </group>
   <group name="nodes">
     <text key="node.load_image.title">Load Image</text>
     <text key="node.load_image.desc">Read an image from a file path (BGR, 3 channels)</text>

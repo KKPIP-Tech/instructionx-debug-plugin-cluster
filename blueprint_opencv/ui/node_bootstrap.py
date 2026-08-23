@@ -71,7 +71,6 @@ _PATH_LABEL_WIDTH = 140
 #: 取词分组名（与 text/zh.xml 的 <group name="..."> 一致）
 _GROUP_NODES = "nodes"
 _GROUP_CATEGORIES = "categories"
-_GROUP_PINS = "pins"
 _GROUP_PARAMS = "params"
 _GROUP_NODE_BODY = "node_body"
 
@@ -84,12 +83,6 @@ _CATEGORY_KEYS: Dict[str, str] = {
     "形态学": "morphology",
     "调整": "adjust",
     "输出": "output",
-}
-
-#: 引脚数据类型 → 语言文件键（pins 组）
-_PIN_NAME_KEYS: Dict[str, str] = {
-    "exec": "pin.exec",
-    "image": "pin.image",
 }
 
 #: 体区空路径占位的中文原文（i18n 未注入时的回退值，与 zh.xml 一致）
@@ -119,28 +112,25 @@ def _category_text(i18n: Optional[ILocalizationFacade], category: str) -> str:
     return _tr_text(i18n, _GROUP_CATEGORIES, key, category)
 
 
-def _pin_name(i18n: Optional[ILocalizationFacade], pin: Dict[str, Any]) -> str:
-    """取引脚显示名（按 data_type 取词，未知类型回退原文）。"""
-    original = str(pin.get("name", ""))
-    key = _PIN_NAME_KEYS.get(pin.get("data_type"))
-    if key is None:
-        return original
-    return _tr_text(i18n, _GROUP_PINS, key, original)
+def _copy_pins(pins: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """逐份拷贝引脚定义（不改动共享模板对象）。
 
-
-def _translated_pins(pins: List[Dict[str, Any]],
-                     i18n: Optional[ILocalizationFacade]) -> List[Dict[str, Any]]:
-    """逐份拷贝引脚定义并翻译显示名（不改动共享模板对象）。"""
-    return [{**pin, "name": _pin_name(i18n, pin)} for pin in pins]
+    引脚 name（执行 / 图像）随图序列化进存档，且 UIKit
+    ``NodeRegistry._same_definition`` 比对完整引脚 dict（含 name）：
+    翻译 name 会使语言切换被判定为「定义不同」而刷覆盖 WARNING，
+    故固定使用目录中文原名，不参与翻译。
+    """
+    return [dict(pin) for pin in pins]
 
 
 def ensure_node_types_registered(
         i18n: Optional[ILocalizationFacade] = None) -> int:
     """把节点目录中的类型注册进 UIKit 本插件命名空间（幂等 + 同名异定义纠正）。
 
-    标题 / 分类 / 引脚名 / 描述按 ``i18n`` 当前语言取词；一致性比较同样
-    按翻译后文本进行，语言切换后重复调用经纠正机制自然完成重注册
-    （详见 docs/req/2026-08-22/SPEC-i18n §D5）。
+    标题 / 分类 / 描述按 ``i18n`` 当前语言取词；一致性比较同样
+    按翻译后文本进行，语言切换后重复调用静默重注册（引脚定义未变，
+    不记 WARNING）；仅引脚定义被同名异定义覆盖时才记 WARNING 纠正。
+    引脚名固定中文原名不参与翻译，详见 docs/req/2026-08-22/SPEC-i18n §D5。
 
     参数:
         i18n: 取词门面（可选；缺省按目录中文原文注册，兼容模块级 /
@@ -158,34 +148,41 @@ def ensure_node_types_registered(
 
 def _sync_definition(registry, definition,
                      i18n: Optional[ILocalizationFacade]) -> int:
-    """同步单个类型定义：一致跳过（幂等），缺失 / 异定义注册纠正。"""
+    """同步单个类型定义：完全一致跳过（幂等），缺失 / 异定义注册纠正。
+
+    引脚定义不同才是真正的「同名异定义覆盖」（记 WARNING 纠正）；
+    引脚一致、仅标题 / 分类不同即界面语言切换，静默重注册不记
+    WARNING（UIKit ``_same_definition`` 只比对引脚，覆盖同样静默）。
+    """
     spec = registry.spec(definition.type_name, owner=REGISTRY_OWNER)
     if spec is not None and _spec_matches(spec, definition, i18n):
         return 0  # 幂等：同名同定义跳过，重复调用不产生重复注册
-    if spec is not None:
+    if spec is not None and not _pins_match(spec, definition):
         _logger.warning(
             _MODULE,
-            f"节点类型 {definition.type_name} 在同空间内被同名异定义覆盖"
-            "（或界面语言已切换），已纠正回本插件当前语言定义")
+            f"节点类型 {definition.type_name} 在同空间内被同名异定义覆盖，"
+            "已纠正回本插件定义")
     _register_definition(definition, i18n)
     return 1
 
 
 def _spec_matches(spec, definition, i18n: Optional[ILocalizationFacade]) -> bool:
-    """判定既有 spec 是否与本插件定义一致（引脚 id/类型/名称 + 标题 + 分类）。"""
-    return (_pin_keys(spec.inputs) == _pin_keys(
-                _translated_pins(definition.inputs, i18n))
-            and _pin_keys(spec.outputs) == _pin_keys(
-                _translated_pins(definition.outputs, i18n))
+    """判定既有 spec 是否与本插件定义完全一致（引脚 + 标题 + 分类）。"""
+    return (_pins_match(spec, definition)
             and spec.title == _node_text(i18n, definition, "title",
                                          definition.title)
             and spec.category == _category_text(i18n, definition.category))
 
 
+def _pins_match(spec, definition) -> bool:
+    """判定既有 spec 的引脚定义是否与本插件目录一致（id + data_type）。"""
+    return (_pin_keys(spec.inputs) == _pin_keys(definition.inputs)
+            and _pin_keys(spec.outputs) == _pin_keys(definition.outputs))
+
+
 def _pin_keys(pins: List[Dict[str, Any]]) -> List[tuple]:
-    """取引脚 ``(id, data_type, name)`` 序列，用于定义一致性比较。"""
-    return [(pin["id"], pin.get("data_type", "any"),
-             str(pin.get("name", ""))) for pin in pins]
+    """取引脚 ``(id, data_type)`` 序列，用于定义一致性比较。"""
+    return [(pin["id"], pin.get("data_type", "any")) for pin in pins]
 
 
 def param_schema_of(type_name: str) -> List[Dict[str, Any]]:
@@ -219,13 +216,13 @@ def apply_catalog_defaults(node) -> None:
 
 def _register_definition(definition,
                          i18n: Optional[ILocalizationFacade]) -> None:
-    """注册单个节点类型（标题/分类/引脚名/描述按当前语言取词）。"""
+    """注册单个节点类型（标题/分类/描述按当前语言取词，引脚名固定中文原名）。"""
     register_node_type(
         definition.type_name,
         _node_text(i18n, definition, "title", definition.title),
         _category_text(i18n, definition.category),
-        inputs=_translated_pins(definition.inputs, i18n),
-        outputs=_translated_pins(definition.outputs, i18n),
+        inputs=_copy_pins(definition.inputs),
+        outputs=_copy_pins(definition.outputs),
         accent=CATEGORY_ACCENTS.get(definition.category),
         body_builder=_make_path_body_builder(definition, i18n),
         description=_node_text(i18n, definition, "desc", definition.description),

@@ -1,7 +1,7 @@
 # PRD — blueprint_opencv 多语言（i18n）改造
 
 - 创建日期：2026-08-22
-- 修改日期：2026-08-22
+- 修改日期：2026-08-22（修正 F4：引脚名为随图序列化的内部标识符，不参与翻译）
 - 插件：blueprint_opencv（Blueprint OpenCV，release.1.0.3，版本不变）
 - 依赖框架能力：dev_i18n 分支 i18n 子系统（`PluginServices.localization` 注入的 `ILocalizationFacade`、插件 `text/<语言代码>.xml` 自动扫描注册、`LanguageManager.language_changed` / `plugin_language_changed` 信号）
 
@@ -27,7 +27,7 @@ blueprint_opencv 当前全部用户可见文案（工具条按钮、面板分区
 - F1：插件提供 `text/zh.xml` 与 `text/en.xml` 两份语言文件，group/键集合完全一致；zh.xml 覆盖插件全部取词键（回退终点）。
 - F2：entrance 经既有 `_get_services()` 模式获取 `services.localization`（判空），注入 MainWidget 与节点类型注册流程。
 - F3：UI 各控件（MainWidget / ToolBar / GraphListPanel / NodeListPanel / PropertyPanel / PreviewPanel / node_bootstrap）的全部用户可见静态文案改为经 `ILocalizationFacade.tr()` 取词；门面未注入时优雅降级返回键名。
-- F4：节点类型元数据（标题/描述/分类/引脚名）在 UI 展示边界（注册进 UIKit NodeRegistry 时）翻译；参数表单标签在属性面板重建表单时翻译；function 层数据结构与 service_api 语义不变。
+- F4：节点类型元数据（标题/描述/分类）在 UI 展示边界（注册进 UIKit NodeRegistry 时）翻译；参数表单标签在属性面板重建表单时翻译；引脚名为随图序列化的内部标识符，固定中文原名不参与翻译（避免破坏已保存蓝图兼容与注册幂等）；function 层数据结构与 service_api 语义不变。
 - F5：MainWidget 连接 `language_changed` 与 `plugin_language_changed`（比对本插件 UUID）信号，集中实现 `_retranslate_ui()` 重设全部静态文案，并触发节点类型按新语言重注册、属性面板表单重建、存档/节点列表行刷新。
 - F6：动态生成的文案（状态栏消息、列表行元信息、对话框内容）在生成时取词，无需回溯刷新。
 - F7：IXPlugin.json 的 `name` / `description` 改为多语言字典（zh 沿用现有文案，en 新译）；版本号与其余字段不变。
