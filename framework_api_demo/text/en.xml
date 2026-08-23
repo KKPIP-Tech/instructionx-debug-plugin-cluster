@@ -1,0 +1,477 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Framework API Demo plugin language file (en, English)
+  Rule: group names and keys must exactly match zh.xml (the fallback root).
+  Verify: .venv\Scripts\python.exe scripts/check_i18n_completeness.py
+-->
+<texts language="en">
+  <!-- Common words shared across tabs -->
+  <group name="common">
+    <text key="result.success">{title} succeeded</text>
+    <text key="result.fail">{title} failed</text>
+    <text key="label.key">Key:</text>
+    <text key="label.value">Value:</text>
+    <text key="label.message">Message:</text>
+    <text key="label.result">Result:</text>
+    <text key="error.prefix">Error: {error}</text>
+    <text key="msg.none">(none)</text>
+  </group>
+
+  <!-- Main widget: result/log panels, tab names, startup logs -->
+  <group name="main">
+    <text key="panel.result.title">Operation Results</text>
+    <text key="btn.clear_result">Clear Results</text>
+    <text key="panel.log.title">Execution Log</text>
+    <text key="tab.data">Data</text>
+    <text key="tab.task">Task</text>
+    <text key="tab.llm">LLM</text>
+    <text key="tab.api">API</text>
+    <text key="tab.info">Info</text>
+    <text key="tab.mcp">MCP</text>
+    <text key="log.loaded">Framework API Demo plugin loaded</text>
+    <text key="log.plugin_id">Plugin ID: {id}</text>
+  </group>
+
+  <!-- DataProvider demo tab -->
+  <group name="tab_data">
+    <text key="group.register">Plugin Registration</text>
+    <text key="btn.register">Register Demo Plugin</text>
+    <text key="btn.unregister">Unregister Demo Plugin</text>
+    <text key="group.private">Private Data Operations</text>
+    <text key="group.public">Public Data Operations</text>
+    <text key="btn.write">Write</text>
+    <text key="btn.read">Read</text>
+    <text key="group.query">Data Query</text>
+    <text key="btn.get_all">Get All Data</text>
+    <text key="group.assets">Asset Management</text>
+    <text key="btn.save_asset">Save Asset</text>
+    <text key="btn.load_asset">Load Asset</text>
+    <text key="group.pubsub">Publish/Subscribe (Pub/Sub)</text>
+    <text key="btn.subscribe">Subscribe</text>
+    <text key="btn.publish">Publish</text>
+    <text key="btn.unsubscribe">Unsubscribe</text>
+    <text key="btn.show_events">View Events</text>
+    <text key="btn.active_instance">Active Instance</text>
+    <text key="title.register">Register Plugin</text>
+    <text key="title.unregister">Unregister Plugin</text>
+    <text key="title.write_private">Write Private</text>
+    <text key="title.read_private">Read Private</text>
+    <text key="title.write_public">Write Public</text>
+    <text key="title.read_public">Read Public</text>
+    <text key="title.all_data">All Data</text>
+    <text key="title.get_data_fail">Failed to Get Data</text>
+    <text key="title.save_asset">Save Asset</text>
+    <text key="title.load_asset">Load Asset</text>
+    <text key="title.subscribe">Subscribe</text>
+    <text key="title.publish">Publish</text>
+    <text key="title.unsubscribe">Unsubscribe</text>
+    <text key="title.events">Subscription Events</text>
+    <text key="title.active_instance">Active Instance</text>
+    <text key="title.active_instance_fail">Failed to Query Active Instance</text>
+    <text key="msg.asset_path">Path: {path}</text>
+    <text key="msg.asset_content">Content:
+{content}</text>
+    <text key="msg.active_instance">{plugin_type} -&gt; {active_instance}</text>
+    <text key="log.register">Register plugin: {result}</text>
+    <text key="log.unregister">Unregister plugin: {result}</text>
+    <text key="log.write_private">Write Private: {result}</text>
+    <text key="log.read_private">Read Private: {result}</text>
+    <text key="log.write_public">Write Public: {result}</text>
+    <text key="log.read_public">Read Public: {result}</text>
+    <text key="log.get_all">Get all data: {result}</text>
+    <text key="log.save_asset">Save asset: {result}</text>
+    <text key="log.load_asset">Load asset: {result}</text>
+    <text key="log.subscribe">Subscribe: {result}</text>
+    <text key="log.publish">Publish: {result}</text>
+    <text key="log.unsubscribe">Unsubscribe: {result}</text>
+    <text key="log.events_count">View events: {count} entries</text>
+    <text key="log.active_instance">Active instance: {result}</text>
+  </group>
+
+  <!-- Background task demo tab -->
+  <group name="tab_task">
+    <text key="group.create">Create Task</text>
+    <text key="label.name">Name:</text>
+    <text key="label.type">Type:</text>
+    <text key="label.interval">Interval:</text>
+    <text key="suffix.seconds">s</text>
+    <text key="btn.create">Create Task</text>
+    <text key="group.query">Task Query</text>
+    <text key="btn.query">Query All Tasks</text>
+    <text key="btn.clear">Clear Completed Tasks</text>
+    <text key="btn.cancel">Cancel Task</text>
+    <text key="btn.stop_long">Stop Long-Running Task</text>
+    <text key="btn.status">Query Status</text>
+    <text key="group.scheduled">Scheduled Task Control</text>
+    <text key="label.task_id">Task ID:</text>
+    <text key="placeholder.scheduled_id">Scheduled task_id (empty = use selected item)</text>
+    <text key="btn.enable">Enable</text>
+    <text key="btn.disable">Disable</text>
+    <text key="btn.unregister">Unregister</text>
+    <text key="title.create">Create Task</text>
+    <text key="title.list">Task List</text>
+    <text key="title.query_fail">Failed to Query Tasks</text>
+    <text key="title.clear">Clear Tasks</text>
+    <text key="title.unregister_scheduled">Unregister Scheduled Task</text>
+    <text key="title.cancel">Cancel Task</text>
+    <text key="title.stop_long">Stop Long-Running Task</text>
+    <text key="title.status">Query Status</text>
+    <text key="title.enable">Enable Scheduled Task</text>
+    <text key="title.disable">Disable Scheduled Task</text>
+    <text key="status.running">Running</text>
+    <text key="status.disabled">Disabled</text>
+    <text key="item.task">{name} [{status}]</text>
+    <text key="item.scheduled">[Scheduled] {name} ({interval}s) [{status}]</text>
+    <text key="item.long">[Long] {name} [{status}]</text>
+    <text key="empty.tasks">No tasks</text>
+    <text key="warn.select_task">Please select an item in the task list first</text>
+    <text key="warn.long_use_stop">For long-running tasks, use the "Stop Long-Running Task" button</text>
+    <text key="log.create">Create task: {result}</text>
+    <text key="log.query">Query tasks: {result}</text>
+    <text key="log.clear">Clear tasks: {result}</text>
+  </group>
+
+  <!-- LLM demo tab -->
+  <group name="tab_llm">
+    <text key="group.provider">Provider Info</text>
+    <text key="btn.get_providers">Get Provider List</text>
+    <text key="btn.get_models">Get Model List</text>
+    <text key="group.chat">Chat Test</text>
+    <text key="default.chat_message">Hello, please introduce yourself</text>
+    <text key="btn.send">Send Chat</text>
+    <text key="btn.stream">Send Streaming</text>
+    <text key="group.conversation">Conversation Management</text>
+    <text key="placeholder.system_prompt">System prompt (optional)</text>
+    <text key="label.system_prompt">System Prompt:</text>
+    <text key="btn.create_conv">Create Conversation</text>
+    <text key="btn.refresh_conv">Refresh Conversation List</text>
+    <text key="btn.conv_detail">View Details</text>
+    <text key="btn.delete_conv">Delete Conversation</text>
+    <text key="placeholder.conv_message">Message to the selected conversation</text>
+    <text key="btn.send_msg">Send</text>
+    <text key="label.reply">Reply:</text>
+    <text key="group.tool">Tool Calling</text>
+    <text key="btn.register_tools">Register Demo Tools</text>
+    <text key="btn.unregister_tools">Unregister Demo Tools</text>
+    <text key="btn.list_tools">List Registered Tools</text>
+    <text key="default.tool_message">What time is it now? Help me calculate 12*(3+4)</text>
+    <text key="btn.tool_chat">Tool Chat</text>
+    <text key="group.embed">Embedding Test</text>
+    <text key="default.embed_text">Hello world</text>
+    <text key="btn.embed">Send Embedding</text>
+    <text key="group.multimodal">Multimodal</text>
+    <text key="label.prompt">Prompt:</text>
+    <text key="default.image_prompt">A cat basking in the sun on the grass</text>
+    <text key="btn.gen_image">Generate Image</text>
+    <text key="label.text">Text:</text>
+    <text key="default.tts_text">Hello, this is a text-to-speech demo</text>
+    <text key="btn.tts">Text to Speech</text>
+    <text key="group.stats">Stats &amp; Validation</text>
+    <text key="placeholder.usage_conv_id">Conversation id (empty = all)</text>
+    <text key="label.conv_id">Conversation id:</text>
+    <text key="btn.usage_stats">Get Usage Stats</text>
+    <text key="placeholder.provider_id">Provider instance id (empty = default)</text>
+    <text key="label.provider">Provider:</text>
+    <text key="btn.validate">Validate Provider</text>
+    <text key="title.tool_chat_fail">Tool Chat Failed</text>
+    <text key="title.stream_fail">Streaming Chat Failed</text>
+    <text key="title.conv_stream_fail">Failed to Send Conversation Streaming</text>
+    <text key="title.conv_reply">Conversation Reply</text>
+    <text key="title.conv_msg_fail">Conversation Message Failed</text>
+    <text key="title.conv_start_fail">Failed to Start Conversation Message</text>
+    <text key="title.conv_stream_result">Conversation Streaming Response</text>
+    <text key="title.stream_result">Streaming Chat Response</text>
+    <text key="title.tool_chat_result">Tool Chat Response</text>
+    <text key="title.providers">Provider List</text>
+    <text key="title.providers_fail">Failed to Get Providers</text>
+    <text key="title.models">Model List</text>
+    <text key="title.models_fail">Failed to Get Models</text>
+    <text key="title.chat_result">Chat Response</text>
+    <text key="title.chat_fail">Chat Failed</text>
+    <text key="title.stream_start_fail">Failed to Start Streaming Chat</text>
+    <text key="title.conv_list_fail">Failed to List Conversations</text>
+    <text key="title.conv_detail_fail">Failed to Get Conversation Detail</text>
+    <text key="title.conv_detail">Conversation Detail</text>
+    <text key="title.register_tools">Register Demo Tools</text>
+    <text key="title.register_tools_fail">Failed to Register Demo Tools</text>
+    <text key="title.unregister_tools">Unregister Demo Tools</text>
+    <text key="title.list_tools_fail">Failed to List Registered Tools</text>
+    <text key="title.tool_registry">Tools Registered in Shared ToolRegistry</text>
+    <text key="title.tool_chat_start_fail">Failed to Start Tool Chat</text>
+    <text key="title.embed_ok">Embedding Succeeded</text>
+    <text key="title.embed_fail">Embedding Failed</text>
+    <text key="title.image_start_fail">Failed to Start Image Generation</text>
+    <text key="title.tts_start_fail">Failed to Start Speech Synthesis</text>
+    <text key="title.usage_fail">Failed to Get Usage Stats</text>
+    <text key="title.usage">Usage Stats</text>
+    <text key="title.validate_fail">Failed to Validate Provider</text>
+    <text key="title.validate_ok">Provider Validation Passed</text>
+    <text key="title.validate_not_ok">Provider Validation Failed</text>
+    <text key="title.image_result">Image Generation Result</text>
+    <text key="title.image_fail">Image Generation Failed</text>
+    <text key="title.tts_result">Speech Synthesis Result</text>
+    <text key="title.tts_fail">Speech Synthesis Failed</text>
+    <text key="op.create_conv">Create Conversation</text>
+    <text key="op.delete_conv">Delete Conversation</text>
+    <text key="msg.stream_result">Model: {model}
+Provider: {provider}
+Chunks: {chunks}  Tokens: {tokens}
+
+{response}</text>
+    <text key="msg.conv_stream_result">Conversation: {id}
+Chunks: {chunks}
+
+{response}</text>
+    <text key="msg.tool_chat_result">Tool call turns: {turns}
+
+{details}
+Final reply:
+{final}</text>
+    <text key="msg.tool_details">Tool call details:
+{lines}
+</text>
+    <text key="msg.chat_result">Model: {model}
+Provider: {provider}
+
+{response}</text>
+    <text key="msg.embed_result">Dimensions: {size}
+Provider: {provider}</text>
+    <text key="msg.validate_content">Provider: {provider}
+{message}</text>
+    <text key="msg.config_valid">Configuration valid</text>
+    <text key="item.conv">{short_id} [{provider}/{model}] messages: {count}</text>
+    <text key="warn.select_conv">Please select a conversation in the list first</text>
+    <text key="log.providers">Get providers: {result}</text>
+    <text key="log.models">Get models: {result}</text>
+    <text key="log.chat">Chat result: {result}</text>
+    <text key="log.stream">Streaming chat: {result}</text>
+    <text key="log.stream_event">Stream event: {message}</text>
+    <text key="log.conv_list">Conversation list: {result}</text>
+    <text key="log.conv_send">Conversation message started: {result}</text>
+    <text key="log.conv_detail">Conversation detail: {result}</text>
+    <text key="log.register_tools">Register demo tools: {result}</text>
+    <text key="log.unregister_tools">Unregister demo tools: {result}</text>
+    <text key="log.list_tools">Registered tools: {result}</text>
+    <text key="log.tool_chat">Tool chat started: {result}</text>
+    <text key="log.embed">Embedding result: {result}</text>
+    <text key="log.image_start">Image generation started: {result}</text>
+    <text key="log.tts_start">Speech synthesis started: {result}</text>
+    <text key="log.usage">Usage stats: {result}</text>
+    <text key="log.validate">Provider validation: {result}</text>
+  </group>
+
+  <!-- Cross-plugin API demo tab -->
+  <group name="tab_api">
+    <text key="group.plugins">Plugin Query</text>
+    <text key="btn.get_plugins">Get All Plugins</text>
+    <text key="group.apis">API Query</text>
+    <text key="btn.get_apis">Get All APIs</text>
+    <text key="group.functions">Function Calling</text>
+    <text key="btn.get_tools">Get All Function Tools</text>
+    <text key="group.call">Cross-Plugin Call</text>
+    <text key="placeholder.call">Enter plugin_id.method</text>
+    <text key="label.call">Call:</text>
+    <text key="btn.call">Call Plugin Method</text>
+    <text key="title.plugins">Plugin List</text>
+    <text key="title.plugins_fail">Failed to Get Plugins</text>
+    <text key="title.apis">API List</text>
+    <text key="title.apis_fail">Failed to Get APIs</text>
+    <text key="title.tools">Function Tools</text>
+    <text key="title.tools_fail">Failed to Get Function Tools</text>
+    <text key="empty.tools">No tools</text>
+    <text key="title.input_error">Input Error</text>
+    <text key="title.call_ok">Cross-Plugin Call Succeeded</text>
+    <text key="title.call_fail">Cross-Plugin Call Failed</text>
+    <text key="warn.format">Please use format: plugin_id.method</text>
+    <text key="msg.tool_line">{name}: {desc}...</text>
+    <text key="log.plugins">Get plugins: {result}</text>
+    <text key="log.apis">Get APIs: {result}</text>
+    <text key="log.tools">Get Function Tools: {result}</text>
+    <text key="log.call">Call result: {result}</text>
+  </group>
+
+  <!-- Framework info demo tab -->
+  <group name="tab_info">
+    <text key="group.info">Framework Info</text>
+    <text key="btn.get_info">Get Framework Info</text>
+    <text key="group.log">Log Levels (LoggerManager)</text>
+    <text key="btn.log_levels">Write Five-Level Logs</text>
+    <text key="group.thread">Thread Utils (thread_utils)</text>
+    <text key="btn.thread">Demo Thread Marshaling</text>
+    <text key="group.asset">Asset Utils (image_utils)</text>
+    <text key="btn.base64">Image to Base64</text>
+    <text key="group.theme">Theme Following (ThemeManager.theme_changed)</text>
+    <text key="label.theme">Current theme: {mode}</text>
+    <text key="group.doc">Available API Documentation</text>
+    <text key="doc.api_text"><![CDATA[Framework API Demo demonstrates the following APIs:
+
+1. DataProvider
+   - register_plugin() / unregister_plugin()
+   - get_plugin_data() / set_plugin_data() / get_all_plugin_data()
+   - subscribe() / publish() / unsubscribe() (publish/subscribe)
+   - save_asset() / load_asset()
+   - get_active_instance()
+
+2. BackgroundTaskManager
+   - register_sync_task() / register_async_task()
+   - register_scheduled_task() (incl. enable/disable/unregister)
+   - register_long_running_task() / stop_long_running_task()
+   - cancel_task() / get_task_status()
+   - get_tasks_by_plugin() / clear_completed_tasks()
+
+3. ILLMService (llm_facade)
+   - list_providers() / get_models() / validate_provider()
+   - chat() / stream_chat() / embed()
+   - Conversations: create_conversation() / send_message() / stream_send_message()
+     / get_conversation() / list_conversations() / delete_conversation()
+   - Tool calling: get_shared_tool_registry() (register/unregister/list_tools)
+     / chat_with_tools(); entry point IPlugin.llm_tools hook
+   - Multimodal: generate_image() / text_to_speech()
+   - get_usage_stats()
+
+4. PluginManager
+   - get_all_plugins() / get_plugin_by_id()
+   - get_all_apis() / call_plugin_method()
+   - get_all_function_tools() (Function Calling)
+   - get_api_description()
+
+5. MCPManager / MCPClientManager
+   - start_server() / stop_server() / is_server_running() / get_server_url()
+   - service_api auto-bridged tools (sanitized {plugin_id}__{method} names)
+   - connect() / disconnect() / list_connected_servers() / list_tools()
+
+6. LoggerManager
+   - debug() / info() / warning() / error() / critical()
+
+7. utils &amp; theme
+   - is_ui_thread() / run_in_ui_thread() / run_in_ui_thread_sync()
+   - load_image_as_base64()
+   - ThemeManager.theme_changed theme following]]></text>
+    <text key="title.info">Framework Info</text>
+    <text key="title.info_fail">Failed to Get Framework Info</text>
+    <text key="msg.no_data">No data returned</text>
+    <text key="op.log_demo">Log Levels Demo</text>
+    <text key="op.thread_demo">Thread Utils Demo</text>
+    <text key="op.base64_demo">Image to Base64 Demo</text>
+    <text key="log.info">Framework info: {result}</text>
+    <text key="log.theme_changed">Theme changed: {mode}</text>
+  </group>
+
+  <!-- MCP demo tab -->
+  <group name="tab_mcp">
+    <text key="group.server">Built-in MCP Server</text>
+    <text key="btn.start">Start Server</text>
+    <text key="btn.stop">Stop Server</text>
+    <text key="btn.refresh">Refresh Status</text>
+    <text key="group.bridge">Bridged Tools (auto-registered via service_api)</text>
+    <text key="note.bridge">After a plugin declares service_api in information.py and provides service.py, the framework automatically registers its cross-plugin APIs, and MCPBridge syncs them as MCP Server tools; tool names use the sanitized {plugin_id}__{method} form and can be called directly by external MCP Clients.</text>
+    <text key="btn.list_bridge">List This Plugin's Bridged Tools</text>
+    <text key="group.remote">Remote MCP Server</text>
+    <text key="btn.connect">Connect</text>
+    <text key="btn.disconnect">Disconnect</text>
+    <text key="btn.refresh_list">Refresh List</text>
+    <text key="btn.list_tools">View Tools</text>
+    <text key="title.server_status">MCP Server Status</text>
+    <text key="title.start_server">Start MCP Server</text>
+    <text key="title.stop_server">Stop MCP Server</text>
+    <text key="title.bridged">Bridged Tools</text>
+    <text key="title.bridged_fail">Failed to Get Bridged Tools</text>
+    <text key="title.connect">Connect Remote Server</text>
+    <text key="title.disconnect">Disconnect Remote Server</text>
+    <text key="title.servers">Remote Server List</text>
+    <text key="title.servers_fail">Failed to Get Remote Servers</text>
+    <text key="empty.servers">No connections</text>
+    <text key="title.tools">Remote Tools</text>
+    <text key="title.tools_fail">Failed to Get Remote Tools</text>
+    <text key="empty.tools">This server has no tools</text>
+    <text key="warn.json">Failed to parse config JSON: {error}</text>
+    <text key="log.bridged">Bridged tools: {result}</text>
+    <text key="log.servers">Remote server list: {result}</text>
+    <text key="log.tools">Remote tools: {result}</text>
+  </group>
+
+  <!-- Data demo service: user-facing message templates -->
+  <group name="svc_data">
+    <text key="msg.register_ok">Plugin {id} registered successfully</text>
+    <text key="msg.unregister_ok">Plugin {id} unregistered successfully</text>
+    <text key="msg.write_private">Private data written: {key}={value}</text>
+    <text key="msg.write_public">Public data written: {key}={value}</text>
+    <text key="msg.subscribed">Subscribed to key of {id}: {key}</text>
+    <text key="msg.published">Published {id}.{key} = {value}</text>
+    <text key="msg.unsubscribed">All subscriptions of this plugin cancelled</text>
+    <text key="event.subscription">Subscription event: {id}.{key} = {value}</text>
+  </group>
+
+  <!-- Task demo service: user-facing message templates -->
+  <group name="svc_task">
+    <text key="msg.callback">Task callback: {name} [{status}] result={result} error={error}</text>
+    <text key="msg.sync_done">Sync task finished in {seconds}s</text>
+    <text key="msg.sync_created">Sync task created and executed</text>
+    <text key="msg.async_done">Async task finished in {seconds}s</text>
+    <text key="msg.async_created">Async task created</text>
+    <text key="msg.manager_closed">Task manager is shut down; cannot create task</text>
+    <text key="msg.scheduled_run">Scheduled task executed</text>
+    <text key="msg.scheduled_created">Scheduled task created, interval {interval}s</text>
+    <text key="msg.long_running">Running for {seconds}s</text>
+    <text key="msg.long_stopped">Long-running task stopped gracefully, total count {count}</text>
+    <text key="msg.long_created">Long-running task created (counter +1 per second)</text>
+    <text key="msg.long_stop_signal">Long-running task received stop signal: {name}</text>
+    <text key="msg.long_status">Long-running task status: {name} -&gt; {status}</text>
+    <text key="msg.long_stopped_ok">Long-running task {id} stopped</text>
+    <text key="err.long_not_running">Long-running task {id} does not exist or is not running</text>
+    <text key="msg.cancelled">Task {id} marked as cancelled</text>
+    <text key="err.not_running">Task {id} is not in the running list</text>
+    <text key="err.not_found">Task {id} does not exist</text>
+    <text key="status.unknown">Unknown</text>
+    <text key="action.enable">enabled</text>
+    <text key="action.disable">disabled</text>
+    <text key="msg.scheduled_toggled">Scheduled task {id} {action}</text>
+    <text key="err.scheduled_not_found">Scheduled task {id} does not exist</text>
+    <text key="msg.scheduled_unregistered">Scheduled task {id} unregistered</text>
+    <text key="err.scheduled_not_running">Scheduled task {id} is not in the running list</text>
+    <text key="msg.cleared">Cleared {count} task(s)</text>
+  </group>
+
+  <!-- LLM demo service: user-facing message templates -->
+  <group name="svc_llm">
+    <text key="msg.stream_started">Streaming chat started (runs as background task)</text>
+    <text key="msg.conv_started">Conversation message started (runs as background task)</text>
+    <text key="msg.conv_stream_started">Conversation streaming message started (runs as background task)</text>
+    <text key="err.conv_not_found">Conversation not found: {id}</text>
+    <text key="err.delete_failed">Failed to delete conversation: {id}</text>
+    <text key="msg.tool_chat_started">Tool chat started (runs as background task)</text>
+    <text key="msg.image_started">Image generation started (runs as background task)</text>
+    <text key="msg.tts_started">Speech synthesis started (runs as background task)</text>
+    <text key="err.no_default_provider">No provider specified and no default instance available</text>
+    <text key="err.base64_decode">base64 decode failed: {error}</text>
+  </group>
+
+  <!-- Framework info service: user-facing message templates -->
+  <group name="svc_info">
+    <text key="msg.log_levels">Five-level logs written; see logs/application.log</text>
+    <text key="msg.thread_started">Worker-thread marshaling comparison will be reported via event notification (see log panel)</text>
+    <text key="msg.thread_receipt">run_in_ui_thread async marshaling receipt: this event was raised on the UI thread</text>
+    <text key="msg.thread_compare">Thread marshaling comparison [{status}]: {result} error={error}</text>
+  </group>
+
+  <!-- MCP demo service: user-facing message templates -->
+  <group name="svc_mcp">
+    <text key="err.unavailable">MCP service not injected (MCP not enabled in the framework)</text>
+    <text key="err.server_not_running">Server did not enter running state (may be disabled in config)</text>
+    <text key="err.not_bridged">This plugin's API is not yet registered with PluginManager</text>
+    <text key="err.config_format">Invalid config format (server_id/name required): {error}</text>
+    <text key="err.server_id_required">server_id is required</text>
+    <text key="msg.connected">Connected to {id}, {count} tools registered</text>
+    <text key="msg.disconnected">Disconnected from {id}</text>
+    <text key="msg.submitted">{operation} submitted for background execution; see execution log for results</text>
+    <text key="msg.callback">MCP {operation}: [{status}] result={result} error={error}</text>
+    <text key="op.connect">Connect remote server</text>
+    <text key="op.disconnect">Disconnect remote server</text>
+  </group>
+
+  <!-- Cross-plugin API demo service: user-facing error templates -->
+  <group name="svc_api">
+    <text key="err.plugin_not_found">Plugin not found</text>
+    <text key="err.need_params">plugin_id and method_name are required</text>
+  </group>
+</texts>

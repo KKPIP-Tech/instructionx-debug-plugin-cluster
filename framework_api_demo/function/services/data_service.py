@@ -41,7 +41,9 @@ class DataDemoService(Service):
         try:
             self.dp.register_plugin(self.demo_plugin_id, "DemoTarget")
             self.logger.info(get_name(), f"成功注册演示插件: {self.demo_plugin_id}")
-            return {"success": True, "message": f"插件 {self.demo_plugin_id} 注册成功"}
+            return {"success": True, "message": self._tr(
+                "svc_data", "msg.register_ok",
+                default="插件 {id} 注册成功", id=self.demo_plugin_id)}
         except Exception as e:
             self.logger.error(get_name(), f"注册插件失败: {e}")
             return {"success": False, "error": str(e)}
@@ -51,7 +53,9 @@ class DataDemoService(Service):
         try:
             self.dp.unregister_plugin(self.demo_plugin_id)
             self.logger.info(get_name(), f"成功注销演示插件: {self.demo_plugin_id}")
-            return {"success": True, "message": f"插件 {self.demo_plugin_id} 注销成功"}
+            return {"success": True, "message": self._tr(
+                "svc_data", "msg.unregister_ok",
+                default="插件 {id} 注销成功", id=self.demo_plugin_id)}
         except Exception as e:
             self.logger.error(get_name(), f"注销插件失败: {e}")
             return {"success": False, "error": str(e)}
@@ -73,7 +77,9 @@ class DataDemoService(Service):
         """演示写入私有数据"""
         try:
             self.dp.set_plugin_data(self.plugin_id, key, value, DataNamespace.PRIVATE)
-            return {"success": True, "message": f"写入私有数据成功: {key}={value}"}
+            return {"success": True, "message": self._tr(
+                "svc_data", "msg.write_private",
+                default="写入私有数据成功: {key}={value}", key=key, value=value)}
         except Exception as e:
             return {"success": False, "error": str(e)}
 
@@ -89,7 +95,9 @@ class DataDemoService(Service):
         """演示写入公共数据"""
         try:
             self.dp.set_plugin_data(self.plugin_id, key, value, DataNamespace.PUBLIC)
-            return {"success": True, "message": f"写入公共数据成功: {key}={value}"}
+            return {"success": True, "message": self._tr(
+                "svc_data", "msg.write_public",
+                default="写入公共数据成功: {key}={value}", key=key, value=value)}
         except Exception as e:
             return {"success": False, "error": str(e)}
 
@@ -144,7 +152,9 @@ class DataDemoService(Service):
                 callback=self._on_subscription_event,
             )
             self.logger.info(get_name(), f"已订阅 {self.demo_plugin_id}.{key}")
-            return {"success": True, "message": f"已订阅 {self.demo_plugin_id} 的键: {key}"}
+            return {"success": True, "message": self._tr(
+                "svc_data", "msg.subscribed",
+                default="已订阅 {id} 的键: {key}", id=self.demo_plugin_id, key=key)}
         except Exception as e:
             self.logger.error(get_name(), f"订阅失败: {e}")
             return {"success": False, "error": str(e)}
@@ -153,7 +163,9 @@ class DataDemoService(Service):
         """演示发布：以演示插件身份向 PUBLIC 命名空间发布数据（触发订阅回调）"""
         try:
             self.dp.publish(self.demo_plugin_id, key, value)
-            return {"success": True, "message": f"已发布 {self.demo_plugin_id}.{key} = {value}"}
+            return {"success": True, "message": self._tr(
+                "svc_data", "msg.published", default="已发布 {id}.{key} = {value}",
+                id=self.demo_plugin_id, key=key, value=value)}
         except Exception as e:
             self.logger.error(get_name(), f"发布失败: {e}")
             return {"success": False, "error": str(e)}
@@ -162,7 +174,8 @@ class DataDemoService(Service):
         """演示取消订阅：取消本插件的全部订阅"""
         try:
             self.dp.unsubscribe(self.plugin_id)
-            return {"success": True, "message": "已取消本插件的全部订阅"}
+            return {"success": True, "message": self._tr(
+                "svc_data", "msg.unsubscribed", default="已取消本插件的全部订阅")}
         except Exception as e:
             self.logger.error(get_name(), f"取消订阅失败: {e}")
             return {"success": False, "error": str(e)}
@@ -192,6 +205,8 @@ class DataDemoService(Service):
             self._events.append(event)
             if len(self._events) > MAX_SUBSCRIPTION_EVENTS:
                 del self._events[:len(self._events) - MAX_SUBSCRIPTION_EVENTS]
-            self._notify_event(f"订阅事件: {target_plugin_id}.{key} = {new_value}")
+            self._notify_event(self._tr(
+                "svc_data", "event.subscription", default="订阅事件: {id}.{key} = {value}",
+                id=target_plugin_id, key=key, value=new_value))
         except Exception as e:
             self.logger.error(get_name(), f"订阅回调处理失败: {e}")

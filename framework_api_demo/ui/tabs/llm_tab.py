@@ -5,6 +5,7 @@
 多模态（图片生成/语音合成）与用量统计/Provider 校验。
 流式片段经服务 notifier 上抛（工作线程），一律 run_in_ui_thread 封送后刷新。
 槽函数仅取输入、调用 LLMDemoService、显示结果，业务逻辑在服务层。
+静态文案经 _tr 取词并登记绑定，语言切换由 retranslate() 统一重设。
 """
 
 import json
@@ -14,6 +15,8 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFormLayout, QGroupBox, QHBoxLayout, QListWidgetItem, QVBoxLayout, QScrollArea
 
 from InstructionX_UIKit.components import Button, LineEdit, ListWidget, Message, TextArea
+
+from core.interfaces import ILocalizationFacade
 from utils.thread_utils import run_in_ui_thread
 
 from .base_tab import BaseTab
@@ -34,8 +37,8 @@ from ...function.services.llm_service import (
 # 会话列表中会话 id 的展示长度（完整 id 存于 UserRole）
 CONV_ID_DISPLAY_LEN = 8
 
-# 工具对话演示的默认输入消息（触发两个演示工具）
-TOOL_DEMO_DEFAULT_MESSAGE = "现在几点了？帮我算一下 12*(3+4)"
+# 结果面板展示 JSON 的缩进宽度
+_JSON_INDENT = 2
 
 
 class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
@@ -46,15 +49,17 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
     多模态与统计校验分组由 LLMMediaStatsGroupsMixin 提供（体量拆分）。
     """
 
-    def __init__(self, llm_service, display_result: Callable, append_log: Callable):
+    def __init__(self, llm_service, display_result: Callable, append_log: Callable,
+                 i18n: Optional[ILocalizationFacade] = None):
         """初始化 LLM 演示 Tab
 
         参数:
             llm_service: LLMDemoService 实例（LLM 演示）
             display_result: 结果显示回调
             append_log: 日志追加回调
+            i18n: 插件取词门面（可选）
         """
-        super().__init__(display_result, append_log)
+        super().__init__(display_result, append_log, i18n=i18n)
         self.llm_service = llm_service
         # 流式回调在工作线程触发，经 run_in_ui_thread 封送到 UI 线程刷新界面
         self.llm_service.set_event_notifier(self._on_stream_notify)
@@ -62,6 +67,10 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
     def _on_stream_notify(self, message: str):
         """服务事件通知（工作线程）：按事件类型封送到 UI 线程分发处理"""
         run_in_ui_thread(self._dispatch_stream_event, message)
+
+    # ------------------------------------------------------------------
+    #  notifier 事件分发
+    # ------------------------------------------------------------------
 
     def _dispatch_stream_event(self, message: str):
         """UI 线程分发服务事件：多模态 / 工具调用 / 会话演示 / 聊天流式分别处理"""
@@ -80,93 +89,105 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
             return True
         if message.startswith(TOOL_ERROR_PREFIX):
             error = message[len(TOOL_ERROR_PREFIX):]
-            self._display_result("工具对话失败", error, is_error=True)
+            self._display_result(self._tr("tab_llm", "title.tool_chat_fail"),
+                                 error, is_error=True)
             return True
         return False
 
     def _dispatch_chat_stream_event(self, message: str):
         """UI 线程分发聊天流式事件：片段增量刷新 / 完成展示 / 失败提示"""
         if message.startswith(STREAM_CHUNK_PREFIX):
-            chunk = message[len(STREAM_CHUNK_PREFIX):]
-            self.chat_result_text.insertPlainText(chunk)
+            self.chat_result_text.insertPlainText(message[len(STREAM_CHUNK_PREFIX):])
             return
         if message == STREAM_DONE_EVENT:
             self._show_stream_result()
             return
         if message.startswith(STREAM_ERROR_PREFIX):
             error = message[len(STREAM_ERROR_PREFIX):]
-            self._display_result("流式聊天失败", error, is_error=True)
-            self.chat_result_text.setPlainText(f"错误: {error}")
+            self._display_result(self._tr("tab_llm", "title.stream_fail"),
+                                 error, is_error=True)
+            self.chat_result_text.setPlainText(
+                self._tr("common", "error.prefix", error=error))
             return
-        self._log(f"流式事件: {message}")
+        self._log(self._tr("tab_llm", "log.stream_event", message=message))
 
     def _dispatch_conversation_event(self, message: str) -> bool:
         """UI 线程分发会话演示事件；命中会话协议返回 True，否则返回 False"""
         if message.startswith(CONV_STREAM_CHUNK_PREFIX):
-            chunk = message[len(CONV_STREAM_CHUNK_PREFIX):]
-            self.conv_result_text.insertPlainText(chunk)
+            self.conv_result_text.insertPlainText(message[len(CONV_STREAM_CHUNK_PREFIX):])
             return True
         if message == CONV_STREAM_DONE_EVENT:
             self._show_conversation_stream_result()
             return True
         if message.startswith(CONV_STREAM_ERROR_PREFIX):
-            self._show_conversation_error("会话流式发送失败", message[len(CONV_STREAM_ERROR_PREFIX):])
+            self._show_conversation_error("title.conv_stream_fail",
+                                          message[len(CONV_STREAM_ERROR_PREFIX):])
             return True
         if message.startswith(CONV_REPLY_PREFIX):
-            reply = message[len(CONV_REPLY_PREFIX):]
-            self.conv_result_text.setPlainText(reply)
-            self._display_result("会话回复", reply)
+            self._show_conversation_reply(message[len(CONV_REPLY_PREFIX):])
             return True
         if message.startswith(CONV_ERROR_PREFIX):
-            self._show_conversation_error("会话消息失败", message[len(CONV_ERROR_PREFIX):])
+            self._show_conversation_error("title.conv_msg_fail",
+                                          message[len(CONV_ERROR_PREFIX):])
             return True
         return False
 
-    def _show_conversation_error(self, title: str, error: str):
+    def _show_conversation_reply(self, reply: str):
+        """会话非流式回复事件：会话回复区与结果面板同步展示"""
+        self.conv_result_text.setPlainText(reply)
+        self._display_result(self._tr("tab_llm", "title.conv_reply"), reply)
+
+    # ------------------------------------------------------------------
+    #  聚合结果展示
+    # ------------------------------------------------------------------
+
+    def _show_conversation_error(self, title_key: str, error: str):
         """统一展示会话演示失败：结果面板 + 会话回复区"""
-        self._display_result(title, error, is_error=True)
-        self.conv_result_text.setPlainText(f"错误: {error}")
+        self._display_result(self._tr("tab_llm", title_key), error, is_error=True)
+        self.conv_result_text.setPlainText(
+            self._tr("common", "error.prefix", error=error))
 
     def _show_conversation_stream_result(self):
         """会话流式完成事件后拉取服务聚合结果，在结果面板展示完整响应"""
         result = self.llm_service.get_last_conversation_stream_result().get("result") or {}
-        content = (
-            f"会话: {result.get('conversation_id', 'unknown')}\n"
-            f"片段数: {result.get('chunk_count', 0)}\n\n"
-            f"{result.get('response', '')}"
-        )
-        self._display_result("会话流式响应", content)
+        content = self._tr("tab_llm", "msg.conv_stream_result",
+                           id=result.get("conversation_id", "unknown"),
+                           chunks=result.get("chunk_count", 0),
+                           response=result.get("response", ""))
+        self._display_result(self._tr("tab_llm", "title.conv_stream_result"), content)
 
     def _show_stream_result(self):
         """完成事件后拉取服务聚合结果，在结果面板展示完整响应"""
         result = self.llm_service.get_last_stream_result().get("result") or {}
         usage = result.get("usage") or {}
-        content = (
-            f"模型: {result.get('model', 'unknown')}\n"
-            f"Provider: {result.get('provider', 'unknown')}\n"
-            f"片段数: {result.get('chunk_count', 0)}  Tokens: {usage.get('total_tokens', 'N/A')}\n\n"
-            f"{result.get('response', '')}"
-        )
-        self._display_result("流式聊天响应", content)
+        content = self._tr("tab_llm", "msg.stream_result",
+                           model=result.get("model", "unknown"),
+                           provider=result.get("provider", "unknown"),
+                           chunks=result.get("chunk_count", 0),
+                           tokens=usage.get("total_tokens", "N/A"),
+                           response=result.get("response", ""))
+        self._display_result(self._tr("tab_llm", "title.stream_result"), content)
 
     def _show_tool_chat_result(self):
         """工具对话完成事件后拉取服务聚合结果，在结果面板展示最终回复与调用明细"""
         result = self.llm_service.get_last_tool_chat_result().get("result") or {}
-        content = (
-            f"工具调用轮次: {result.get('turn_count', 0)}\n\n"
-            f"{self._format_tool_results(result.get('tool_results', []))}"
-            f"\n最终回复:\n{result.get('final_text', '')}"
-        )
-        self._display_result("工具对话响应", content)
+        content = self._tr("tab_llm", "msg.tool_chat_result",
+                           turns=result.get("turn_count", 0),
+                           details=self._format_tool_results(
+                               result.get("tool_results", [])),
+                           final=result.get("final_text", ""))
+        self._display_result(self._tr("tab_llm", "title.tool_chat_result"), content)
 
-    @staticmethod
-    def _format_tool_results(tool_results: list) -> str:
+    def _format_tool_results(self, tool_results: list) -> str:
         """把各轮工具调用明细格式化为展示文本（无调用时返回空串）"""
         lines = []
         for item in tool_results:
             detail = item.get("error") or item.get("result", "")
-            lines.append(f"[{item.get('tool_name', '?')}]({item.get('arguments', {})}) -> {detail}")
-        return "工具调用明细:\n" + "\n".join(lines) + "\n" if lines else ""
+            lines.append(f"[{item.get('tool_name', '?')}]({item.get('arguments', {})})"
+                         f" -> {detail}")
+        if not lines:
+            return ""
+        return self._tr("tab_llm", "msg.tool_details", lines="\n".join(lines))
 
     # ------------------------------------------------------------------
     #  布局构建
@@ -186,57 +207,70 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
         layout.addStretch()
         return scroll
 
+    def _make_group(self, key: str) -> QGroupBox:
+        """创建本 Tab 分组框（标题取 tab_llm 分组 group.* 键并登记绑定）"""
+        return super()._make_group("tab_llm", key)
+
+    def _make_button(self, key: str, slot, variant: Optional[str] = None) -> Button:
+        """创建本 Tab 按钮（文案取 tab_llm 分组 btn.* 键并登记绑定）"""
+        return super()._make_button("tab_llm", key, slot, variant=variant)
+
+    def _make_tab_label(self, key: str):
+        """创建本 Tab 表单标签（取 tab_llm 分组 label.* 键并登记绑定）"""
+        return self._make_label("tab_llm", key)
+
     def _build_llm_provider_group(self) -> QGroupBox:
-        group = QGroupBox("Provider 信息")
+        group = self._make_group("group.provider")
         layout = QVBoxLayout()
         layout.setSpacing(8)
-
-        self.get_providers_btn = Button("获取 Provider 列表", variant="primary")
-        self.get_providers_btn.clicked.connect(self._on_get_providers)
+        self.get_providers_btn = self._make_button(
+            "btn.get_providers", self._on_get_providers, variant="primary")
         layout.addWidget(self.get_providers_btn)
-
-        self.providers_list = ListWidget()
-        self.providers_list.setMaximumHeight(80)
-        layout.addWidget(self.providers_list)
-
-        self.get_models_btn = Button("获取模型列表", variant="primary")
-        self.get_models_btn.clicked.connect(self._on_get_models)
+        self.providers_list = self._make_list_box(layout)
+        self.get_models_btn = self._make_button(
+            "btn.get_models", self._on_get_models, variant="primary")
         layout.addWidget(self.get_models_btn)
-
-        self.models_list = ListWidget()
-        self.models_list.setMaximumHeight(80)
-        layout.addWidget(self.models_list)
-
+        self.models_list = self._make_list_box(layout)
         group.setLayout(layout)
         return group
 
+    @staticmethod
+    def _make_list_box(layout: QVBoxLayout) -> ListWidget:
+        """创建限高列表框并加入布局（Provider/模型列表共用）"""
+        list_widget = ListWidget()
+        list_widget.setMaximumHeight(80)
+        layout.addWidget(list_widget)
+        return list_widget
+
     def _build_llm_chat_group(self) -> QGroupBox:
-        group = QGroupBox("聊天测试")
+        group = self._make_group("group.chat")
         form = QFormLayout()
         form.setSpacing(6)
-
-        self.chat_message_input = LineEdit(text="你好，请介绍一下自己")
-        form.addRow("消息:", self.chat_message_input)
-
-        self.chat_btn = Button("发送聊天", variant="primary")
-        self.chat_btn.clicked.connect(self._on_send_chat)
+        self.chat_message_input = LineEdit(
+            text=self._tr("tab_llm", "default.chat_message"))
+        form.addRow(self._make_tab_label("label.message"), self.chat_message_input)
+        self.chat_btn = self._make_button("btn.send", self._on_send_chat,
+                                          variant="primary")
         form.addRow("", self.chat_btn)
-
-        self.chat_stream_btn = Button("流式发送", variant="primary")
-        self.chat_stream_btn.clicked.connect(self._on_send_chat_stream)
+        self.chat_stream_btn = self._make_button("btn.stream", self._on_send_chat_stream,
+                                                 variant="primary")
         form.addRow("", self.chat_stream_btn)
-
-        self.chat_result_text = TextArea()
-        self.chat_result_text.setReadOnly(True)
-        self.chat_result_text.setMaximumHeight(80)
-        form.addRow("结果:", self.chat_result_text)
-
+        self.chat_result_text = self._make_result_area(80)
+        form.addRow(self._make_label("common", "label.result"), self.chat_result_text)
         group.setLayout(form)
         return group
 
+    @staticmethod
+    def _make_result_area(max_height: int) -> TextArea:
+        """创建只读结果展示区（限高）"""
+        area = TextArea()
+        area.setReadOnly(True)
+        area.setMaximumHeight(max_height)
+        return area
+
     def _build_llm_conversation_group(self) -> QGroupBox:
         """构建「会话管理」分组（创建/列表/发送/详情/删除）"""
-        group = QGroupBox("会话管理")
+        group = self._make_group("group.conversation")
         layout = QVBoxLayout()
         layout.setSpacing(6)
         layout.addLayout(self._build_conv_create_form())
@@ -249,12 +283,20 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
         """构建会话创建子块：系统提示词输入 + 创建按钮"""
         form = QFormLayout()
         form.setSpacing(6)
-        self.conv_system_prompt_input = LineEdit(placeholder="系统提示词（可留空）")
-        form.addRow("系统提示词:", self.conv_system_prompt_input)
-        self.conv_create_btn = Button("创建会话", variant="primary")
-        self.conv_create_btn.clicked.connect(self._on_create_conversation)
+        self.conv_system_prompt_input = self._make_placeholder_input(
+            "placeholder.system_prompt")
+        form.addRow(self._make_tab_label("label.system_prompt"),
+                    self.conv_system_prompt_input)
+        self.conv_create_btn = self._make_button(
+            "btn.create_conv", self._on_create_conversation, variant="primary")
         form.addRow("", self.conv_create_btn)
         return form
+
+    def _make_placeholder_input(self, key: str) -> LineEdit:
+        """创建占位提示取词并登记重翻译绑定的输入框"""
+        edit = LineEdit(placeholder=self._tr("tab_llm", key))
+        self._bind(edit, "tab_llm", key, setter="setPlaceholderText")
+        return edit
 
     def _build_conv_list_row(self) -> QHBoxLayout:
         """构建会话列表子块：列表（conversation_id 存 UserRole）+ 操作按钮列"""
@@ -270,14 +312,15 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
         """构建会话操作按钮列：刷新 / 查看详情 / 删除"""
         column = QVBoxLayout()
         column.setSpacing(6)
-        self.conv_refresh_btn = Button("刷新会话列表")
-        self.conv_refresh_btn.clicked.connect(self._on_refresh_conversations)
+        self.conv_refresh_btn = self._make_button("btn.refresh_conv",
+                                                  self._on_refresh_conversations)
         column.addWidget(self.conv_refresh_btn)
-        self.conv_detail_btn = Button("查看详情")
-        self.conv_detail_btn.clicked.connect(self._on_show_conversation_detail)
+        self.conv_detail_btn = self._make_button("btn.conv_detail",
+                                                 self._on_show_conversation_detail)
         column.addWidget(self.conv_detail_btn)
-        self.conv_delete_btn = Button("删除会话", variant="danger")
-        self.conv_delete_btn.clicked.connect(self._on_delete_conversation)
+        self.conv_delete_btn = self._make_button("btn.delete_conv",
+                                                 self._on_delete_conversation,
+                                                 variant="danger")
         column.addWidget(self.conv_delete_btn)
         column.addStretch()
         return column
@@ -286,34 +329,37 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
         """构建会话消息发送子块：消息输入 + 发送/流式发送 + 回复区"""
         form = QFormLayout()
         form.setSpacing(6)
-        self.conv_message_input = LineEdit(placeholder="发送给选中会话的消息")
-        form.addRow("消息:", self.conv_message_input)
+        self.conv_message_input = self._make_placeholder_input("placeholder.conv_message")
+        form.addRow(self._make_tab_label("label.message"), self.conv_message_input)
+        form.addRow("", self._build_conv_send_buttons())
+        self.conv_result_text = self._make_result_area(100)
+        form.addRow(self._make_tab_label("label.reply"), self.conv_result_text)
+        return form
+
+    def _build_conv_send_buttons(self) -> QHBoxLayout:
+        """构建会话发送按钮行：发送 / 流式发送"""
         send_row = QHBoxLayout()
         send_row.setSpacing(8)
-        self.conv_send_btn = Button("发送", variant="primary")
-        self.conv_send_btn.clicked.connect(self._on_send_conversation)
+        self.conv_send_btn = self._make_button("btn.send_msg", self._on_send_conversation,
+                                               variant="primary")
         send_row.addWidget(self.conv_send_btn)
-        self.conv_stream_btn = Button("流式发送", variant="primary")
-        self.conv_stream_btn.clicked.connect(self._on_stream_conversation)
+        self.conv_stream_btn = self._make_button("btn.stream", self._on_stream_conversation,
+                                                 variant="primary")
         send_row.addWidget(self.conv_stream_btn)
-        form.addRow("", send_row)
-        self.conv_result_text = TextArea()
-        self.conv_result_text.setReadOnly(True)
-        self.conv_result_text.setMaximumHeight(100)
-        form.addRow("回复:", self.conv_result_text)
-        return form
+        return send_row
 
     def _build_llm_tool_group(self) -> QGroupBox:
         """构建「工具调用」分组（注册/注销/查看工具 + 工具对话）"""
-        group = QGroupBox("工具调用")
+        group = self._make_group("group.tool")
         form = QFormLayout()
         form.setSpacing(6)
         for row in self._build_tool_buttons_rows():
             form.addRow("", row)
-        self.tool_message_input = LineEdit(text=TOOL_DEMO_DEFAULT_MESSAGE)
-        form.addRow("消息:", self.tool_message_input)
-        self.tool_chat_btn = Button("工具对话", variant="primary")
-        self.tool_chat_btn.clicked.connect(self._on_tool_chat)
+        self.tool_message_input = LineEdit(
+            text=self._tr("tab_llm", "default.tool_message"))
+        form.addRow(self._make_tab_label("label.message"), self.tool_message_input)
+        self.tool_chat_btn = self._make_button("btn.tool_chat", self._on_tool_chat,
+                                               variant="primary")
         form.addRow("", self.tool_chat_btn)
         group.setLayout(form)
         return group
@@ -322,62 +368,62 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
         """构建工具注册表操作按钮行（拆为两行，适配收窄后的面板宽度）"""
         manage_row = QHBoxLayout()
         manage_row.setSpacing(8)
-        self.tool_register_btn = Button("注册演示工具")
-        self.tool_register_btn.clicked.connect(self._on_register_tools)
+        self.tool_register_btn = self._make_button("btn.register_tools",
+                                                   self._on_register_tools)
         manage_row.addWidget(self.tool_register_btn)
-        self.tool_unregister_btn = Button("注销演示工具", variant="danger")
-        self.tool_unregister_btn.clicked.connect(self._on_unregister_tools)
+        self.tool_unregister_btn = self._make_button("btn.unregister_tools",
+                                                     self._on_unregister_tools,
+                                                     variant="danger")
         manage_row.addWidget(self.tool_unregister_btn)
         list_row = QHBoxLayout()
-        self.tool_list_btn = Button("查看已注册工具")
-        self.tool_list_btn.clicked.connect(self._on_list_tools)
+        self.tool_list_btn = self._make_button("btn.list_tools", self._on_list_tools)
         list_row.addWidget(self.tool_list_btn)
         list_row.addStretch()
         return [manage_row, list_row]
 
     def _build_llm_embed_group(self) -> QGroupBox:
-        group = QGroupBox("嵌入测试")
+        group = self._make_group("group.embed")
         row = QHBoxLayout()
         row.setSpacing(8)
-
-        self.embed_text_input = LineEdit(text="Hello world")
+        self.embed_text_input = LineEdit(text=self._tr("tab_llm", "default.embed_text"))
         row.addWidget(self.embed_text_input)
-
-        self.embed_btn = Button("发送嵌入", variant="primary")
-        self.embed_btn.clicked.connect(self._on_send_embed)
+        self.embed_btn = self._make_button("btn.embed", self._on_send_embed,
+                                           variant="primary")
         row.addWidget(self.embed_btn)
-
         group.setLayout(row)
         return group
 
     # ------------------------------------------------------------------
-    #  事件处理
+    #  Provider / 聊天事件
     # ------------------------------------------------------------------
 
     def _on_get_providers(self):
         result = self.llm_service.get_providers()
-        self._log(f"获取Provider: {result}")
-
+        self._log(self._tr("tab_llm", "log.providers", result=result))
         self.providers_list.clear()
         if result.get("success"):
             for p in result.get("providers", []):
                 self.providers_list.addItem(p)
-            self._display_result("Provider 列表", "\n".join(result.get("providers", [])))
+            self._display_result(self._tr("tab_llm", "title.providers"),
+                                 "\n".join(result.get("providers", [])))
         else:
-            self.providers_list.addItem(f"错误: {result.get('error')}")
-            self._display_result("获取 Provider 失败", result.get("error", ""), is_error=True)
+            self._show_list_error(self.providers_list, "title.providers_fail", result)
 
     def _on_get_models(self):
         result = self.llm_service.get_models()
-        self._log(f"获取模型: {result}")
-
+        self._log(self._tr("tab_llm", "log.models", result=result))
         self.models_list.clear()
         if result.get("success"):
             lines = self._collect_model_lines(result.get("models", {}))
-            self._display_result("模型列表", "\n".join(lines))
+            self._display_result(self._tr("tab_llm", "title.models"), "\n".join(lines))
         else:
-            self.models_list.addItem(f"错误: {result.get('error')}")
-            self._display_result("获取模型失败", result.get("error", ""), is_error=True)
+            self._show_list_error(self.models_list, "title.models_fail", result)
+
+    def _show_list_error(self, list_widget: ListWidget, title_key: str, result: dict):
+        """列表型查询失败统一处理：列表写错误行 + 结果面板弹错误"""
+        error = result.get("error", "")
+        list_widget.addItem(self._tr("common", "error.prefix", error=error))
+        self._display_result(self._tr("tab_llm", title_key), error, is_error=True)
 
     def _collect_model_lines(self, models) -> list:
         """收集模型展示行并填充模型列表（服务层统一返回 List[dict]）"""
@@ -391,27 +437,33 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
     def _on_send_chat(self):
         message = self.chat_message_input.text()
         result = self.llm_service.send_chat(message)
-        self._log(f"聊天结果: {result}")
-
+        self._log(self._tr("tab_llm", "log.chat", result=result))
         if result.get("success"):
-            content = (
-                f"模型: {result.get('model', 'unknown')}\n"
-                f"Provider: {result.get('provider', 'unknown')}\n\n"
-                f"{result.get('response', '')}"
-            )
-            self._display_result("聊天响应", content)
-            self.chat_result_text.setPlainText(result.get("response", ""))
+            self._show_chat_success(result)
         else:
-            self._display_result("聊天失败", result.get("error", ""), is_error=True)
-            self.chat_result_text.setPlainText(f"错误: {result.get('error')}")
+            error = result.get("error", "")
+            self._display_result(self._tr("tab_llm", "title.chat_fail"),
+                                 error, is_error=True)
+            self.chat_result_text.setPlainText(
+                self._tr("common", "error.prefix", error=error))
+
+    def _show_chat_success(self, result: dict):
+        """展示聊天成功结果：结果面板含模型信息，聊天区仅显示回复正文"""
+        content = self._tr("tab_llm", "msg.chat_result",
+                           model=result.get("model", "unknown"),
+                           provider=result.get("provider", "unknown"),
+                           response=result.get("response", ""))
+        self._display_result(self._tr("tab_llm", "title.chat_result"), content)
+        self.chat_result_text.setPlainText(result.get("response", ""))
 
     def _on_send_chat_stream(self):
         message = self.chat_message_input.text()
         self.chat_result_text.clear()
         result = self.llm_service.send_chat_stream(message)
-        self._log(f"流式聊天: {result}")
+        self._log(self._tr("tab_llm", "log.stream", result=result))
         if not result.get("success"):
-            self._display_result("流式聊天发起失败", result.get("error", ""), is_error=True)
+            self._display_result(self._tr("tab_llm", "title.stream_start_fail"),
+                                 result.get("error", ""), is_error=True)
 
     # ------------------------------------------------------------------
     #  会话管理事件
@@ -420,12 +472,12 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
     def _on_create_conversation(self):
         system_prompt = self.conv_system_prompt_input.text().strip() or None
         result = self.llm_service.create_conversation_demo(system_prompt)
-        self._show_conv_op_result("创建会话", result)
+        self._show_conv_op_result("op.create_conv", result)
         self._on_refresh_conversations()
 
     def _on_refresh_conversations(self):
         result = self.llm_service.list_conversations_demo()
-        self._log(f"会话列表: {result}")
+        self._log(self._tr("tab_llm", "log.conv_list", result=result))
         self._populate_conversation_list(result)
 
     def _on_send_conversation(self):
@@ -454,7 +506,7 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
         if conversation_id is None:
             return
         result = self.llm_service.delete_conversation_demo(conversation_id)
-        self._show_conv_op_result("删除会话", result)
+        self._show_conv_op_result("op.delete_conv", result)
         self._on_refresh_conversations()
 
     def _request_conversation_send(self, conversation_id: str, stream: bool):
@@ -464,24 +516,28 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
             result = self.llm_service.stream_conversation_message(conversation_id, content)
         else:
             result = self.llm_service.send_conversation_message(conversation_id, content)
-        self._log(f"会话消息发起: {result}")
+        self._log(self._tr("tab_llm", "log.conv_send", result=result))
         if not result.get("success"):
-            self._show_conversation_error("会话消息发起失败", result.get("error", ""))
+            self._show_conversation_error("title.conv_start_fail",
+                                          result.get("error", ""))
 
     def _selected_conversation_id(self) -> Optional[str]:
         """取当前会话列表选中项的 conversation_id；无选中时弹提示"""
         item = self.conv_list.currentItem()
         if item is not None:
             return item.data(Qt.ItemDataRole.UserRole)
-        Message.warning(self._message_parent, "请先在会话列表中选中一个会话")
+        Message.warning(self._message_parent,
+                        self._tr("tab_llm", "warn.select_conv"))
         return None
 
     def _populate_conversation_list(self, result: dict):
         """填充会话列表，conversation_id 存入 item 的 UserRole 数据"""
         self.conv_list.clear()
         if not result.get("success"):
-            self.conv_list.addItem(f"错误: {result.get('error')}")
-            self._display_result("获取会话列表失败", result.get("error", ""), is_error=True)
+            error = result.get("error", "")
+            self.conv_list.addItem(self._tr("common", "error.prefix", error=error))
+            self._display_result(self._tr("tab_llm", "title.conv_list_fail"),
+                                 error, is_error=True)
             return
         for conv in result.get("conversations", []):
             self._add_conversation_item(conv)
@@ -489,27 +545,34 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
     def _add_conversation_item(self, conv: dict):
         """向会话列表添加一行，并把 conversation_id 绑定到 UserRole"""
         short_id = conv["id"][:CONV_ID_DISPLAY_LEN]
-        text = f"{short_id} [{conv['provider']}/{conv['model']}] 消息数:{conv['message_count']}"
+        text = self._tr("tab_llm", "item.conv", short_id=short_id,
+                        provider=conv["provider"], model=conv["model"],
+                        count=conv["message_count"])
         item = QListWidgetItem(text)
         item.setData(Qt.ItemDataRole.UserRole, conv["id"])
         self.conv_list.addItem(item)
 
-    def _show_conv_op_result(self, title: str, result: dict):
-        """统一展示会话操作结果（成功/失败）"""
+    def _show_conv_op_result(self, title_key: str, result: dict):
+        """统一展示会话操作结果（成功/失败标题模板取词）"""
+        title = self._tr("tab_llm", title_key)
         self._log(f"{title}: {result}")
         if result.get("success"):
-            self._display_result(f"{title}成功", str(result))
+            self._display_result(self._tr("common", "result.success", title=title),
+                                 str(result))
             return
-        self._display_result(f"{title}失败", result.get("error", ""), is_error=True)
+        self._display_result(self._tr("common", "result.fail", title=title),
+                             result.get("error", ""), is_error=True)
 
     def _show_conv_detail_result(self, result: dict):
         """展示会话详情（含消息历史，JSON 格式化）"""
-        self._log(f"会话详情: {result}")
+        self._log(self._tr("tab_llm", "log.conv_detail", result=result))
         if not result.get("success"):
-            self._display_result("查看会话详情失败", result.get("error", ""), is_error=True)
+            self._display_result(self._tr("tab_llm", "title.conv_detail_fail"),
+                                 result.get("error", ""), is_error=True)
             return
-        content = json.dumps(result.get("conversation", {}), ensure_ascii=False, indent=2)
-        self._display_result("会话详情", content)
+        content = json.dumps(result.get("conversation", {}), ensure_ascii=False,
+                             indent=_JSON_INDENT)
+        self._display_result(self._tr("tab_llm", "title.conv_detail"), content)
 
     # ------------------------------------------------------------------
     #  工具调用事件
@@ -517,50 +580,59 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
 
     def _on_register_tools(self):
         result = self.llm_service.register_demo_tools()
-        self._log(f"注册演示工具: {result}")
+        self._log(self._tr("tab_llm", "log.register_tools", result=result))
         if result.get("success"):
-            self._display_result("注册演示工具", "\n".join(result.get("registered", [])))
+            self._display_result(self._tr("tab_llm", "title.register_tools"),
+                                 "\n".join(result.get("registered", [])))
         else:
-            self._display_result("注册演示工具失败", result.get("error", ""), is_error=True)
+            self._display_result(self._tr("tab_llm", "title.register_tools_fail"),
+                                 result.get("error", ""), is_error=True)
 
     def _on_unregister_tools(self):
         result = self.llm_service.unregister_demo_tools()
-        self._log(f"注销演示工具: {result}")
-        self._show_tool_op_result("注销演示工具", result, "unregistered")
+        self._log(self._tr("tab_llm", "log.unregister_tools", result=result))
+        self._show_tool_op_result(self._tr("tab_llm", "title.unregister_tools"),
+                                  result, "unregistered")
 
     def _on_list_tools(self):
         result = self.llm_service.list_registered_tools()
-        self._log(f"已注册工具: {result}")
+        self._log(self._tr("tab_llm", "log.list_tools", result=result))
         if not result.get("success"):
-            self._display_result("查看已注册工具失败", result.get("error", ""), is_error=True)
+            self._display_result(self._tr("tab_llm", "title.list_tools_fail"),
+                                 result.get("error", ""), is_error=True)
             return
         descriptions = result.get("tool_descriptions", {})
         lines = [f"{name}: {desc}" for name, desc in descriptions.items()]
-        self._display_result("共享 ToolRegistry 已注册工具", "\n".join(lines))
+        self._display_result(self._tr("tab_llm", "title.tool_registry"),
+                             "\n".join(lines))
 
     def _on_tool_chat(self):
         message = self.tool_message_input.text()
         result = self.llm_service.chat_with_tools_demo(message)
-        self._log(f"工具对话发起: {result}")
+        self._log(self._tr("tab_llm", "log.tool_chat", result=result))
         if not result.get("success"):
-            self._display_result("工具对话发起失败", result.get("error", ""), is_error=True)
+            self._display_result(self._tr("tab_llm", "title.tool_chat_start_fail"),
+                                 result.get("error", ""), is_error=True)
 
     def _show_tool_op_result(self, title: str, result: dict, key: str):
         """统一展示工具注册表操作结果（成功列名 / 失败弹错误）"""
         if result.get("success"):
-            self._display_result(title, "\n".join(result.get(key, [])) or "（无）")
+            content = "\n".join(result.get(key, [])) or self._tr("common", "msg.none")
+            self._display_result(title, content)
             return
-        self._display_result(f"{title}失败", result.get("error", ""), is_error=True)
+        self._display_result(self._tr("common", "result.fail", title=title),
+                             result.get("error", ""), is_error=True)
 
     def _on_send_embed(self):
         text = self.embed_text_input.text()
         result = self.llm_service.send_embedding(text)
-        self._log(f"嵌入结果: {result}")
+        self._log(self._tr("tab_llm", "log.embed", result=result))
         if result.get("success"):
-            self._display_result(
-                "嵌入成功",
-                f"维度: {result.get('embedding_size', 0)}\nProvider: {result.get('provider', 'unknown')}"
-            )
+            self._display_result(self._tr("tab_llm", "title.embed_ok"), self._tr(
+                "tab_llm", "msg.embed_result",
+                size=result.get("embedding_size", 0),
+                provider=result.get("provider", "unknown")))
         else:
-            self._display_result("嵌入失败", result.get("error", ""), is_error=True)
+            self._display_result(self._tr("tab_llm", "title.embed_fail"),
+                                 result.get("error", ""), is_error=True)
         Message.info(self._message_parent, str(result))

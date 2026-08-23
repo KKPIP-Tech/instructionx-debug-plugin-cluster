@@ -42,6 +42,9 @@ class Service:
         self.tm = self._resolve_task_manager(services)
         self.llm = self._resolve_llm_facade(services)
         self.logger = self._resolve_logger(services)
+        # 多语言取词门面（ILocalizationFacade）：框架加载路径始终经
+        # PluginServices.localization 注入；service.py 委托链等无注入路径为 None
+        self._i18n = services.localization if services is not None else None
         # 事件通知回调（callable(str)）：工作线程回调产生的事件经它上抛，
         # 由 UI 层注入并自行负责线程封送（run_in_ui_thread）
         self._event_notifier: Optional[Callable[[str], None]] = None
@@ -49,6 +52,25 @@ class Service:
     def set_event_notifier(self, notifier: Optional[Callable[[str], None]]) -> None:
         """注入事件的 UI 通知回调（callable(str)，由 UI 负责线程封送）"""
         self._event_notifier = notifier
+
+    def _tr(self, group: str, key: str, /, default: str = "", **params) -> str:
+        """取插件文案；门面未注入时回退中文默认文案
+
+        服务层经跨插件 API / MCP 工具被外部调用时不保证有门面注入
+        （如 service.py 委托链），回退 default 保持行为与改造前一致，
+        避免调用方看到裸键名。
+
+        参数:
+            group: 语言文件分组名
+            key: 分组内点分键名
+            default: 门面缺失时的中文回退文案（可含与 params 对应的占位符）
+            params: 命名占位符参数（对应模板中的 {name}）
+        """
+        if self._i18n is not None:
+            return self._i18n.tr(group, key, **params)
+        if default:
+            return default.format(**params)
+        return key
 
     def _notify_event(self, message: str) -> None:
         """上抛事件：有 notifier 时通知 UI，否则仅记日志"""

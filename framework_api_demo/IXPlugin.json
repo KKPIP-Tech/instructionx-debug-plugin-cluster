@@ -1,9 +1,12 @@
 {
     "id": "framework-api-demo",
-    "name": "Framework API Demo",
+    "name": {"zh": "Framework API Demo", "en": "Framework API Demo"},
     "version": "release.1.0.3",
     "main": "entrance.py",
-    "description": "演示 InstructionX 框架核心 API：数据持久化、后台任务、LLM（会话/工具调用/多模态/统计）、MCP 与跨插件调用。",
+    "description": {
+        "zh": "演示 InstructionX 框架核心 API：数据持久化、后台任务、LLM（会话/工具调用/多模态/统计）、MCP 与跨插件调用。",
+        "en": "Demonstrates InstructionX framework core APIs: data persistence, background tasks, LLM (conversations/tool calling/multimodal/stats), MCP, and cross-plugin calls."
+    },
     "author": "InstructionX Team",
     "keywords": ["instructionx", "plugin", "framework", "api", "demo", "llm", "mcp", "multimodal"]
 }

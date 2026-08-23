@@ -1,0 +1,478 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Framework API Demo 插件默认语言文件（zh，简体中文）
+  规则：本文件必须完整覆盖插件全部 tr(group, key) 调用（回退终点）；
+  其他语言文件（如 en.xml）的 group 名与键名必须与本文件一致。
+  校验：.venv\Scripts\python.exe scripts/check_i18n_completeness.py
+-->
+<texts language="zh">
+  <!-- 通用词：跨 Tab 复用 -->
+  <group name="common">
+    <text key="result.success">{title}成功</text>
+    <text key="result.fail">{title}失败</text>
+    <text key="label.key">键:</text>
+    <text key="label.value">值:</text>
+    <text key="label.message">消息:</text>
+    <text key="label.result">结果:</text>
+    <text key="error.prefix">错误: {error}</text>
+    <text key="msg.none">（无）</text>
+  </group>
+
+  <!-- 主控件：结果/日志面板、Tab 名、启动日志 -->
+  <group name="main">
+    <text key="panel.result.title">操作结果</text>
+    <text key="btn.clear_result">清除结果</text>
+    <text key="panel.log.title">执行日志</text>
+    <text key="tab.data">数据</text>
+    <text key="tab.task">任务</text>
+    <text key="tab.llm">LLM</text>
+    <text key="tab.api">API</text>
+    <text key="tab.info">信息</text>
+    <text key="tab.mcp">MCP</text>
+    <text key="log.loaded">Framework API Demo 插件已加载</text>
+    <text key="log.plugin_id">插件 ID: {id}</text>
+  </group>
+
+  <!-- DataProvider 演示 Tab -->
+  <group name="tab_data">
+    <text key="group.register">插件注册</text>
+    <text key="btn.register">注册演示插件</text>
+    <text key="btn.unregister">注销演示插件</text>
+    <text key="group.private">Private 数据操作</text>
+    <text key="group.public">Public 数据操作</text>
+    <text key="btn.write">写入</text>
+    <text key="btn.read">读取</text>
+    <text key="group.query">数据查询</text>
+    <text key="btn.get_all">获取所有数据</text>
+    <text key="group.assets">资源管理</text>
+    <text key="btn.save_asset">保存资源</text>
+    <text key="btn.load_asset">加载资源</text>
+    <text key="group.pubsub">发布订阅（Pub/Sub）</text>
+    <text key="btn.subscribe">订阅</text>
+    <text key="btn.publish">发布</text>
+    <text key="btn.unsubscribe">取消订阅</text>
+    <text key="btn.show_events">查看事件</text>
+    <text key="btn.active_instance">活跃实例</text>
+    <text key="title.register">注册插件</text>
+    <text key="title.unregister">注销插件</text>
+    <text key="title.write_private">写入 Private</text>
+    <text key="title.read_private">读取 Private</text>
+    <text key="title.write_public">写入 Public</text>
+    <text key="title.read_public">读取 Public</text>
+    <text key="title.all_data">所有数据</text>
+    <text key="title.get_data_fail">获取数据失败</text>
+    <text key="title.save_asset">保存资源</text>
+    <text key="title.load_asset">加载资源</text>
+    <text key="title.subscribe">订阅</text>
+    <text key="title.publish">发布</text>
+    <text key="title.unsubscribe">取消订阅</text>
+    <text key="title.events">订阅事件列表</text>
+    <text key="title.active_instance">活跃实例</text>
+    <text key="title.active_instance_fail">查询活跃实例失败</text>
+    <text key="msg.asset_path">路径: {path}</text>
+    <text key="msg.asset_content">内容:
+{content}</text>
+    <text key="msg.active_instance">{plugin_type} -&gt; {active_instance}</text>
+    <text key="log.register">注册插件: {result}</text>
+    <text key="log.unregister">注销插件: {result}</text>
+    <text key="log.write_private">写入Private: {result}</text>
+    <text key="log.read_private">读取Private: {result}</text>
+    <text key="log.write_public">写入Public: {result}</text>
+    <text key="log.read_public">读取Public: {result}</text>
+    <text key="log.get_all">获取所有数据: {result}</text>
+    <text key="log.save_asset">保存资源: {result}</text>
+    <text key="log.load_asset">加载资源: {result}</text>
+    <text key="log.subscribe">订阅: {result}</text>
+    <text key="log.publish">发布: {result}</text>
+    <text key="log.unsubscribe">取消订阅: {result}</text>
+    <text key="log.events_count">查看事件: 共 {count} 条</text>
+    <text key="log.active_instance">活跃实例: {result}</text>
+  </group>
+
+  <!-- 后台任务演示 Tab -->
+  <group name="tab_task">
+    <text key="group.create">创建任务</text>
+    <text key="label.name">名称:</text>
+    <text key="label.type">类型:</text>
+    <text key="label.interval">间隔:</text>
+    <text key="suffix.seconds">秒</text>
+    <text key="btn.create">创建任务</text>
+    <text key="group.query">任务查询</text>
+    <text key="btn.query">查询所有任务</text>
+    <text key="btn.clear">清理已完成任务</text>
+    <text key="btn.cancel">取消任务</text>
+    <text key="btn.stop_long">停止长期任务</text>
+    <text key="btn.status">查询状态</text>
+    <text key="group.scheduled">定时任务控制</text>
+    <text key="label.task_id">任务 ID:</text>
+    <text key="placeholder.scheduled_id">定时任务 task_id（留空则取列表选中项）</text>
+    <text key="btn.enable">启用</text>
+    <text key="btn.disable">禁用</text>
+    <text key="btn.unregister">注销</text>
+    <text key="title.create">创建任务</text>
+    <text key="title.list">任务列表</text>
+    <text key="title.query_fail">查询任务失败</text>
+    <text key="title.clear">清理任务</text>
+    <text key="title.unregister_scheduled">注销定时任务</text>
+    <text key="title.cancel">取消任务</text>
+    <text key="title.stop_long">停止长期任务</text>
+    <text key="title.status">查询状态</text>
+    <text key="title.enable">启用定时任务</text>
+    <text key="title.disable">禁用定时任务</text>
+    <text key="status.running">运行中</text>
+    <text key="status.disabled">已禁用</text>
+    <text key="item.task">{name} [{status}]</text>
+    <text key="item.scheduled">[定时] {name} ({interval}s) [{status}]</text>
+    <text key="item.long">[长期] {name} [{status}]</text>
+    <text key="empty.tasks">暂无任务</text>
+    <text key="warn.select_task">请先在任务列表中选中一项</text>
+    <text key="warn.long_use_stop">长期任务请使用「停止长期任务」按钮</text>
+    <text key="log.create">创建任务: {result}</text>
+    <text key="log.query">查询任务: {result}</text>
+    <text key="log.clear">清理任务: {result}</text>
+  </group>
+
+  <!-- LLM 演示 Tab -->
+  <group name="tab_llm">
+    <text key="group.provider">Provider 信息</text>
+    <text key="btn.get_providers">获取 Provider 列表</text>
+    <text key="btn.get_models">获取模型列表</text>
+    <text key="group.chat">聊天测试</text>
+    <text key="default.chat_message">你好，请介绍一下自己</text>
+    <text key="btn.send">发送聊天</text>
+    <text key="btn.stream">流式发送</text>
+    <text key="group.conversation">会话管理</text>
+    <text key="placeholder.system_prompt">系统提示词（可留空）</text>
+    <text key="label.system_prompt">系统提示词:</text>
+    <text key="btn.create_conv">创建会话</text>
+    <text key="btn.refresh_conv">刷新会话列表</text>
+    <text key="btn.conv_detail">查看详情</text>
+    <text key="btn.delete_conv">删除会话</text>
+    <text key="placeholder.conv_message">发送给选中会话的消息</text>
+    <text key="btn.send_msg">发送</text>
+    <text key="label.reply">回复:</text>
+    <text key="group.tool">工具调用</text>
+    <text key="btn.register_tools">注册演示工具</text>
+    <text key="btn.unregister_tools">注销演示工具</text>
+    <text key="btn.list_tools">查看已注册工具</text>
+    <text key="default.tool_message">现在几点了？帮我算一下 12*(3+4)</text>
+    <text key="btn.tool_chat">工具对话</text>
+    <text key="group.embed">嵌入测试</text>
+    <text key="default.embed_text">Hello world</text>
+    <text key="btn.embed">发送嵌入</text>
+    <text key="group.multimodal">多模态</text>
+    <text key="label.prompt">提示词:</text>
+    <text key="default.image_prompt">一只在草地上晒太阳的猫</text>
+    <text key="btn.gen_image">生成图片</text>
+    <text key="label.text">文本:</text>
+    <text key="default.tts_text">你好，这是文本转语音演示</text>
+    <text key="btn.tts">文本转语音</text>
+    <text key="group.stats">统计与校验</text>
+    <text key="placeholder.usage_conv_id">会话 id（留空查全部）</text>
+    <text key="label.conv_id">会话 id:</text>
+    <text key="btn.usage_stats">获取用量统计</text>
+    <text key="placeholder.provider_id">Provider 实例 id（留空用默认）</text>
+    <text key="label.provider">Provider:</text>
+    <text key="btn.validate">校验 Provider</text>
+    <text key="title.tool_chat_fail">工具对话失败</text>
+    <text key="title.stream_fail">流式聊天失败</text>
+    <text key="title.conv_stream_fail">会话流式发送失败</text>
+    <text key="title.conv_reply">会话回复</text>
+    <text key="title.conv_msg_fail">会话消息失败</text>
+    <text key="title.conv_start_fail">会话消息发起失败</text>
+    <text key="title.conv_stream_result">会话流式响应</text>
+    <text key="title.stream_result">流式聊天响应</text>
+    <text key="title.tool_chat_result">工具对话响应</text>
+    <text key="title.providers">Provider 列表</text>
+    <text key="title.providers_fail">获取 Provider 失败</text>
+    <text key="title.models">模型列表</text>
+    <text key="title.models_fail">获取模型失败</text>
+    <text key="title.chat_result">聊天响应</text>
+    <text key="title.chat_fail">聊天失败</text>
+    <text key="title.stream_start_fail">流式聊天发起失败</text>
+    <text key="title.conv_list_fail">获取会话列表失败</text>
+    <text key="title.conv_detail_fail">查看会话详情失败</text>
+    <text key="title.conv_detail">会话详情</text>
+    <text key="title.register_tools">注册演示工具</text>
+    <text key="title.register_tools_fail">注册演示工具失败</text>
+    <text key="title.unregister_tools">注销演示工具</text>
+    <text key="title.list_tools_fail">查看已注册工具失败</text>
+    <text key="title.tool_registry">共享 ToolRegistry 已注册工具</text>
+    <text key="title.tool_chat_start_fail">工具对话发起失败</text>
+    <text key="title.embed_ok">嵌入成功</text>
+    <text key="title.embed_fail">嵌入失败</text>
+    <text key="title.image_start_fail">图片生成发起失败</text>
+    <text key="title.tts_start_fail">语音合成发起失败</text>
+    <text key="title.usage_fail">获取用量统计失败</text>
+    <text key="title.usage">用量统计</text>
+    <text key="title.validate_fail">校验 Provider 失败</text>
+    <text key="title.validate_ok">Provider 校验通过</text>
+    <text key="title.validate_not_ok">Provider 校验未通过</text>
+    <text key="title.image_result">图片生成结果</text>
+    <text key="title.image_fail">图片生成失败</text>
+    <text key="title.tts_result">语音合成结果</text>
+    <text key="title.tts_fail">语音合成失败</text>
+    <text key="op.create_conv">创建会话</text>
+    <text key="op.delete_conv">删除会话</text>
+    <text key="msg.stream_result">模型: {model}
+Provider: {provider}
+片段数: {chunks}  Tokens: {tokens}
+
+{response}</text>
+    <text key="msg.conv_stream_result">会话: {id}
+片段数: {chunks}
+
+{response}</text>
+    <text key="msg.tool_chat_result">工具调用轮次: {turns}
+
+{details}
+最终回复:
+{final}</text>
+    <text key="msg.tool_details">工具调用明细:
+{lines}
+</text>
+    <text key="msg.chat_result">模型: {model}
+Provider: {provider}
+
+{response}</text>
+    <text key="msg.embed_result">维度: {size}
+Provider: {provider}</text>
+    <text key="msg.validate_content">Provider: {provider}
+{message}</text>
+    <text key="msg.config_valid">配置有效</text>
+    <text key="item.conv">{short_id} [{provider}/{model}] 消息数:{count}</text>
+    <text key="warn.select_conv">请先在会话列表中选中一个会话</text>
+    <text key="log.providers">获取Provider: {result}</text>
+    <text key="log.models">获取模型: {result}</text>
+    <text key="log.chat">聊天结果: {result}</text>
+    <text key="log.stream">流式聊天: {result}</text>
+    <text key="log.stream_event">流式事件: {message}</text>
+    <text key="log.conv_list">会话列表: {result}</text>
+    <text key="log.conv_send">会话消息发起: {result}</text>
+    <text key="log.conv_detail">会话详情: {result}</text>
+    <text key="log.register_tools">注册演示工具: {result}</text>
+    <text key="log.unregister_tools">注销演示工具: {result}</text>
+    <text key="log.list_tools">已注册工具: {result}</text>
+    <text key="log.tool_chat">工具对话发起: {result}</text>
+    <text key="log.embed">嵌入结果: {result}</text>
+    <text key="log.image_start">图片生成发起: {result}</text>
+    <text key="log.tts_start">语音合成发起: {result}</text>
+    <text key="log.usage">用量统计: {result}</text>
+    <text key="log.validate">Provider 校验: {result}</text>
+  </group>
+
+  <!-- 跨插件 API 演示 Tab -->
+  <group name="tab_api">
+    <text key="group.plugins">插件查询</text>
+    <text key="btn.get_plugins">获取所有插件</text>
+    <text key="group.apis">API 查询</text>
+    <text key="btn.get_apis">获取所有 API</text>
+    <text key="group.functions">Function Calling</text>
+    <text key="btn.get_tools">获取所有 Function Tools</text>
+    <text key="group.call">跨插件调用</text>
+    <text key="placeholder.call">输入 plugin_id.method</text>
+    <text key="label.call">调用:</text>
+    <text key="btn.call">调用插件方法</text>
+    <text key="title.plugins">插件列表</text>
+    <text key="title.plugins_fail">获取插件失败</text>
+    <text key="title.apis">API 列表</text>
+    <text key="title.apis_fail">获取 API 失败</text>
+    <text key="title.tools">Function Tools</text>
+    <text key="title.tools_fail">获取 Function Tools 失败</text>
+    <text key="empty.tools">暂无工具</text>
+    <text key="title.input_error">输入错误</text>
+    <text key="title.call_ok">跨插件调用成功</text>
+    <text key="title.call_fail">跨插件调用失败</text>
+    <text key="warn.format">请输入格式: plugin_id.method</text>
+    <text key="msg.tool_line">{name}: {desc}...</text>
+    <text key="log.plugins">获取插件: {result}</text>
+    <text key="log.apis">获取API: {result}</text>
+    <text key="log.tools">获取Function Tools: {result}</text>
+    <text key="log.call">调用结果: {result}</text>
+  </group>
+
+  <!-- 框架信息演示 Tab -->
+  <group name="tab_info">
+    <text key="group.info">框架信息</text>
+    <text key="btn.get_info">获取框架信息</text>
+    <text key="group.log">日志级别（LoggerManager）</text>
+    <text key="btn.log_levels">写入五级日志</text>
+    <text key="group.thread">线程工具（thread_utils）</text>
+    <text key="btn.thread">演示线程封送</text>
+    <text key="group.asset">资源工具（image_utils）</text>
+    <text key="btn.base64">图片转 Base64</text>
+    <text key="group.theme">主题跟随（ThemeManager.theme_changed）</text>
+    <text key="label.theme">当前主题: {mode}</text>
+    <text key="group.doc">可用接口文档</text>
+    <text key="doc.api_text"><![CDATA[Framework API Demo 演示以下接口:
+
+1. DataProvider
+   - register_plugin() / unregister_plugin()
+   - get_plugin_data() / set_plugin_data() / get_all_plugin_data()
+   - subscribe() / publish() / unsubscribe()（发布订阅）
+   - save_asset() / load_asset()
+   - get_active_instance()
+
+2. BackgroundTaskManager
+   - register_sync_task() / register_async_task()
+   - register_scheduled_task()（含启用/禁用/注销）
+   - register_long_running_task() / stop_long_running_task()
+   - cancel_task() / get_task_status()
+   - get_tasks_by_plugin() / clear_completed_tasks()
+
+3. ILLMService（llm_facade）
+   - list_providers() / get_models() / validate_provider()
+   - chat() / stream_chat() / embed()
+   - 会话: create_conversation() / send_message() / stream_send_message()
+     / get_conversation() / list_conversations() / delete_conversation()
+   - 工具调用: get_shared_tool_registry()（register/unregister/list_tools）
+     / chat_with_tools()；入口 IPlugin.llm_tools 钩子
+   - 多模态: generate_image() / text_to_speech()
+   - get_usage_stats()
+
+4. PluginManager
+   - get_all_plugins() / get_plugin_by_id()
+   - get_all_apis() / call_plugin_method()
+   - get_all_function_tools() (Function Calling)
+   - get_api_description()
+
+5. MCPManager / MCPClientManager
+   - start_server() / stop_server() / is_server_running() / get_server_url()
+   - service_api 自动桥接工具（{plugin_id}__{method} 净化名）
+   - connect() / disconnect() / list_connected_servers() / list_tools()
+
+6. LoggerManager
+   - debug() / info() / warning() / error() / critical()
+
+7. utils 工具与主题
+   - is_ui_thread() / run_in_ui_thread() / run_in_ui_thread_sync()
+   - load_image_as_base64()
+   - ThemeManager.theme_changed 主题跟随]]></text>
+    <text key="title.info">框架信息</text>
+    <text key="title.info_fail">获取框架信息失败</text>
+    <text key="msg.no_data">无返回数据</text>
+    <text key="op.log_demo">日志级别演示</text>
+    <text key="op.thread_demo">线程工具演示</text>
+    <text key="op.base64_demo">图片转 Base64 演示</text>
+    <text key="log.info">框架信息: {result}</text>
+    <text key="log.theme_changed">主题已切换: {mode}</text>
+  </group>
+
+  <!-- MCP 演示 Tab -->
+  <group name="tab_mcp">
+    <text key="group.server">内置 MCP Server</text>
+    <text key="btn.start">启动 Server</text>
+    <text key="btn.stop">停止 Server</text>
+    <text key="btn.refresh">刷新状态</text>
+    <text key="group.bridge">桥接工具（service_api 自动注册）</text>
+    <text key="note.bridge">插件在 information.py 声明 service_api 并提供 service.py 后，框架自动注册跨插件 API，并由 MCPBridge 同步为 MCP Server 工具；工具名为 {plugin_id}__{method} 净化形式，外部 MCP Client 可直接调用。</text>
+    <text key="btn.list_bridge">列出本插件桥接工具</text>
+    <text key="group.remote">远程 MCP Server</text>
+    <text key="btn.connect">连接</text>
+    <text key="btn.disconnect">断开</text>
+    <text key="btn.refresh_list">刷新列表</text>
+    <text key="btn.list_tools">查看工具</text>
+    <text key="title.server_status">MCP Server 状态</text>
+    <text key="title.start_server">启动 MCP Server</text>
+    <text key="title.stop_server">停止 MCP Server</text>
+    <text key="title.bridged">桥接工具</text>
+    <text key="title.bridged_fail">获取桥接工具失败</text>
+    <text key="title.connect">连接远程 Server</text>
+    <text key="title.disconnect">断开远程 Server</text>
+    <text key="title.servers">远程 Server 列表</text>
+    <text key="title.servers_fail">获取远程 Server 失败</text>
+    <text key="empty.servers">暂无连接</text>
+    <text key="title.tools">远程工具</text>
+    <text key="title.tools_fail">获取远程工具失败</text>
+    <text key="empty.tools">该 Server 暂无工具</text>
+    <text key="warn.json">配置 JSON 解析失败: {error}</text>
+    <text key="log.bridged">桥接工具: {result}</text>
+    <text key="log.servers">远程 Server 列表: {result}</text>
+    <text key="log.tools">远程工具: {result}</text>
+  </group>
+
+  <!-- 数据演示服务：面向用户的消息模板 -->
+  <group name="svc_data">
+    <text key="msg.register_ok">插件 {id} 注册成功</text>
+    <text key="msg.unregister_ok">插件 {id} 注销成功</text>
+    <text key="msg.write_private">写入私有数据成功: {key}={value}</text>
+    <text key="msg.write_public">写入公共数据成功: {key}={value}</text>
+    <text key="msg.subscribed">已订阅 {id} 的键: {key}</text>
+    <text key="msg.published">已发布 {id}.{key} = {value}</text>
+    <text key="msg.unsubscribed">已取消本插件的全部订阅</text>
+    <text key="event.subscription">订阅事件: {id}.{key} = {value}</text>
+  </group>
+
+  <!-- 任务演示服务：面向用户的消息模板 -->
+  <group name="svc_task">
+    <text key="msg.callback">任务回调: {name} [{status}] 结果={result} 错误={error}</text>
+    <text key="msg.sync_done">同步任务完成，耗时 {seconds} 秒</text>
+    <text key="msg.sync_created">同步任务已创建并执行</text>
+    <text key="msg.async_done">异步任务完成，耗时 {seconds} 秒</text>
+    <text key="msg.async_created">异步任务已创建</text>
+    <text key="msg.manager_closed">任务管理器已关闭，无法创建任务</text>
+    <text key="msg.scheduled_run">定时任务执行</text>
+    <text key="msg.scheduled_created">定时任务已创建，间隔 {interval} 秒</text>
+    <text key="msg.long_running">已运行 {seconds} 秒</text>
+    <text key="msg.long_stopped">长期任务优雅停止，共计数 {count}</text>
+    <text key="msg.long_created">长期任务已创建（每秒计数 +1）</text>
+    <text key="msg.long_stop_signal">长期任务收到停止信号: {name}</text>
+    <text key="msg.long_status">长期任务状态: {name} -&gt; {status}</text>
+    <text key="msg.long_stopped_ok">长期任务 {id} 已停止</text>
+    <text key="err.long_not_running">长期任务 {id} 不存在或未在运行</text>
+    <text key="msg.cancelled">任务 {id} 已标记取消</text>
+    <text key="err.not_running">任务 {id} 不在运行列表中</text>
+    <text key="err.not_found">任务 {id} 不存在</text>
+    <text key="status.unknown">未知</text>
+    <text key="action.enable">启用</text>
+    <text key="action.disable">禁用</text>
+    <text key="msg.scheduled_toggled">定时任务 {id} 已{action}</text>
+    <text key="err.scheduled_not_found">定时任务 {id} 不存在</text>
+    <text key="msg.scheduled_unregistered">定时任务 {id} 已注销</text>
+    <text key="err.scheduled_not_running">定时任务 {id} 不在运行列表中</text>
+    <text key="msg.cleared">已清理 {count} 个任务</text>
+  </group>
+
+  <!-- LLM 演示服务：面向用户的消息模板 -->
+  <group name="svc_llm">
+    <text key="msg.stream_started">流式聊天已发起（后台任务执行）</text>
+    <text key="msg.conv_started">会话消息已发起（后台任务执行）</text>
+    <text key="msg.conv_stream_started">会话流式消息已发起（后台任务执行）</text>
+    <text key="err.conv_not_found">会话不存在: {id}</text>
+    <text key="err.delete_failed">删除会话失败: {id}</text>
+    <text key="msg.tool_chat_started">工具对话已发起（后台任务执行）</text>
+    <text key="msg.image_started">图片生成已发起（后台任务执行）</text>
+    <text key="msg.tts_started">语音合成已发起（后台任务执行）</text>
+    <text key="err.no_default_provider">未指定 Provider 且无可用默认实例</text>
+    <text key="err.base64_decode">base64 解码失败: {error}</text>
+  </group>
+
+  <!-- 框架信息服务：面向用户的消息模板 -->
+  <group name="svc_info">
+    <text key="msg.log_levels">五级日志已写入，请到 logs/application.log 查看</text>
+    <text key="msg.thread_started">工作线程封送对照结果将经事件通知回传（见日志面板）</text>
+    <text key="msg.thread_receipt">run_in_ui_thread 异步封送回执：本条事件由 UI 线程上抛</text>
+    <text key="msg.thread_compare">线程封送对照 [{status}]: {result} 错误={error}</text>
+  </group>
+
+  <!-- MCP 演示服务：面向用户的消息模板 -->
+  <group name="svc_mcp">
+    <text key="err.unavailable">MCP 服务未注入（框架未启用 MCP）</text>
+    <text key="err.server_not_running">Server 未进入运行状态（可能在配置中被禁用）</text>
+    <text key="err.not_bridged">本插件 API 尚未注册到 PluginManager</text>
+    <text key="err.config_format">配置格式错误（需含 server_id/name）: {error}</text>
+    <text key="err.server_id_required">需要指定 server_id</text>
+    <text key="msg.connected">已连接 {id}，注册工具 {count} 个</text>
+    <text key="msg.disconnected">已断开 {id}</text>
+    <text key="msg.submitted">{operation}已提交后台执行，结果见执行日志</text>
+    <text key="msg.callback">MCP {operation}: [{status}] 结果={result} 错误={error}</text>
+    <text key="op.connect">连接远程 Server</text>
+    <text key="op.disconnect">断开远程 Server</text>
+  </group>
+
+  <!-- 跨插件 API 演示服务：面向用户的错误模板 -->
+  <group name="svc_api">
+    <text key="err.plugin_not_found">插件不存在</text>
+    <text key="err.need_params">需要指定 plugin_id 和 method_name</text>
+  </group>
+</texts>

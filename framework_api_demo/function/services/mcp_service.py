@@ -44,10 +44,10 @@ class MCPDemoService(Service):
     #  公共辅助
     # ------------------------------------------------------------------
 
-    @staticmethod
-    def _unavailable() -> Dict[str, Any]:
-        """MCP 服务未注入时的统一错误返回"""
-        return {"success": False, "error": MCP_UNAVAILABLE_ERROR}
+    def _unavailable(self) -> Dict[str, Any]:
+        """MCP 服务未注入时的统一错误返回（门面缺失时回退模块级中文常量）"""
+        return {"success": False, "error": self._tr(
+            "svc_mcp", "err.unavailable", default=MCP_UNAVAILABLE_ERROR)}
 
     def get_remote_demo_config(self) -> Dict[str, Any]:
         """返回远程演示服务器的示例配置（config/default.json 的 mcp.remote_demo 段）"""
@@ -58,7 +58,10 @@ class MCPDemoService(Service):
 
         def on_completed(task_id: str, status, result, error) -> None:
             try:
-                message = f"MCP {operation}: [{status}] 结果={result} 错误={error}"
+                message = self._tr(
+                    "svc_mcp", "msg.callback",
+                    default="MCP {operation}: [{status}] 结果={result} 错误={error}",
+                    operation=operation, status=status, result=result, error=error)
                 self._notify_event(message)
                 self.logger.info(get_name(), f"MCP 后台操作回调 {operation}({task_id}): {message}")
             except Exception as e:
@@ -98,7 +101,9 @@ class MCPDemoService(Service):
             running = self.mcp_manager.is_server_running()
             if running:
                 return {"success": True, "url": self.mcp_manager.get_server_url()}
-            return {"success": False, "error": "Server 未进入运行状态（可能在配置中被禁用）"}
+            return {"success": False, "error": self._tr(
+                "svc_mcp", "err.server_not_running",
+                default="Server 未进入运行状态（可能在配置中被禁用）")}
         except Exception as e:
             return {"success": False, "error": str(e)}
 
@@ -128,7 +133,9 @@ class MCPDemoService(Service):
             apis = self.plugin_manager.get_all_apis()
             info = apis.get(self.plugin_id)
             if info is None:
-                return {"success": False, "error": "本插件 API 尚未注册到 PluginManager"}
+                return {"success": False, "error": self._tr(
+                    "svc_mcp", "err.not_bridged",
+                    default="本插件 API 尚未注册到 PluginManager")}
             methods: List[str] = list(info.get("methods", []))
             tools = [sanitize_tool_name(f"{self.plugin_id}__{m}") for m in methods]
             return {"success": True, "count": len(tools), "tools": tools}
@@ -155,29 +162,41 @@ class MCPDemoService(Service):
         try:
             remote_cfg = MCPRemoteServerConfig.from_dict(config)
         except (KeyError, TypeError) as e:
-            return {"success": False, "error": f"配置格式错误（需含 server_id/name）: {e}"}
-        return self._submit_mcp_task("连接远程 Server", self._do_connect, remote_cfg)
+            return self._connect_config_error(e)
+        op = self._tr("svc_mcp", "op.connect", default="连接远程 Server")
+        return self._submit_mcp_task(op, self._do_connect, remote_cfg)
+
+    def _connect_config_error(self, error: Exception) -> Dict[str, Any]:
+        """远程配置格式错误的统一返回"""
+        return {"success": False, "error": self._tr(
+            "svc_mcp", "err.config_format",
+            default="配置格式错误（需含 server_id/name）: {error}", error=error)}
 
     def _do_connect(self, remote_cfg: MCPRemoteServerConfig) -> str:
         """后台线程执行：同步连接远程 Server 并返回摘要（异常抛给任务系统）"""
         server_id = self.mcp_client.connect(remote_cfg)
         tools = self.mcp_client.list_tools(server_id)
-        return f"已连接 {server_id}，注册工具 {len(tools)} 个"
+        return self._tr("svc_mcp", "msg.connected",
+                        default="已连接 {id}，注册工具 {count} 个",
+                        id=server_id, count=len(tools))
 
     def disconnect_remote_demo(self, server_id: str) -> Dict[str, Any]:
         """演示断开远程 MCP Server（后台任务执行，理由同 connect）"""
         if self.mcp_client is None:
             return self._unavailable()
         if not server_id:
-            return {"success": False, "error": "需要指定 server_id"}
+            return {"success": False, "error": self._tr(
+                "svc_mcp", "err.server_id_required", default="需要指定 server_id")}
         return self._submit_mcp_task(
-            "断开远程 Server", self._do_disconnect, server_id
+            self._tr("svc_mcp", "op.disconnect", default="断开远程 Server"),
+            self._do_disconnect, server_id
         )
 
     def _do_disconnect(self, server_id: str) -> str:
         """后台线程执行：同步断开远程 Server"""
         self.mcp_client.disconnect(server_id)
-        return f"已断开 {server_id}"
+        return self._tr("svc_mcp", "msg.disconnected",
+                        default="已断开 {id}", id=server_id)
 
     def _submit_mcp_task(self, operation: str, func: Callable, arg: Any) -> Dict[str, Any]:
         """把阻塞型 MCP 操作提交为后台同步任务"""
@@ -188,7 +207,10 @@ class MCPDemoService(Service):
                 callback=self._make_mcp_callback(operation),
             )
             return {"success": True, "task_id": task_id,
-                    "message": f"{operation}已提交后台执行，结果见执行日志"}
+                    "message": self._tr(
+                        "svc_mcp", "msg.submitted",
+                        default="{operation}已提交后台执行，结果见执行日志",
+                        operation=operation)}
         except Exception as e:
             return {"success": False, "error": str(e)}
 
@@ -207,7 +229,8 @@ class MCPDemoService(Service):
         if self.mcp_client is None:
             return self._unavailable()
         if not server_id:
-            return {"success": False, "error": "需要指定 server_id"}
+            return {"success": False, "error": self._tr(
+                "svc_mcp", "err.server_id_required", default="需要指定 server_id")}
         try:
             tools = self.mcp_client.list_tools(server_id)
             return {"success": True, "count": len(tools), "tools": tools}

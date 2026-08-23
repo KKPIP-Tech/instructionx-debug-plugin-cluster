@@ -130,7 +130,9 @@ class FrameworkAPIDemoPlugin(IPlugin):
             )
 
     def _create_widget(self, parent=None, data_provider=None) -> QWidget:
-        """创建插件主控件（UI 构建由 MainWidget 完成）"""
+        """创建插件主控件（UI 构建由 MainWidget 完成；注入取词门面与插件 UUID）"""
+        services = self._get_services()
+        i18n = services.localization if services is not None else None
         widget = MainWidget(
             data_service=self.data_service,
             task_service=self.task_service,
@@ -139,10 +141,12 @@ class FrameworkAPIDemoPlugin(IPlugin):
             info_service=self.info_service,
             mcp_service=self.mcp_service,
             parent=parent,
+            i18n=i18n,
+            plugin_id=self.plugin_id,
         )
         self._main_widget = widget
-        widget.append_log("Framework API Demo 插件已加载")
-        widget.append_log(f"插件 ID: {self.plugin_id}")
+        widget.append_log(widget.tr_text("main", "log.loaded"))
+        widget.append_log(widget.tr_text("main", "log.plugin_id", id=self.plugin_id))
         return widget
 
     def _log(self, message: str):

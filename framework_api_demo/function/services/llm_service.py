@@ -173,7 +173,8 @@ class LLMDemoService(Service):
                 func=self._run_stream_chat, args=(message, provider),
                 callback=self._on_stream_task_done,
             )
-            return {"success": True, "task_id": task_id, "message": "流式聊天已发起（后台任务执行）"}
+            return {"success": True, "task_id": task_id, "message": self._tr(
+                "svc_llm", "msg.stream_started", default="流式聊天已发起（后台任务执行）")}
         except Exception as e:
             self.logger.error(get_name(), f"[{self.plugin_id}] 发起流式聊天失败(provider={provider}): {e}")
             return {"success": False, "error": str(e)}
@@ -265,7 +266,8 @@ class LLMDemoService(Service):
                 func=self._run_conv_send, args=(conversation_id, content),
                 callback=self._on_conv_send_done,
             )
-            return {"success": True, "task_id": task_id, "message": "会话消息已发起（后台任务执行）"}
+            return {"success": True, "task_id": task_id, "message": self._tr(
+                "svc_llm", "msg.conv_started", default="会话消息已发起（后台任务执行）")}
         except Exception as e:
             self.logger.error(get_name(), f"[{self.plugin_id}] 发起会话消息失败({conversation_id}): {e}")
             return {"success": False, "error": str(e)}
@@ -282,7 +284,8 @@ class LLMDemoService(Service):
                 func=self._run_conv_stream, args=(conversation_id, content),
                 callback=self._on_conv_stream_done,
             )
-            return {"success": True, "task_id": task_id, "message": "会话流式消息已发起（后台任务执行）"}
+            return {"success": True, "task_id": task_id, "message": self._tr(
+                "svc_llm", "msg.conv_stream_started", default="会话流式消息已发起（后台任务执行）")}
         except Exception as e:
             self.logger.error(get_name(), f"[{self.plugin_id}] 发起会话流式消息失败({conversation_id}): {e}")
             return {"success": False, "error": str(e)}
@@ -308,7 +311,9 @@ class LLMDemoService(Service):
         try:
             conversation = self.llm.get_conversation(conversation_id)
             if conversation is None:
-                return {"success": False, "error": f"会话不存在: {conversation_id}"}
+                return {"success": False, "error": self._tr(
+                    "svc_llm", "err.conv_not_found",
+                    default="会话不存在: {id}", id=conversation_id)}
             detail = self._conversation_to_summary(conversation)
             detail["messages"] = conversation.messages
             return {"success": True, "conversation": detail}
@@ -326,7 +331,8 @@ class LLMDemoService(Service):
         if conversation_id in self._conversation_ids:
             self._conversation_ids.remove(conversation_id)
         if not deleted:
-            return {"success": False, "error": f"删除会话失败: {conversation_id}"}
+            return {"success": False, "error": self._tr(
+                "svc_llm", "err.delete_failed", default="删除会话失败: {id}", id=conversation_id)}
         return {"success": True, "conversation_id": conversation_id}
 
     @staticmethod
@@ -479,7 +485,8 @@ class LLMDemoService(Service):
                 func=self._run_tool_chat, args=(message,),
                 callback=self._on_tool_chat_done,
             )
-            return {"success": True, "task_id": task_id, "message": "工具对话已发起（后台任务执行）"}
+            return {"success": True, "task_id": task_id, "message": self._tr(
+                "svc_llm", "msg.tool_chat_started", default="工具对话已发起（后台任务执行）")}
         except Exception as e:
             self.logger.error(get_name(), f"[{self.plugin_id}] 发起工具对话失败: {e}")
             return {"success": False, "error": str(e)}
@@ -549,7 +556,8 @@ class LLMDemoService(Service):
                 func=self._run_generate_image, args=(prompt, provider),
                 callback=self._on_image_task_done,
             )
-            return {"success": True, "task_id": task_id, "message": "图片生成已发起（后台任务执行）"}
+            return {"success": True, "task_id": task_id, "message": self._tr(
+                "svc_llm", "msg.image_started", default="图片生成已发起（后台任务执行）")}
         except Exception as e:
             self.logger.error(get_name(), f"[{self.plugin_id}] 发起图片生成失败(provider={provider}): {e}")
             return {"success": False, "error": str(e)}
@@ -585,7 +593,8 @@ class LLMDemoService(Service):
             content = base64.b64decode(base64_data)
         except Exception as e:
             self.logger.error(get_name(), f"[{self.plugin_id}] base64 解码失败({filename}): {e}")
-            return {"asset_save_error": f"base64 解码失败: {e}"}
+            return {"asset_save_error": self._tr(
+                "svc_llm", "err.base64_decode", default="base64 解码失败: {error}", error=e)}
         return self._save_bytes_asset(content, filename)
 
     def _save_bytes_asset(self, content: bytes, filename: str) -> Dict[str, Any]:
@@ -609,7 +618,8 @@ class LLMDemoService(Service):
                 func=self._run_text_to_speech, args=(text, provider),
                 callback=self._on_tts_task_done,
             )
-            return {"success": True, "task_id": task_id, "message": "语音合成已发起（后台任务执行）"}
+            return {"success": True, "task_id": task_id, "message": self._tr(
+                "svc_llm", "msg.tts_started", default="语音合成已发起（后台任务执行）")}
         except Exception as e:
             self.logger.error(get_name(), f"[{self.plugin_id}] 发起语音合成失败(provider={provider}): {e}")
             return {"success": False, "error": str(e)}
@@ -675,7 +685,8 @@ class LLMDemoService(Service):
             self.logger.error(get_name(), f"[{self.plugin_id}] 获取用量统计失败({conversation_id}): {e}")
             return {"success": False, "error": str(e)}
         if stats is None:
-            return {"success": False, "error": f"会话不存在: {conversation_id}"}
+            return {"success": False, "error": self._tr(
+                "svc_llm", "err.conv_not_found", default="会话不存在: {id}", id=conversation_id)}
         return {
             "success": True,
             "conversation_id": conversation_id,
@@ -698,7 +709,9 @@ class LLMDemoService(Service):
         """演示 ILLMService.validate_provider；provider 为空时取默认 chat 实例"""
         target = provider or self.llm.get_default_provider_id(feature="chat")
         if not target:
-            return {"success": False, "error": "未指定 Provider 且无可用默认实例"}
+            return {"success": False, "error": self._tr(
+                "svc_llm", "err.no_default_provider",
+                default="未指定 Provider 且无可用默认实例")}
         try:
             valid, message = self.llm.validate_provider(target)
             return {"success": True, "provider": target, "valid": valid, "message": message}

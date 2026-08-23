@@ -68,7 +68,8 @@ class FrameworkInfoService(Service):
         return {
             "success": True,
             "levels": levels,
-            "message": "五级日志已写入，请到 logs/application.log 查看",
+            "message": self._tr("svc_info", "msg.log_levels",
+                                default="五级日志已写入，请到 logs/application.log 查看"),
         }
 
     # ------------------------------------------------------------------
@@ -99,7 +100,8 @@ class FrameworkInfoService(Service):
             "success": True,
             "task_id": task_id,
             "caller_is_ui_thread": caller_is_ui,
-            "message": "工作线程封送对照结果将经事件通知回传（见日志面板）",
+            "message": self._tr("svc_info", "msg.thread_started",
+                                default="工作线程封送对照结果将经事件通知回传（见日志面板）"),
         }
 
     def _worker_probe(self) -> Dict[str, Any]:
@@ -108,7 +110,8 @@ class FrameworkInfoService(Service):
         marshaled_is_ui = run_in_ui_thread_sync(is_ui_thread)
         run_in_ui_thread(
             self._notify_event,
-            "run_in_ui_thread 异步封送回执：本条事件由 UI 线程上抛",
+            self._tr("svc_info", "msg.thread_receipt",
+                     default="run_in_ui_thread 异步封送回执：本条事件由 UI 线程上抛"),
         )
         return {
             "worker_is_ui_thread": worker_is_ui,
@@ -120,7 +123,10 @@ class FrameworkInfoService(Service):
 
         def on_completed(task_id: str, status, result, error) -> None:
             try:
-                self._notify_event(f"线程封送对照 [{status}]: {result} 错误={error}")
+                self._notify_event(self._tr(
+                    "svc_info", "msg.thread_compare",
+                    default="线程封送对照 [{status}]: {result} 错误={error}",
+                    status=status, result=result, error=error))
             except Exception as e:
                 self.logger.error(get_name(), f"线程演示回调处理失败: {e}")
 

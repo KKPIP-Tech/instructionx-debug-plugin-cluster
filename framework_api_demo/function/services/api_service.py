@@ -43,7 +43,8 @@ class APIDemoService(Service):
                     "success": True,
                     "plugin": {"name": plugin.plugin_name, "id": plugin.plugin_id},
                 }
-            return {"success": False, "error": "插件不存在"}
+            return {"success": False, "error": self._tr(
+                "svc_api", "err.plugin_not_found", default="插件不存在")}
         except Exception as e:
             return {"success": False, "error": str(e)}
 
@@ -89,7 +90,8 @@ class APIDemoService(Service):
         """演示跨插件调用方法"""
         try:
             if not plugin_id or not method_name:
-                return {"success": False, "error": "需要指定 plugin_id 和 method_name"}
+                return {"success": False, "error": self._tr(
+                    "svc_api", "err.need_params", default="需要指定 plugin_id 和 method_name")}
             result = self.plugin_manager.call_plugin_method(
                 caller_id=self.plugin_id,
                 plugin_id=plugin_id,
