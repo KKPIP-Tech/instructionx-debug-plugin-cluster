@@ -22,11 +22,15 @@ from utils.thread_utils import run_in_ui_thread
 from .base_tab import BaseTab
 from .llm_tab_groups import LLMMediaStatsGroupsMixin
 from ...function.services.llm_service import (
+    CHAT_DONE_EVENT,
+    CHAT_ERROR_PREFIX,
     CONV_ERROR_PREFIX,
     CONV_REPLY_PREFIX,
     CONV_STREAM_CHUNK_PREFIX,
     CONV_STREAM_DONE_EVENT,
     CONV_STREAM_ERROR_PREFIX,
+    EMBED_DONE_EVENT,
+    EMBED_ERROR_PREFIX,
     STREAM_CHUNK_PREFIX,
     STREAM_DONE_EVENT,
     STREAM_ERROR_PREFIX,
@@ -73,7 +77,9 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
     # ------------------------------------------------------------------
 
     def _dispatch_stream_event(self, message: str):
-        """UI 线程分发服务事件：多模态 / 工具调用 / 会话演示 / 聊天流式分别处理"""
+        """UI 线程分发服务事件：聊天/嵌入 / 多模态 / 工具调用 / 会话演示 / 聊天流式分别处理"""
+        if self._dispatch_chat_result_event(message):
+            return
         if self._dispatch_multimodal_event(message):
             return
         if self._dispatch_tool_event(message):
@@ -81,6 +87,43 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
         if self._dispatch_conversation_event(message):
             return
         self._dispatch_chat_stream_event(message)
+
+    def _dispatch_chat_result_event(self, message: str) -> bool:
+        """UI 线程分发聊天/嵌入完成事件；命中对应协议返回 True，否则返回 False"""
+        if message == CHAT_DONE_EVENT:
+            self._show_chat_result()
+            return True
+        if message.startswith(CHAT_ERROR_PREFIX):
+            self._show_chat_error(message[len(CHAT_ERROR_PREFIX):])
+            return True
+        if message == EMBED_DONE_EVENT:
+            self._show_embed_result()
+            return True
+        if message.startswith(EMBED_ERROR_PREFIX):
+            self._display_result(self._tr("tab_llm", "title.embed_fail"),
+                                 message[len(EMBED_ERROR_PREFIX):], is_error=True)
+            return True
+        return False
+
+    def _show_chat_result(self):
+        """聊天完成事件后拉取服务聚合结果展示（复用成功展示分支）"""
+        result = self.llm_service.get_last_chat_result().get("result") or {}
+        self._show_chat_success(result)
+
+    def _show_chat_error(self, error: str):
+        """聊天失败事件：结果面板弹错误，聊天区写错误前缀"""
+        self._display_result(self._tr("tab_llm", "title.chat_fail"),
+                             error, is_error=True)
+        self.chat_result_text.setPlainText(
+            self._tr("common", "error.prefix", error=error))
+
+    def _show_embed_result(self):
+        """嵌入完成事件后拉取服务聚合结果展示"""
+        result = self.llm_service.get_last_embed_result().get("result") or {}
+        self._display_result(self._tr("tab_llm", "title.embed_ok"), self._tr(
+            "tab_llm", "msg.embed_result",
+            size=result.get("embedding_size", 0),
+            provider=result.get("provider", "unknown")))
 
     def _dispatch_tool_event(self, message: str) -> bool:
         """UI 线程分发工具调用事件；命中工具协议返回 True，否则返回 False"""
@@ -435,17 +478,12 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
         return lines
 
     def _on_send_chat(self):
+        """发起聊天（后台任务执行，完成/失败经 notifier 事件上抛）"""
         message = self.chat_message_input.text()
         result = self.llm_service.send_chat(message)
         self._log(self._tr("tab_llm", "log.chat", result=result))
-        if result.get("success"):
-            self._show_chat_success(result)
-        else:
-            error = result.get("error", "")
-            self._display_result(self._tr("tab_llm", "title.chat_fail"),
-                                 error, is_error=True)
-            self.chat_result_text.setPlainText(
-                self._tr("common", "error.prefix", error=error))
+        if not result.get("success"):
+            self._show_chat_error(result.get("error", ""))
 
     def _show_chat_success(self, result: dict):
         """展示聊天成功结果：结果面板含模型信息，聊天区仅显示回复正文"""
@@ -624,15 +662,10 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
                              result.get("error", ""), is_error=True)
 
     def _on_send_embed(self):
+        """发起嵌入（后台任务执行，完成/失败经 notifier 事件上抛）"""
         text = self.embed_text_input.text()
         result = self.llm_service.send_embedding(text)
         self._log(self._tr("tab_llm", "log.embed", result=result))
-        if result.get("success"):
-            self._display_result(self._tr("tab_llm", "title.embed_ok"), self._tr(
-                "tab_llm", "msg.embed_result",
-                size=result.get("embedding_size", 0),
-                provider=result.get("provider", "unknown")))
-        else:
+        if not result.get("success"):
             self._display_result(self._tr("tab_llm", "title.embed_fail"),
                                  result.get("error", ""), is_error=True)
-        Message.info(self._message_parent, str(result))

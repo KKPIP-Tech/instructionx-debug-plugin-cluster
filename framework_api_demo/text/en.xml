@@ -434,6 +434,8 @@ Provider: {provider}</text>
 
   <!-- LLM demo service: user-facing message templates -->
   <group name="svc_llm">
+    <text key="msg.chat_started">Chat request started (runs as background task)</text>
+    <text key="msg.embed_started">Embedding request started (runs as background task)</text>
     <text key="msg.stream_started">Streaming chat started (runs as background task)</text>
     <text key="msg.conv_started">Conversation message started (runs as background task)</text>
     <text key="msg.conv_stream_started">Conversation streaming message started (runs as background task)</text>

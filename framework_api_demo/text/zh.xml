@@ -435,6 +435,8 @@ Provider: {provider}</text>
 
   <!-- LLM 演示服务：面向用户的消息模板 -->
   <group name="svc_llm">
+    <text key="msg.chat_started">聊天请求已发起（后台任务执行）</text>
+    <text key="msg.embed_started">嵌入请求已发起（后台任务执行）</text>
     <text key="msg.stream_started">流式聊天已发起（后台任务执行）</text>
     <text key="msg.conv_started">会话消息已发起（后台任务执行）</text>
     <text key="msg.conv_stream_started">会话流式消息已发起（后台任务执行）</text>

@@ -30,6 +30,15 @@ from .base import Service
 # 默认实例引用（语义等同 core.llm.types.DEFAULT_PROVIDER，字面量演示 ILLMService 约定）
 DEFAULT_PROVIDER_REF = "default"
 
+# 聊天/嵌入后台任务名（register_async_task 的 name 参数）
+CHAT_TASK_NAME = "llm_chat"
+EMBED_TASK_NAME = "llm_embed"
+# 聊天/嵌入演示 notifier 事件协议（与流式聊天同风格，前缀独立防串台）
+CHAT_DONE_EVENT = "[聊天完成]"
+CHAT_ERROR_PREFIX = "[聊天失败] "
+EMBED_DONE_EVENT = "[嵌入完成]"
+EMBED_ERROR_PREFIX = "[嵌入失败] "
+
 # 流式聊天后台任务名（register_async_task 的 name 参数）
 STREAM_TASK_NAME = "llm_stream_chat"
 # notifier 事件前缀：UI 依此区分片段增量刷新 / 完成 / 失败三类事件
@@ -74,6 +83,9 @@ class LLMDemoService(Service):
 
     def __init__(self, plugin_id, services=None, data_provider=None):
         super().__init__(plugin_id, services=services, data_provider=data_provider)
+        # 最近一次聊天 / 嵌入的聚合结果（工作线程写入，UI 在完成事件后读取）
+        self._last_chat_result: Optional[Dict[str, Any]] = None
+        self._last_embed_result: Optional[Dict[str, Any]] = None
         # 最近一次流式聊天的聚合结果（工作线程写入，UI 在完成事件后读取）
         self._last_stream_result: Optional[Dict[str, Any]] = None
         # 本插件创建的会话 id 记录（卸载 cleanup 时据此清理）
@@ -127,33 +139,97 @@ class LLMDemoService(Service):
             self.logger.error(f"[{self.plugin_id}] 获取模型列表失败(provider={target}): {e}")
             return {"success": False, "error": str(e)}
 
+    # ------------------------------------------------------------------
+    #  聊天 / 嵌入演示（阻塞 HTTP，经后台任务执行）
+    # ------------------------------------------------------------------
+
     def send_chat(self, message: str = "你好", provider: str = DEFAULT_PROVIDER_REF) -> Dict[str, Any]:
-        """演示 ILLMService.chat（messages 字典列表，返回 ChatResponse）"""
+        """演示 ILLMService.chat（同步 HTTP 阻塞调用，经后台任务执行）
+
+        chat 内部为同步 HTTP 请求，直接在 UI 线程调用会卡界面，
+        因此经 register_async_task 提交到任务线程池执行；本方法立即返回
+        任务已发起，聚合结果经完成回调 + notifier 上抛（CHAT_DONE_EVENT），
+        UI 再经 get_last_chat_result 拉取展示。
+        """
         try:
-            messages: List[Dict[str, str]] = [{"role": "user", "content": message}]
-            response = self.llm.chat(messages, provider=provider)
-            return {
-                "success": True,
-                "response": response.content,
-                "model": response.model,
-                "provider": self.llm.resolve_provider_id(provider),
-            }
+            return self._submit_async_task(
+                CHAT_TASK_NAME, self._run_chat, (message, provider),
+                self._on_chat_done,
+                "msg.chat_started", "聊天请求已发起（后台任务执行）")
         except Exception as e:
-            self.logger.error(f"[{self.plugin_id}] 聊天请求失败(provider={provider}): {e}")
+            self.logger.error(get_name(), f"[{self.plugin_id}] 发起聊天请求失败(provider={provider}): {e}")
             return {"success": False, "error": str(e)}
 
-    def send_embedding(self, text: str = "Hello world", provider: str = DEFAULT_PROVIDER_REF) -> Dict[str, Any]:
-        """演示 ILLMService.embed（texts 支持 str 或 List[str]，返回 List[EmbeddingResponse]）"""
+    def get_last_chat_result(self) -> Dict[str, Any]:
+        """返回最近一次聊天的聚合结果（供 UI 在完成事件后拉取展示）"""
+        return {"success": True, "result": self._last_chat_result}
+
+    def _run_chat(self, message: str, provider: str) -> Dict[str, Any]:
+        """在工作线程执行 chat（messages 字典列表，返回 ChatResponse）"""
+        messages: List[Dict[str, str]] = [{"role": "user", "content": message}]
+        response = self.llm.chat(messages, provider=provider)
+        result = {
+            "success": True,
+            "response": response.content,
+            "model": response.model,
+            "provider": self.llm.resolve_provider_id(provider),
+        }
+        self._last_chat_result = result
+        return result
+
+    def _on_chat_done(self, task_id: str, status, result, error) -> None:
+        """聊天任务完成回调（工作线程）：经 notifier 上抛完成/失败事件，异常不外抛"""
         try:
-            response = self.llm.embed(texts=[text], provider=provider)
-            return {
-                "success": True,
-                "embedding_size": len(response[0].embedding) if response else 0,
-                "provider": self.llm.resolve_provider_id(provider),
-            }
+            if error:
+                self._notify_event(f"{CHAT_ERROR_PREFIX}{error}")
+                self.logger.error(get_name(), f"[{self.plugin_id}] 聊天任务失败({task_id}): {error}")
+                return
+            self._notify_event(CHAT_DONE_EVENT)
+            self.logger.info(get_name(), f"[{self.plugin_id}] 聊天任务完成({task_id}): {status}")
         except Exception as e:
-            self.logger.error(f"[{self.plugin_id}] 嵌入请求失败(provider={provider}): {e}")
+            self.logger.error(get_name(), f"[{self.plugin_id}] 聊天完成回调处理失败: {e}")
+
+    def send_embedding(self, text: str = "Hello world", provider: str = DEFAULT_PROVIDER_REF) -> Dict[str, Any]:
+        """演示 ILLMService.embed（同步 HTTP 阻塞调用，经后台任务执行）
+
+        与 send_chat 同模式：工作线程执行，完成事件（EMBED_DONE_EVENT）后
+        由 UI 经 get_last_embed_result 拉取聚合结果。
+        """
+        try:
+            return self._submit_async_task(
+                EMBED_TASK_NAME, self._run_embedding, (text, provider),
+                self._on_embed_done,
+                "msg.embed_started", "嵌入请求已发起（后台任务执行）")
+        except Exception as e:
+            self.logger.error(get_name(), f"[{self.plugin_id}] 发起嵌入请求失败(provider={provider}): {e}")
             return {"success": False, "error": str(e)}
+
+    def get_last_embed_result(self) -> Dict[str, Any]:
+        """返回最近一次嵌入的聚合结果（供 UI 在完成事件后拉取展示）"""
+        return {"success": True, "result": self._last_embed_result}
+
+    def _run_embedding(self, text: str, provider: str) -> Dict[str, Any]:
+        """在工作线程执行 embed（texts 支持 str 或 List[str]，返回 List[EmbeddingResponse]）"""
+        response = self.llm.embed(texts=[text], provider=provider)
+        result = {
+            "success": True,
+            "embedding_size": len(response[0].embedding) if response else 0,
+            "provider": self.llm.resolve_provider_id(provider),
+        }
+        self._last_embed_result = result
+        return result
+
+    def _on_embed_done(self, task_id: str, status, result, error) -> None:
+        """嵌入任务完成回调（工作线程）：经 notifier 上抛完成/失败事件，异常不外抛"""
+        try:
+            if error:
+                self._notify_event(f"{EMBED_ERROR_PREFIX}{error}")
+                self.logger.error(get_name(), f"[{self.plugin_id}] 嵌入任务失败({task_id}): {error}")
+                return
+            self._notify_event(EMBED_DONE_EVENT)
+            self.logger.info(get_name(), f"[{self.plugin_id}] 嵌入任务完成({task_id}): {status}")
+        except Exception as e:
+            self.logger.error(get_name(), f"[{self.plugin_id}] 嵌入完成回调处理失败: {e}")
 
     # ------------------------------------------------------------------
     #  流式聊天演示
