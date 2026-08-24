@@ -53,9 +53,6 @@ GRAPH_FILE_SUFFIX = ".json"
 #: 图名非法字符（Windows 文件名禁用字符，SPEC-graph-list §1.4）
 INVALID_NAME_CHARS = '<>:"/\\|?*'
 
-# DataProvider.save_asset 返回的资源相对路径前缀（见 data_provider.py 实现）
-ASSET_PATH_PREFIX = "assets/plugins"
-
 # 预置示例图资产路径（相对插件目录，见 SPEC §8 assets.preset_graph）
 PRESET_GRAPH_RELATIVE_PATH = "assets/preset_graph.json"
 
@@ -310,13 +307,21 @@ class BlueprintOpenCVService(QObject):
     # ------------------------------------------------------------------
 
     def _read_saved_graph(self, name: str) -> Optional[Dict[str, Any]]:
-        """读取 DataProvider 存档图；不存在或损坏时记 WARNING 日志并返回 None"""
-        relative = f"{ASSET_PATH_PREFIX}/{self._plugin_id}/{self._asset_filename(name)}"
+        """读取 DataProvider 存档图；不存在返回 None，损坏记 WARNING 并返回 None
+
+        先校验图名合法性（拒绝路径穿越字符，替代原 get_asset_path 的
+        读侧消毒），再 is_file 预检：存档不存在属正常路径（首次启动 /
+        未保存过），静默回退预置图不记 WARNING，避免日志噪音。
+        """
+        if self._validate_graph_name(name) is not None:
+            return None  # 非法图名按不存在处理（不读盘）
+        path = self._storage_dir() / f"{name}{GRAPH_FILE_SUFFIX}"
+        if not path.is_file():
+            return None  # 存档不存在：正常回退路径，不记日志
         try:
-            path = self._data_provider.get_asset_path(relative)
             with open(path, "rb") as f:
                 return json.loads(f.read().decode("utf-8"))
-        except (DataProviderError, OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
             self._logger.warning(LOG_TAG, f"读取图存档失败（回退示例图）: {name}: {e}")
             return None
 
