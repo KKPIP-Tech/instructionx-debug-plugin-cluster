@@ -313,11 +313,14 @@ Provider: {provider}</text>
    - get_active_instance()
 
 2. BackgroundTaskManager
-   - register_sync_task() / register_async_task()
+   - register_sync_task() (inline on caller thread) / register_async_task() (thread pool)
    - register_scheduled_task() (incl. enable/disable/unregister)
-   - register_long_running_task() / stop_long_running_task()
+   - register_long_running_task() / stop_long_running_task(delete_from_storage=)
+     / is_long_task_running()
    - cancel_task() / get_task_status()
    - get_tasks_by_plugin() / clear_completed_tasks()
+   - Blocking calls (chat/embed/stream/conversation/tools/multimodal) always run
+     via register_async_task()
 
 3. ILLMService (llm_facade)
    - list_providers() / get_models() / validate_provider()
@@ -340,10 +343,18 @@ Provider: {provider}</text>
    - service_api auto-bridged tools (sanitized {plugin_id}__{method} names)
    - connect() / disconnect() / list_connected_servers() / list_tools()
 
-6. LoggerManager
+6. FontManager (font subsystem, read-only demo)
+   - list_fonts() / installed_families()
+   - is_available() / resolve_family() (system font fallback resolution)
+
+7. LanguageManager / ILocalizationFacade (i18n facade, read-only demo)
+   - current_language() / available_languages() / has_catalog()
+   - tr() lookup (all plugin texts are resolved via the facade)
+
+8. LoggerManager
    - debug() / info() / warning() / error() / critical()
 
-7. utils &amp; theme
+9. utils &amp; theme
    - is_ui_thread() / run_in_ui_thread() / run_in_ui_thread_sync()
    - load_image_as_base64()
    - ThemeManager.theme_changed theme following]]></text>
@@ -353,6 +364,16 @@ Provider: {provider}</text>
     <text key="op.log_demo">Log Levels Demo</text>
     <text key="op.thread_demo">Thread Utils Demo</text>
     <text key="op.base64_demo">Image to Base64 Demo</text>
+    <text key="group.font">Font Subsystem (FontManager, read-only demo)</text>
+    <text key="label.font_family">Font family:</text>
+    <text key="default.font_family">NotARealFont-Demo (deliberately non-existent)</text>
+    <text key="btn.list_fonts">List Registered Fonts</text>
+    <text key="btn.resolve_font">Fallback Resolution Demo</text>
+    <text key="op.font_list">Registered Fonts</text>
+    <text key="op.font_resolve">Font Fallback Resolution</text>
+    <text key="group.i18n">Localization (i18n facade, read-only demo)</text>
+    <text key="btn.i18n_info">Show Facade Info</text>
+    <text key="op.i18n_demo">Localization Facade Info</text>
     <text key="log.info">Framework info: {result}</text>
     <text key="log.theme_changed">Theme changed: {mode}</text>
   </group>
@@ -456,6 +477,8 @@ Provider: {provider}</text>
     <text key="msg.thread_receipt">run_in_ui_thread async marshaling receipt: this event was raised on the UI thread</text>
     <text key="msg.thread_compare">Thread marshaling comparison [{status}]: {result} error={error}</text>
     <text key="err.manager_closed">Task manager is shut down; cannot start background task</text>
+    <text key="err.font_unavailable">FontManager not injected (font subsystem unavailable)</text>
+    <text key="err.i18n_unavailable">Localization facade not injected (no PluginServices.localization)</text>
   </group>
 
   <!-- MCP demo service: user-facing message templates -->

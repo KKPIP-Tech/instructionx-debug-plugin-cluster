@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """框架信息演示 Tab。
 
-演示框架信息获取、框架 utils 工具（日志级别、线程封送、字体与资源）
-以及 UIKit 主题跟随，并展示可用接口文档文本。
+演示框架信息获取、框架 utils 工具（日志级别、线程封送、图片转 Base64）、
+FontManager 字体子系统（只读）、ILocalizationFacade 多语言门面（只读）、
+UIKit 主题跟随，并展示可用接口文档文本。
 槽函数仅调用 FrameworkInfoService、显示结果，业务逻辑在服务层。
 静态文案经 _tr 取词并登记绑定，语言切换由 retranslate() 统一重设。
 """
@@ -10,10 +11,10 @@
 import json
 from typing import Any, Callable, Dict, Optional
 
-from PySide6.QtWidgets import QGroupBox, QLabel, QVBoxLayout, QScrollArea
+from PySide6.QtWidgets import QFormLayout, QGroupBox, QLabel, QVBoxLayout, QScrollArea
 
 from InstructionX_UIKit import ThemeManager
-from InstructionX_UIKit.components import Button, TextArea
+from InstructionX_UIKit.components import Button, LineEdit, TextArea
 
 from core.interfaces import ILocalizationFacade
 
@@ -21,6 +22,9 @@ from .base_tab import BaseTab
 
 # 结果面板展示 JSON 的缩进宽度
 _JSON_INDENT = 2
+
+# 分组内布局默认间距（像素）
+_GROUP_SPACING = 8
 
 
 class InfoTab(BaseTab):
@@ -55,6 +59,8 @@ class InfoTab(BaseTab):
         layout.addWidget(self._build_log_group())
         layout.addWidget(self._build_thread_group())
         layout.addWidget(self._build_asset_group())
+        layout.addWidget(self._build_font_group())
+        layout.addWidget(self._build_i18n_group())
         layout.addWidget(self._build_theme_group())
         layout.addWidget(self._build_info_doc_group())
         layout.addStretch()
@@ -108,6 +114,33 @@ class InfoTab(BaseTab):
         self.image_base64_btn = self._make_button(
             "btn.base64", self._on_demo_image_base64, variant="primary")
         layout.addWidget(self.image_base64_btn)
+        group.setLayout(layout)
+        return group
+
+    def _build_font_group(self) -> QGroupBox:
+        """构建「字体子系统」分组（FontManager 只读演示，不含安装/卸载写操作）"""
+        group = self._make_group("group.font")
+        form = QFormLayout()
+        self.font_family_input = LineEdit(
+            text=self._tr("tab_info", "default.font_family"))
+        form.addRow(self._make_label("tab_info", "label.font_family"),
+                    self.font_family_input)
+        self.list_fonts_btn = self._make_button(
+            "btn.list_fonts", self._on_list_fonts, variant="primary")
+        form.addRow("", self.list_fonts_btn)
+        self.resolve_font_btn = self._make_button(
+            "btn.resolve_font", self._on_resolve_font)
+        form.addRow("", self.resolve_font_btn)
+        group.setLayout(form)
+        return group
+
+    def _build_i18n_group(self) -> QGroupBox:
+        """构建「多语言门面」分组（ILocalizationFacade 只读能力演示）"""
+        group = self._make_group("group.i18n")
+        layout = QVBoxLayout()
+        self.i18n_info_btn = self._make_button(
+            "btn.i18n_info", self._on_show_i18n_info, variant="primary")
+        layout.addWidget(self.i18n_info_btn)
         group.setLayout(layout)
         return group
 
@@ -177,6 +210,22 @@ class InfoTab(BaseTab):
         """演示图片转 Base64"""
         result = self.info_service.demo_load_image_base64()
         self._show_service_result(self._tr("tab_info", "op.base64_demo"), result)
+
+    def _on_list_fonts(self):
+        """列出框架已注册字体（FontManager 只读演示）"""
+        result = self.info_service.demo_list_fonts()
+        self._show_service_result(self._tr("tab_info", "op.font_list"), result)
+
+    def _on_resolve_font(self):
+        """演示系统字体回退解析（输入故意不存在的家族名可观察到回退链）"""
+        family = self.font_family_input.text().strip()
+        result = self.info_service.demo_resolve_family(family)
+        self._show_service_result(self._tr("tab_info", "op.font_resolve"), result)
+
+    def _on_show_i18n_info(self):
+        """查看多语言门面信息（当前语言 / 插件语言包清单 / 语言目录存在性）"""
+        result = self.info_service.demo_localization_info()
+        self._show_service_result(self._tr("tab_info", "op.i18n_demo"), result)
 
     def _on_theme_changed(self, mode: str):
         """主题切换回调：更新状态标签并记录日志（UIKit 组件本身自动跟随主题）"""

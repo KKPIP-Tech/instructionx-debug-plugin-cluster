@@ -314,11 +314,13 @@ Provider: {provider}</text>
    - get_active_instance()
 
 2. BackgroundTaskManager
-   - register_sync_task() / register_async_task()
+   - register_sync_task()（调用线程内联执行）/ register_async_task()（线程池执行）
    - register_scheduled_task()（含启用/禁用/注销）
-   - register_long_running_task() / stop_long_running_task()
+   - register_long_running_task() / stop_long_running_task(delete_from_storage=)
+     / is_long_task_running()
    - cancel_task() / get_task_status()
    - get_tasks_by_plugin() / clear_completed_tasks()
+   - 阻塞型调用（聊天/嵌入/流式/会话/工具/多模态）一律经 register_async_task 执行
 
 3. ILLMService（llm_facade）
    - list_providers() / get_models() / validate_provider()
@@ -341,10 +343,18 @@ Provider: {provider}</text>
    - service_api 自动桥接工具（{plugin_id}__{method} 净化名）
    - connect() / disconnect() / list_connected_servers() / list_tools()
 
-6. LoggerManager
+6. FontManager（字体子系统，只读演示）
+   - list_fonts() / installed_families()
+   - is_available() / resolve_family()（系统字体回退解析）
+
+7. LanguageManager / ILocalizationFacade（多语言门面，只读演示）
+   - current_language() / available_languages() / has_catalog()
+   - tr() 取词（本插件全部文案均经门面按当前语言取词）
+
+8. LoggerManager
    - debug() / info() / warning() / error() / critical()
 
-7. utils 工具与主题
+9. utils 工具与主题
    - is_ui_thread() / run_in_ui_thread() / run_in_ui_thread_sync()
    - load_image_as_base64()
    - ThemeManager.theme_changed 主题跟随]]></text>
@@ -354,6 +364,16 @@ Provider: {provider}</text>
     <text key="op.log_demo">日志级别演示</text>
     <text key="op.thread_demo">线程工具演示</text>
     <text key="op.base64_demo">图片转 Base64 演示</text>
+    <text key="group.font">字体子系统（FontManager，只读演示）</text>
+    <text key="label.font_family">字体家族:</text>
+    <text key="default.font_family">NotARealFont-Demo（故意不存在的字体名）</text>
+    <text key="btn.list_fonts">列出已注册字体</text>
+    <text key="btn.resolve_font">回退解析演示</text>
+    <text key="op.font_list">已注册字体</text>
+    <text key="op.font_resolve">字体回退解析</text>
+    <text key="group.i18n">多语言（i18n 门面，只读演示）</text>
+    <text key="btn.i18n_info">查看门面信息</text>
+    <text key="op.i18n_demo">多语言门面信息</text>
     <text key="log.info">框架信息: {result}</text>
     <text key="log.theme_changed">主题已切换: {mode}</text>
   </group>
@@ -457,6 +477,8 @@ Provider: {provider}</text>
     <text key="msg.thread_receipt">run_in_ui_thread 异步封送回执：本条事件由 UI 线程上抛</text>
     <text key="msg.thread_compare">线程封送对照 [{status}]: {result} 错误={error}</text>
     <text key="err.manager_closed">任务管理器已关闭，无法发起后台任务</text>
+    <text key="err.font_unavailable">FontManager 未注入（框架未提供字体子系统）</text>
+    <text key="err.i18n_unavailable">多语言门面未注入（无 PluginServices.localization）</text>
   </group>
 
   <!-- MCP 演示服务：面向用户的消息模板 -->

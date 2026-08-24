@@ -29,8 +29,8 @@ Framework API Demo 插件用于演示 InstructionX 框架提供的核心 API 接
 
 - Provider 实例列表（`list_providers()` / `get_default_provider_id()` / `resolve_provider_id()`）
 - 模型列表查询（`get_models()`）
-- 聊天（`chat()`）与流式聊天（`stream_chat()`，后台任务执行 + 片段事件上抛 UI）
-- 嵌入（`embed()`）
+- 聊天（`chat()`）与流式聊天（`stream_chat()`，均经后台任务执行 + notifier 事件上抛 UI）
+- 嵌入（`embed()`，后台任务执行 + 完成事件上抛 UI）
 - 会话管理（`create_conversation()` / `send_message()` / `stream_send_message()` / `get_conversation()` / `list_conversations()` / `delete_conversation()`）
 - 工具调用（共享 `ToolRegistry` 注册 / 注销 / 查询 + `chat_with_tools()` 多轮循环；入口经 `IPlugin.llm_tools` 声明工具清单）
 - 多模态（`generate_image()` / `text_to_speech()`，结果经 `save_asset()` 落盘）
@@ -48,6 +48,16 @@ Framework API Demo 插件用于演示 InstructionX 框架提供的核心 API 接
 - 内置 MCP Server 状态查询与启停（`get_server_config()` / `is_server_running()` / `get_server_url()` / `start_server()` / `stop_server()`）
 - service_api 自动桥接工具清单（工具名 `{plugin_id}__{method}` 净化版）
 - 远程 MCP Server 连接 / 断开 / 列表 / 工具查询（`connect()` / `disconnect()` / `list_connected_servers()` / `list_tools()`，同步契约，后台任务执行）
+
+### FontManager（字体子系统，只读演示）
+
+- 已注册字体清单（`list_fonts()` / `installed_families()`）
+- 系统字体回退解析（`is_available()` / `resolve_family()`；仅只读演示，不含安装/卸载字体文件的写操作）
+
+### LanguageManager / ILocalizationFacade（多语言门面，只读演示）
+
+- 门面信息查询（`current_language()` / `available_languages()` / `has_catalog()`）
+- 插件全部文案经 `tr()` 门面按当前语言取词（本插件自身的 i18n 机制即演示素材）
 
 ### 框架工具（utils / 主题）
 
@@ -81,7 +91,7 @@ Framework API Demo 插件用于演示 InstructionX 框架提供的核心 API 接
 2. **Task** - 同步/异步/定时/长期任务，取消、启停与状态查询
 3. **LLM** - Provider/模型查询、聊天、流式聊天、嵌入、会话管理、工具调用、多模态、用量统计与校验
 4. **API** - 插件查询、API 发现、Function Calling、跨插件调用
-5. **Info** - 框架信息、日志级别、线程封送、字体与资源、主题跟随、接口文档
+5. **Info** - 框架信息、日志级别、线程封送、图片转 Base64、字体子系统（只读）、多语言门面（只读）、主题跟随、接口文档
 6. **MCP** - 内置 MCP Server 启停、service_api 桥接工具、远程 Server 连接
 
 ### 注意事项
