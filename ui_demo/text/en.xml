@@ -1847,6 +1847,9 @@ flowchart LR
     <text key="toolbar.load">Load JSON</text>
     <text key="status.ready">Ready</text>
     <text key="status.running">Running {cur}/{total} …</text>
+    <text key="backend.label">Render backend: {backend} (controllable via the UIKIT_BLUEPRINT_GL env var)</text>
+    <text key="backend.gl">OpenGL (GPU-accelerated)</text>
+    <text key="backend.software">Software (CPU)</text>
     <text key="status.done">Simulation done: {count} nodes · total {ms} ms (pure simulation, no business logic)</text>
     <text key="status.save_fail">Save failed: {error}</text>
     <text key="status.saved">Saved: {path}</text>

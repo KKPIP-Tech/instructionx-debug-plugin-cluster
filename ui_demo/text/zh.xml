@@ -1844,6 +1844,9 @@ flowchart LR
     <text key="toolbar.load">加载 JSON</text>
     <text key="status.ready">就绪</text>
     <text key="status.running">运行中 {cur}/{total} …</text>
+    <text key="backend.label">渲染后端：{backend}（UIKIT_BLUEPRINT_GL 环境变量可控制）</text>
+    <text key="backend.gl">OpenGL（GPU 加速）</text>
+    <text key="backend.software">软件渲染（CPU）</text>
     <text key="status.done">模拟完成：{count} 个节点 · 总耗时 {ms} ms（纯模拟，无业务逻辑）</text>
     <text key="status.save_fail">保存失败：{error}</text>
     <text key="status.saved">已保存：{path}</text>

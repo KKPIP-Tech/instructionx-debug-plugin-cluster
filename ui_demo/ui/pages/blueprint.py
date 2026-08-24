@@ -45,6 +45,7 @@ from InstructionX_UIKit.blueprint import (
     BlueprintGraph,
     register_node_type,
 )
+from InstructionX_UIKit.blueprint.viewport import gl_available
 from InstructionX_UIKit.components import Button
 from InstructionX_UIKit.components.combo_box import ComboBox
 from InstructionX_UIKit.components.slider import Slider
@@ -503,6 +504,7 @@ class BlueprintDemoPage(QWidget):
             'canvas.add_node_at("resize", QPointF(100, 80))'))
 
         root.addLayout(self._build_toolbar())
+        root.addWidget(self._build_backend_label())
 
         body = QHBoxLayout()
         body.setSpacing(12)
@@ -541,6 +543,17 @@ class BlueprintDemoPage(QWidget):
         set_property(self.status_label, "role", "secondary")
         bar.addWidget(self.status_label, 1)
         return bar
+
+    def _build_backend_label(self) -> QLabel:
+        """渲染后端状态行：展示蓝图画布当前视口后端（GL / 软件）。
+
+        与 ``create_viewport`` 的实际选择一致（同源 ``gl_available()``，
+        模块级缓存只探测一次）；offscreen / 无 GL 驱动环境显示软件渲染。
+        """
+        backend_key = "backend.gl" if gl_available() else "backend.software"
+        text = self._tr("backend.label", backend=self._tr(backend_key))
+        self.backend_label = hint_label(text, role="tertiary")
+        return self.backend_label
 
     # ------------------------------------------------------------------ 属性面板
     def _build_panel(self) -> QFrame:
