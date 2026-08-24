@@ -20,7 +20,6 @@ from typing import Dict, Optional, Tuple
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QHBoxLayout,
-    QInputDialog,
     QLabel,
     QListWidgetItem,
     QVBoxLayout,
@@ -32,6 +31,8 @@ from InstructionX_UIKit.components import Button, ListWidget
 from InstructionX_UIKit.theme import T, set_property
 
 from core.interfaces import ILocalizationFacade
+
+from . import dialogs
 
 __all__ = ["NodeListPanel"]
 
@@ -313,11 +314,11 @@ class NodeListPanel(QWidget):
 
     def _prompt_rename(self, node) -> None:
         """弹重命名对话框；确认且非空时写回标题并广播变化。"""
-        text, ok = QInputDialog.getText(
+        text = dialogs.prompt_text(
             self, self._tr(_GROUP, "dialog.rename_title"),
-            self._tr(_GROUP, "dialog.rename_label"), text=node.title)
-        if ok and text.strip():
-            node.title = text.strip()
+            self._tr(_GROUP, "dialog.rename_label"), initial=node.title)
+        if text:
+            node.title = text
             node.changed.emit()
 
     def _sync_empty_state(self) -> None:

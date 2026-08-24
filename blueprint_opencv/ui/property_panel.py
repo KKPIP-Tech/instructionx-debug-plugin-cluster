@@ -13,7 +13,7 @@ SPEC §1.2 的外部属性面板方案一致。
 from typing import Any, Dict, Optional
 
 from PySide6.QtWidgets import (
-    QFileDialog,
+    QFileDialog,  # 系统级文件对话框：UIKit 无对应组件，保留原生（见 ui/dialogs.py 模块说明）
     QHBoxLayout,
     QLabel,
     QScrollArea,

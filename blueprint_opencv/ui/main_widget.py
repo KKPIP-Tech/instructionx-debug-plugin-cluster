@@ -26,9 +26,7 @@ from PySide6.QtCore import QPointF
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
-    QInputDialog,
     QLabel,
-    QMessageBox,
     QVBoxLayout,
     QWidget,
 )
@@ -40,7 +38,7 @@ from core.i18n import get_language_manager
 from core.interfaces import ILocalizationFacade
 from utils.logging_tools import LoggerManager, get_name
 
-from . import plugin_config
+from . import dialogs, plugin_config
 from .graph_list_panel import GraphListPanel
 from .node_bootstrap import (
     REGISTRY_OWNER,
@@ -350,24 +348,21 @@ class MainWidget(QWidget):
 
     def _prompt_graph_name(self) -> Optional[str]:
         """弹存档命名对话框；取消或空名返回 None。"""
-        name, ok = QInputDialog.getText(
+        return dialogs.prompt_text(
             self, self._tr(_GROUP_MAIN, "dialog.save_as_title"),
             self._tr(_GROUP_MAIN, "dialog.save_as_label"))
-        if not ok or not name.strip():
-            return None
-        return name.strip()
 
     def _confirm_overwrite(self, name: str) -> bool:
-        """重名时弹覆盖确认；不重名或用户确认返回 True。"""
-        result = self._service.list_graphs()
-        names = {meta.get("name")
-                 for meta in result.get("data", {}).get("graphs", [])}
-        if name not in names:
+        """重名时弹覆盖确认；不重名或用户确认返回 True。
+
+        存档名单复用蓝图列表面板已枚举的结果（面板在每次增删改名后
+        自刷，与磁盘一致），避免保存流程重复调 service.list_graphs。
+        """
+        if name not in self.graph_list_panel.existing_names():
             return True
-        answer = QMessageBox.question(
+        return dialogs.confirm(
             self, self._tr(_GROUP_MAIN, "dialog.overwrite_title"),
             self._tr(_GROUP_MAIN, "dialog.overwrite_text", name=name))
-        return answer == QMessageBox.StandardButton.Yes
 
     def _load_graph_by_name(self, name: str) -> None:
         """加载指定存档：委托 service 恢复，成功后取回图 dict 刷新画布。"""
@@ -473,5 +468,5 @@ class MainWidget(QWidget):
         """操作失败：弹窗告知 + ERROR 日志（面向用户的错误两者都要）。"""
         reason = result.get("error", self._tr(_GROUP_MAIN, "error.unknown"))
         _logger.error(_MODULE, f"{title}：{reason}")
-        QMessageBox.warning(self, title, str(reason))
+        dialogs.warn(self, title, str(reason))
         self._toolbar.set_status(f"{title}：{reason}")

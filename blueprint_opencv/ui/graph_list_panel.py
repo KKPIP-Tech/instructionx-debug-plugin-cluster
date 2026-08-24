@@ -18,15 +18,13 @@
 """
 
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Set
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QHBoxLayout,
-    QInputDialog,
     QLabel,
     QListWidgetItem,
-    QMessageBox,
     QVBoxLayout,
     QWidget,
 )
@@ -36,6 +34,8 @@ from InstructionX_UIKit.theme import set_property
 
 from core.interfaces import ILocalizationFacade
 from utils.logging_tools import LoggerManager, get_name
+
+from . import dialogs
 
 __all__ = ["GraphListPanel"]
 
@@ -188,6 +188,15 @@ class GraphListPanel(QWidget):
         item = self._list.currentItem()
         return item.data(Qt.ItemDataRole.UserRole) if item is not None else None
 
+    def existing_names(self) -> Set[str]:
+        """当前列表中的存档名集合（refresh 枚举结果，供覆盖确认复用）。
+
+        面板在每次增删改名成功后自刷，列表与磁盘存档保持一致；
+        MainWidget 的覆盖确认直接复用该集合，避免重复枚举。
+        """
+        return {self._list.item(row).data(Qt.ItemDataRole.UserRole)
+                for row in range(self._list.count())}
+
     def row_count(self) -> int:
         """当前列表行数。"""
         return self._list.count()
@@ -269,12 +278,12 @@ class GraphListPanel(QWidget):
     # ------------------------------------------------------------------ 内部
     def _prompt_rename(self, name: str) -> None:
         """重命名流程：输入新名 → service.rename_graph → 刷新 / 报错。"""
-        new_name, ok = QInputDialog.getText(
+        new_name = dialogs.prompt_text(
             self, self._tr("dialog.rename_title"),
-            self._tr("dialog.rename_label"), text=name)
-        if not ok or not new_name.strip() or new_name.strip() == name:
+            self._tr("dialog.rename_label"), initial=name)
+        if new_name is None or new_name == name:
             return
-        result = self._service.rename_graph(name, new_name.strip())
+        result = self._service.rename_graph(name, new_name)
         if not result.get("success"):
             self._report_error(self._tr("fail.rename"), result.get("error"))
             return
@@ -282,10 +291,8 @@ class GraphListPanel(QWidget):
 
     def _confirm_delete(self, name: str) -> None:
         """删除流程：确认 → service.delete_graph → 刷新 / 报错。"""
-        answer = QMessageBox.question(
-            self, self._tr("dialog.delete_title"),
-            self._tr("dialog.delete_text", name=name))
-        if answer != QMessageBox.StandardButton.Yes:
+        if not dialogs.confirm(self, self._tr("dialog.delete_title"),
+                               self._tr("dialog.delete_text", name=name)):
             return
         result = self._service.delete_graph(name)
         if not result.get("success"):
@@ -296,7 +303,7 @@ class GraphListPanel(QWidget):
     def _report_error(self, title: str, message: Any) -> None:
         """操作失败：中文弹窗告知 + ERROR 日志（两者都要）。"""
         _logger.error(_MODULE, f"{title}：{message}")
-        QMessageBox.warning(self, title, str(message))
+        dialogs.warn(self, title, str(message))
 
     def _sync_empty_state(self) -> None:
         """空态占位与列表互斥显隐。"""
