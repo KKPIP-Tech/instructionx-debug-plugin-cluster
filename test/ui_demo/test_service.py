@@ -13,6 +13,8 @@ from plugin.ui_demo.function.component_catalog import COMPONENT_CATALOG
 from plugin.ui_demo.service import Service
 from plugin.ui_demo.ui.pages import NAV
 
+from ._helpers import nav_title_map
+
 #: 目录页面总数（预期清单长度）
 _EXPECTED_COUNT = sum(len(pages) for _c, pages in COMPONENT_CATALOG)
 
@@ -60,10 +62,11 @@ class TestGetControlList:
         assert self.items == expected
 
     def test_matches_nav_titles(self) -> None:
-        """清单条目应与 NAV 页面标题一一对应（含顺序）。"""
-        expected = [f"{cat_title} · {page_title}"
-                    for _k, cat_title, pages in NAV
-                    for _pk, page_title, _f in pages]
+        """清单条目应与 NAV 页面标题一一对应（含顺序，标题经 zh.xml 翻译）。"""
+        titles = nav_title_map()
+        expected = [f"{titles[f'cat.{cat_key}']} · {titles[f'page.{page_key}']}"
+                    for cat_key, pages in NAV
+                    for page_key, _f in pages]
         assert self.items == expected
 
     def test_first_and_last_entries(self) -> None:

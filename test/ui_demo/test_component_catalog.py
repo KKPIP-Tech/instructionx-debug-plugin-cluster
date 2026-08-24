@@ -10,16 +10,23 @@
 from plugin.ui_demo.function.component_catalog import COMPONENT_CATALOG
 from plugin.ui_demo.ui.pages import NAV
 
+from ._helpers import nav_title_map
+
 
 def _nav_categories() -> list:
-    """提取 NAV 的分类标题序列。"""
-    return [cat_title for _key, cat_title, _pages in NAV]
+    """提取 NAV 的分类标题序列（键经 zh.xml nav 分组翻译）。"""
+    titles = nav_title_map()
+    return [titles[f"cat.{cat_key}"] for cat_key, _pages in NAV]
 
 
 def _nav_titles_by_category() -> dict:
     """提取 NAV 的 {分类标题: [页面标题, ...]} 映射（保持顺序）。"""
-    return {cat_title: [title for _key, title, _f in pages]
-            for _key, cat_title, pages in NAV}
+    titles = nav_title_map()
+    return {
+        titles[f"cat.{cat_key}"]: [titles[f"page.{page_key}"]
+                                   for page_key, _f in pages]
+        for cat_key, pages in NAV
+    }
 
 
 class TestCatalogStructure:
@@ -68,15 +75,18 @@ class TestCatalogNavConsistency:
 
     def test_every_nav_page_declared_in_catalog(self) -> None:
         """NAV 中的每个页面条目在目录中均有对应声明（无遗漏）。"""
+        titles = nav_title_map()
         catalog_titles = {title for _c, pages in COMPONENT_CATALOG
                           for title in pages}
-        for _cat_key, cat_title, pages in NAV:
-            for _page_key, page_title, _factory in pages:
+        for cat_key, pages in NAV:
+            for page_key, _factory in pages:
+                page_title = titles[f"page.{page_key}"]
                 assert page_title in catalog_titles, (
-                    f"NAV 页面「{cat_title} / {page_title}」未在目录中声明")
+                    f"NAV 页面「{titles[f'cat.{cat_key}']} / {page_title}」"
+                    "未在目录中声明")
 
     def test_page_count_matches_nav(self) -> None:
         """目录页面总数与 NAV 页面总数一致。"""
         catalog_count = sum(len(p) for _c, p in COMPONENT_CATALOG)
-        nav_count = sum(len(p) for _k, _t, p in NAV)
+        nav_count = sum(len(p) for _k, p in NAV)
         assert catalog_count == nav_count

@@ -15,6 +15,7 @@ DataProvider 隔离，不触碰真实运行数据目录）：
 """
 
 import json
+from pathlib import Path
 
 from plugin.blueprint_opencv.service import BlueprintOpenCVService
 
@@ -22,6 +23,12 @@ from .conftest import (
     InlineTaskManager,
     PendingTaskManager,
     solid_preview_graph,
+)
+
+#: 预置示例图资产（load_graph 的最终回退数据源，随插件仓库发布）
+_PRESET_GRAPH_PATH = (
+    Path(__file__).resolve().parents[2]
+    / "blueprint_opencv" / "assets" / "preset_graph.json"
 )
 
 #: 测试用图名
@@ -93,12 +100,14 @@ class TestLoad:
         assert service.current_graph == graph
 
     def test_load_missing_falls_back(self, service):
-        """存档不存在：回退预置示例图（本环境缺资产 → 空图），fallback=True。"""
+        """存档不存在：回退预置示例图（assets/preset_graph.json），fallback=True。"""
+        with open(_PRESET_GRAPH_PATH, encoding="utf-8") as fh:
+            preset_nodes = len(json.load(fh)["graph"]["nodes"])
         result = service.load_graph("no_such_graph")
         assert result["success"] is True
         assert result["data"]["fallback"] is True
         payload = service.current_graph.get("graph", service.current_graph)
-        assert payload["nodes"] == []
+        assert len(payload["nodes"]) == preset_nodes
 
     def test_load_corrupted_falls_back(self, service):
         """存档损坏（非 JSON）：load 回退示例图，list 中 node_count 为 None。"""

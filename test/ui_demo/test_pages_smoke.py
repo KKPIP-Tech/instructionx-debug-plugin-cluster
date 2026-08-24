@@ -3,21 +3,28 @@
 
 覆盖范围：
 - NAV 注册表自身结构（键唯一、工厂可调用）；
-- 每个页面工厂 ``create_page()`` 能实例化为 QWidget 且不抛异常；
+- 每个页面工厂 ``create_page(i18n=None)`` 能实例化为 QWidget 且不抛异常；
 - 蓝图页重点用例：节点类型注册幂等、预置图结构（6 节点 / 9 边 /
   exec 拓扑序）、属性 schema 结构、运行模拟（单步 / 连续 / 重置）、
   JSON 保存-加载回环；
 - MainWidget 集成冒烟：导航树叶子覆盖全部 NAV 页面、页面懒加载缓存。
 
 不断言任何视觉细节，仅验证结构契约与「可构建、可驱动」。
+
+i18n 说明：插件页面文案经取词门面翻译（门面缺失时降级为键名）。
+本模块用 session 级 fixture 注册 ui_demo 真实语言包并注入门面，
+使文案断言（「就绪」「模拟完成」等）面向真实中文译文而非键名。
 """
 
 import json
+from pathlib import Path
 
 import pytest
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget
 
+from core.i18n import get_language_manager
+from core.i18n.facade import PluginI18nFacade
 from plugin.ui_demo.ui.main_widget import MainWidget
 from plugin.ui_demo.ui.pages import NAV
 from plugin.ui_demo.ui.pages.blueprint import (
@@ -27,17 +34,31 @@ from plugin.ui_demo.ui.pages.blueprint import (
     register_demo_node_types,
 )
 
+#: ui_demo 插件目录（text/zh.xml 语言包所在）
+_UI_DEMO_DIR = Path(__file__).resolve().parents[2] / "ui_demo"
+
 #: 预置流水线节点数（开始→加载→预处理→推理→后处理→保存）
 _PRESET_NODE_COUNT = 6
 #: 预置图边数（5 条 exec 链 + 4 条数据引脚）
 _PRESET_EDGE_COUNT = 9
 
-#: 展平 NAV 为 (页面键, 分类标题, 页面标题, 工厂) 供参数化
+#: 展平 NAV 为 (页面键, 分类键, 工厂) 供参数化
+#: （NAV 结构为 [(分类键, [(页面键, 工厂), ...]), ...]，标题由取词门面派生）
 _ALL_PAGES = [
-    (page_key, cat_title, page_title, factory)
-    for _cat_key, cat_title, pages in NAV
-    for page_key, page_title, factory in pages
+    (page_key, cat_key, factory)
+    for cat_key, pages in NAV
+    for page_key, factory in pages
 ]
+
+
+@pytest.fixture(scope="session")
+def i18n_facade() -> PluginI18nFacade:
+    """注册 ui_demo 语言包并返回绑定测试插件 id 的取词门面（中文）。"""
+    manager = get_language_manager()
+    plugin_id = "pytest-ui-demo-pages"
+    manager.register_plugin_texts(plugin_id, _UI_DEMO_DIR)
+    manager.set_language("zh")
+    return PluginI18nFacade(plugin_id)
 
 
 def _settle_page(qapp, page: QWidget) -> None:
@@ -64,12 +85,12 @@ class TestNavStructure:
 
     def test_page_keys_unique(self) -> None:
         """全部页面键不允许重复。"""
-        keys = [key for key, _c, _t, _f in _ALL_PAGES]
+        keys = [key for key, _c, _f in _ALL_PAGES]
         assert len(keys) == len(set(keys))
 
     def test_factories_callable(self) -> None:
-        """每个页面条目第三项应为可调用工厂。"""
-        for key, _c, _t, factory in _ALL_PAGES:
+        """每个页面条目第二项应为可调用工厂。"""
+        for key, _c, factory in _ALL_PAGES:
             assert callable(factory), f"页面 {key} 的工厂不可调用"
 
 
@@ -77,28 +98,28 @@ class TestPageFactoriesSmoke:
     """逐页实例化冒烟（每个工厂返回 QWidget 且不抛异常）。"""
 
     @pytest.mark.parametrize(
-        "page_key,cat_title,page_title,factory",
+        "page_key,cat_key,factory",
         _ALL_PAGES,
-        ids=[key for key, _c, _t, _f in _ALL_PAGES],
+        ids=[key for key, _c, _f in _ALL_PAGES],
     )
     def test_create_page_returns_widget(
-            self, qapp, qtbot, page_key, cat_title, page_title, factory) -> None:
+            self, qapp, qtbot, i18n_facade, page_key, cat_key, factory) -> None:
         """页面工厂应返回 QWidget 实例（offscreen 下构建不抛异常）。"""
-        page = factory()
+        page = factory(i18n_facade)
         qtbot.addWidget(page)
         assert isinstance(page, QWidget), (
-            f"{cat_title} / {page_title}（{page_key}）未返回 QWidget")
+            f"{cat_key} / {page_key} 未返回 QWidget")
         _settle_page(qapp, page)
 
 
 class TestBlueprintNodeRegistration:
     """蓝图节点类型注册与属性 schema。"""
 
-    def test_register_node_types_idempotent(self, qapp, qtbot) -> None:
+    def test_register_node_types_idempotent(self, qapp, qtbot, i18n_facade) -> None:
         """重复注册同名节点类型应安全（同名覆盖），页面仍可正常构建。"""
         register_demo_node_types()
         register_demo_node_types()
-        page = BlueprintDemoPage()
+        page = BlueprintDemoPage(i18n=i18n_facade)
         qtbot.addWidget(page)
         assert len(page.graph.nodes()) == _PRESET_NODE_COUNT
 
@@ -128,23 +149,23 @@ class TestBlueprintNodeRegistration:
 class TestBlueprintPresetGraph:
     """蓝图页预置流水线结构。"""
 
-    def test_preset_nodes_and_edges(self, qapp, qtbot) -> None:
+    def test_preset_nodes_and_edges(self, qapp, qtbot, i18n_facade) -> None:
         """预置图应含 6 个节点、9 条边，且 preset_ids 记录 6 个节点 id。"""
-        page = BlueprintDemoPage()
+        page = BlueprintDemoPage(i18n=i18n_facade)
         qtbot.addWidget(page)
         assert len(page.graph.nodes()) == _PRESET_NODE_COUNT
         assert len(page.graph.edges()) == _PRESET_EDGE_COUNT
         assert len(page.preset_ids) == _PRESET_NODE_COUNT
 
-    def test_exec_order_matches_preset_chain(self, qapp, qtbot) -> None:
+    def test_exec_order_matches_preset_chain(self, qapp, qtbot, i18n_facade) -> None:
         """exec 拓扑序应与预置链顺序一致（开始 → … → 保存）。"""
-        page = BlueprintDemoPage()
+        page = BlueprintDemoPage(i18n=i18n_facade)
         qtbot.addWidget(page)
         assert exec_order(page.graph) == page.preset_ids
 
-    def test_preset_nodes_have_default_properties(self, qapp, qtbot) -> None:
+    def test_preset_nodes_have_default_properties(self, qapp, qtbot, i18n_facade) -> None:
         """带 schema 的预置节点应在构建时写入默认属性（如 CNN 层数 18）。"""
-        page = BlueprintDemoPage()
+        page = BlueprintDemoPage(i18n=i18n_facade)
         qtbot.addWidget(page)
         cnn_id = page.preset_ids[3]
         cnn = page.graph.node(cnn_id)
@@ -162,9 +183,9 @@ class TestBlueprintRunSimulation:
     """蓝图页运行模拟（纯 UI 状态机，无业务逻辑）。"""
 
     @pytest.fixture()
-    def page(self, qapp, qtbot) -> BlueprintDemoPage:
+    def page(self, qapp, qtbot, i18n_facade) -> BlueprintDemoPage:
         """构建零延迟的蓝图页（delay_range 置 0 加速模拟）。"""
-        widget = BlueprintDemoPage()
+        widget = BlueprintDemoPage(i18n=i18n_facade)
         qtbot.addWidget(widget)
         widget.delay_range = (0, 0)
         return widget
@@ -182,6 +203,18 @@ class TestBlueprintRunSimulation:
         qtbot.waitUntil(lambda: "模拟完成" in page.status_label.text(),
                         timeout=5000)
 
+    def test_step_ignored_while_running(self, page, qtbot) -> None:
+        """连续运行进行中「单步」应被忽略且按钮置灰（防 QTimer 交错推进）。"""
+        page.delay_range = (50, 50)
+        page.run_all()
+        assert not page.step_button.isEnabled()
+        idx_before = page._idx
+        page.step_once()
+        assert page._idx == idx_before
+        qtbot.waitUntil(lambda: "模拟完成" in page.status_label.text(),
+                        timeout=5000)
+        assert page.step_button.isEnabled()
+
     def test_reset_restores_idle(self, page) -> None:
         """「重置」应中断模拟并恢复就绪状态。"""
         page.run_all()
@@ -192,10 +225,10 @@ class TestBlueprintRunSimulation:
 class TestBlueprintJsonRoundTrip:
     """蓝图页 JSON 序列化（offscreen 下降级路径重定向到 tmp_path）。"""
 
-    def test_save_and_load_round_trip(self, qapp, qtbot, tmp_path,
+    def test_save_and_load_round_trip(self, qapp, qtbot, i18n_facade, tmp_path,
                                       monkeypatch) -> None:
         """保存后加载应还原节点/边数量，状态标签汇报加载结果。"""
-        page = BlueprintDemoPage()
+        page = BlueprintDemoPage(i18n=i18n_facade)
         qtbot.addWidget(page)
         target = tmp_path / "graph.json"
         monkeypatch.setattr(page, "_json_path", lambda save: str(target))
@@ -211,10 +244,10 @@ class TestBlueprintJsonRoundTrip:
         assert len(page.graph.edges()) == _PRESET_EDGE_COUNT
         assert "已加载" in page.status_label.text()
 
-    def test_load_invalid_json_reports_failure(self, qapp, qtbot, tmp_path,
+    def test_load_invalid_json_reports_failure(self, qapp, qtbot, i18n_facade, tmp_path,
                                                monkeypatch) -> None:
         """加载损坏的 JSON 应汇报失败且不抛异常、图保持原状。"""
-        page = BlueprintDemoPage()
+        page = BlueprintDemoPage(i18n=i18n_facade)
         qtbot.addWidget(page)
         bad = tmp_path / "broken.json"
         bad.write_text("{ 这不是合法 JSON", encoding="utf-8")
@@ -224,10 +257,10 @@ class TestBlueprintJsonRoundTrip:
         assert "加载失败" in page.status_label.text()
         assert len(page.graph.nodes()) == _PRESET_NODE_COUNT
 
-    def test_load_missing_file_reports_failure(self, qapp, qtbot, tmp_path,
+    def test_load_missing_file_reports_failure(self, qapp, qtbot, i18n_facade, tmp_path,
                                                monkeypatch) -> None:
         """加载不存在的文件应汇报失败且不抛异常。"""
-        page = BlueprintDemoPage()
+        page = BlueprintDemoPage(i18n=i18n_facade)
         qtbot.addWidget(page)
         missing = tmp_path / "not_exist.json"
         monkeypatch.setattr(page, "_json_path", lambda save: str(missing))
@@ -239,19 +272,19 @@ class TestBlueprintJsonRoundTrip:
 class TestMainWidgetIntegration:
     """主控件集成冒烟：导航树与懒加载缓存。"""
 
-    def test_nav_leaves_cover_all_pages(self, qapp, qtbot) -> None:
+    def test_nav_leaves_cover_all_pages(self, qapp, qtbot, i18n_facade) -> None:
         """导航树叶子节点应覆盖 NAV 全部页面（数量一致、键一致）。"""
-        widget = MainWidget()
+        widget = MainWidget(i18n=i18n_facade)
         qtbot.addWidget(widget)
         leaves = widget.nav_leaves()
         assert len(leaves) == len(_ALL_PAGES)
-        assert [key for key, _t, _i in leaves] == [k for k, _c, _t, _f in _ALL_PAGES]
+        assert [key for key, _t, _i in leaves] == [k for k, _c, _f in _ALL_PAGES]
 
-    def test_show_page_lazy_cache(self, qapp, qtbot) -> None:
+    def test_show_page_lazy_cache(self, qapp, qtbot, i18n_facade) -> None:
         """同一页面键两次 show_page 应复用缓存实例（懒加载只构建一次）。"""
-        widget = MainWidget()
+        widget = MainWidget(i18n=i18n_facade)
         qtbot.addWidget(widget)
-        page_key, _c, _t, factory = _ALL_PAGES[0]
+        page_key, _c, factory = _ALL_PAGES[0]
 
         widget.show_page(page_key, factory)
         first = widget._page_cache[page_key]
@@ -259,9 +292,9 @@ class TestMainWidgetIntegration:
         assert widget._page_cache[page_key] is first
         assert widget._stack.currentWidget() is first
 
-    def test_iterate_all_leaves_no_exception(self, qapp, qtbot) -> None:
+    def test_iterate_all_leaves_no_exception(self, qapp, qtbot, i18n_facade) -> None:
         """经主控件遍历全部导航叶子加载页面，均不抛异常。"""
-        widget = MainWidget()
+        widget = MainWidget(i18n=i18n_facade)
         qtbot.addWidget(widget)
         _settle_page(qapp, widget)
         for page_key, _title, item in widget.nav_leaves():

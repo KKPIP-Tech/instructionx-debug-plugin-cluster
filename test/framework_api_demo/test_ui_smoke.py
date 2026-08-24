@@ -9,9 +9,12 @@
 仅做实例化与面板读写冒烟，不触发任何 LLM 真实调用与任务执行。
 """
 
+from pathlib import Path
+
 import pytest
 from PySide6.QtWidgets import QTabWidget
-
+from core.i18n import get_language_manager
+from core.i18n.facade import PluginI18nFacade
 from plugin.framework_api_demo.function.services import (
     APIDemoService,
     DataDemoService,
@@ -22,12 +25,32 @@ from plugin.framework_api_demo.function.services import (
 )
 from plugin.framework_api_demo.ui.main_widget import MainWidget
 
-# 右侧 Tab 标题清单（与 main_widget._build_right_panel 的装配顺序一致）
-EXPECTED_TAB_TITLES = ["Data", "Task", "LLM", "API", "Info", "MCP"]
+#: framework_api_demo 插件目录（text/zh.xml 语言包所在）
+_FAD_DIR = Path(__file__).resolve().parents[2] / "framework_api_demo"
+
+#: 测试门面绑定的插件 id（注册语言包用，无业务含义）
+_I18N_PLUGIN_ID = "pytest-fad-ui-smoke"
+
+# 右侧 Tab 标题清单（与 main_widget._build_right_panel 的装配顺序一致，
+# 取词门面注入后为 zh.xml 中文译文）
+EXPECTED_TAB_TITLES = ["数据", "任务", "LLM", "API", "信息", "MCP"]
+
+
+@pytest.fixture(scope="session")
+def i18n_facade() -> PluginI18nFacade:
+    """注册 framework_api_demo 语言包并返回取词门面（中文）。
+
+    门面缺失时 UI 文案降级为键名；注入真实门面使标题断言面向
+    实际中文译文而非键名。
+    """
+    manager = get_language_manager()
+    manager.register_plugin_texts(_I18N_PLUGIN_ID, _FAD_DIR)
+    manager.set_language("zh")
+    return PluginI18nFacade(_I18N_PLUGIN_ID)
 
 
 @pytest.fixture()
-def main_widget(qtbot, qapp, plugin_id, registered_provider):
+def main_widget(qtbot, qapp, plugin_id, registered_provider, i18n_facade):
     """装配完整 MainWidget（六个真实演示服务，数据落盘到 tmp_path）"""
     widget = MainWidget(
         data_service=DataDemoService(plugin_id, data_provider=registered_provider),
@@ -36,6 +59,8 @@ def main_widget(qtbot, qapp, plugin_id, registered_provider):
         api_service=APIDemoService(plugin_id, data_provider=registered_provider),
         info_service=FrameworkInfoService(plugin_id, data_provider=registered_provider),
         mcp_service=MCPDemoService(plugin_id, data_provider=registered_provider),
+        i18n=i18n_facade,
+        plugin_id=_I18N_PLUGIN_ID,
     )
     qtbot.addWidget(widget)
     return widget
