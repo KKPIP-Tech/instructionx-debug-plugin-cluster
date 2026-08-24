@@ -39,6 +39,8 @@ from core.interfaces import ILocalizationFacade
 from utils.logging_tools import LoggerManager, get_name
 
 from . import dialogs, plugin_config
+from ..function.constants import (NODE_STATUS_DONE, NODE_STATUS_ERROR,
+                                  NODE_STATUS_RUNNING, RUN_STATUS_DONE)
 from .graph_list_panel import GraphListPanel
 from .node_bootstrap import (
     REGISTRY_OWNER,
@@ -343,10 +345,13 @@ class MainWidget(QWidget):
             self._report_failure(self._tr(_GROUP_MAIN, "fail.save"), result)
             return False
         self.graph_list_panel.refresh()
-        count = result.get("data", {}).get("node_count", len(self.graph.nodes()))
-        self._toolbar.set_status(self._tr(_GROUP_MAIN, "status.saved",
-                                          name=name, count=count))
+        self._toolbar.set_status(self._saved_status_text(name, result))
         return True
+
+    def _saved_status_text(self, name: str, result: Dict[str, Any]) -> str:
+        """组装保存成功的状态栏文案（节点数取 service 返回值兜底画布计数）。"""
+        count = result.get("data", {}).get("node_count", len(self.graph.nodes()))
+        return self._tr(_GROUP_MAIN, "status.saved", name=name, count=count)
 
     def _prompt_graph_name(self) -> Optional[str]:
         """弹存档命名对话框；取消或空名返回 None。"""
@@ -372,6 +377,10 @@ class MainWidget(QWidget):
         if not result.get("success"):
             self._report_failure(self._tr(_GROUP_MAIN, "fail.load"), result)
             return
+        self._apply_loaded_graph(name, result)
+
+    def _apply_loaded_graph(self, name: str, result: Dict[str, Any]) -> None:
+        """把已加载的图恢复到画布，并同步当前存档名与状态栏文案。"""
         data = self._pull_graph_snapshot()
         if data is None:
             self._toolbar.set_status(self._tr(_GROUP_MAIN,
@@ -405,33 +414,31 @@ class MainWidget(QWidget):
                         elapsed_ms: float, message: str) -> None:
         """节点状态 → 画布运行指示：start / finish / fail + 路径高亮。"""
         execution = self.canvas.execution()
-        if status == "running":
+        if status == NODE_STATUS_RUNNING:
             self._run_order.append(node_id)
             execution.set_path(list(self._run_order))
             execution.start(node_id)
-        elif status == "done":
+        elif status == NODE_STATUS_DONE:
             execution.finish(node_id, elapsed_ms)
-        elif status == "error":
+        elif status == NODE_STATUS_ERROR:
             execution.fail(node_id, message)
 
     def _on_run_finished(self, summary: Dict[str, Any]) -> None:
         """运行汇总 → 状态标签（节点数 / 总耗时 / 错误摘要）并恢复按钮态。"""
         self._toolbar.set_running(False)
-        status = summary.get("status", "done")
+        self._toolbar.set_status(self._run_finished_text(summary))
+
+    def _run_finished_text(self, summary: Dict[str, Any]) -> str:
+        """组装运行结束的状态栏文案；非完成时记 ERROR 日志（便于追溯）。"""
         total_ms = float(summary.get("total_ms", 0.0))
         count = int(summary.get("node_count", 0))
-        if status == "done":
-            self._toolbar.set_status(self._tr(
-                _GROUP_MAIN, "status.run_done", count=count,
-                ms=f"{total_ms:.0f}"))
-            return
-        errors = summary.get("errors") or []
-        reason = self._first_error_reason(errors) or self._tr(_GROUP_MAIN,
-                                                              "error.unknown")
+        if summary.get("status", RUN_STATUS_DONE) == RUN_STATUS_DONE:
+            return self._tr(_GROUP_MAIN, "status.run_done", count=count,
+                            ms=f"{total_ms:.0f}")
+        reason = self._first_error_reason(summary.get("errors") or []) \
+            or self._tr(_GROUP_MAIN, "error.unknown")
         _logger.error(_MODULE, f"管线运行失败：{reason}")
-        self._toolbar.set_status(self._tr(_GROUP_MAIN,
-                                          "status.run_interrupted",
-                                          reason=reason))
+        return self._tr(_GROUP_MAIN, "status.run_interrupted", reason=reason)
 
     @staticmethod
     def _first_error_reason(errors: List[Any]) -> Optional[str]:
