@@ -29,6 +29,10 @@ from .tabs import APITab, DataTab, InfoTab, LLMTab, MCPTab, TaskTab
 # 窗口拉伸时多余空间全部分配给左侧结果面板
 RIGHT_PANEL_FIXED_WIDTH = 320
 
+# 结果卡片内联 HTML 样式常量（像素）
+RESULT_CARD_TITLE_FONT_SIZE = 13
+RESULT_CARD_CONTENT_FONT_SIZE = 12
+
 
 class MainWidget(QWidget):
     """Framework API Demo 插件主控件
@@ -231,29 +235,33 @@ class MainWidget(QWidget):
         历史卡片不随主题切换刷新（详见 SPEC 说明）。
         """
         timestamp = datetime.now().strftime('%H:%M:%S')
-        if is_error:
-            border_color = T("color.danger")
-            title_color = T("color.danger")
-            content_color = T("color.danger")
-        else:
-            border_color = T("color.success")
-            title_color = T("color.success")
-            content_color = "inherit"
-
-        safe_content = escape(str(content))
-        html = (
-            f'<div style="margin: 8px 0; border-left: 3px solid {border_color}; '
-            f'padding-left: 10px;">'
-            f'<div style="color: {title_color}; font-weight: bold; font-size: 13px; '
-            f'margin-bottom: 4px;">[{timestamp}] {escape(title)}</div>'
-            f'<pre style="margin: 0; font-family: Consolas, monospace; font-size: 12px; '
-            f'color: {content_color}; white-space: pre-wrap; word-wrap: break-word;">'
-            f'{safe_content}</pre>'
-            f'</div>'
-        )
-        self.result_display.append(html)
+        self.result_display.append(
+            self._build_result_card_html(timestamp, title, str(content), is_error))
         scrollbar = self.result_display.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
+
+    @staticmethod
+    def _result_card_colors(is_error: bool) -> tuple:
+        """按成败取卡片颜色（错误：边框/标题/正文均 danger；成功：正文继承主题色）"""
+        if is_error:
+            return T("color.danger"), T("color.danger"), T("color.danger")
+        return T("color.success"), T("color.success"), "inherit"
+
+    def _build_result_card_html(self, timestamp: str, title: str, content: str,
+                                is_error: bool) -> str:
+        """拼装单条结果卡片的 HTML（标题/正文转义，等宽字体取 UIKit MONO_FAMILY）"""
+        border_color, title_color, content_color = self._result_card_colors(is_error)
+        return (
+            f'<div style="margin: 8px 0; border-left: 3px solid {border_color}; '
+            f'padding-left: 10px;">'
+            f'<div style="color: {title_color}; font-weight: bold; '
+            f'font-size: {RESULT_CARD_TITLE_FONT_SIZE}px; margin-bottom: 4px;">'
+            f'[{timestamp}] {escape(title)}</div>'
+            f'<pre style="margin: 0; font-family: {MONO_FAMILY}, monospace; '
+            f'font-size: {RESULT_CARD_CONTENT_FONT_SIZE}px; color: {content_color}; '
+            f'white-space: pre-wrap; word-wrap: break-word;">{escape(content)}</pre>'
+            f'</div>'
+        )
 
     def append_log(self, message: str):
         """追加一条日志到执行日志面板（自动带时间戳并滚动到底部）
