@@ -36,6 +36,9 @@ from ...function.services.llm_service import (
     STREAM_ERROR_PREFIX,
     TOOL_DONE_EVENT,
     TOOL_ERROR_PREFIX,
+    TOOL_STREAM_CHUNK_PREFIX,
+    TOOL_STREAM_DONE_EVENT,
+    TOOL_STREAM_ERROR_PREFIX,
 )
 
 # 会话列表中会话 id 的展示长度（完整 id 存于 UserRole）
@@ -127,6 +130,8 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
 
     def _dispatch_tool_event(self, message: str) -> bool:
         """UI 线程分发工具调用事件；命中工具协议返回 True，否则返回 False"""
+        if self._dispatch_tool_stream_event(message):
+            return True
         if message == TOOL_DONE_EVENT:
             self._show_tool_chat_result()
             return True
@@ -136,6 +141,32 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
                                  error, is_error=True)
             return True
         return False
+
+    def _dispatch_tool_stream_event(self, message: str) -> bool:
+        """UI 线程分发工具流式对话事件：片段增量刷新 / 完成展示 / 失败提示"""
+        if message.startswith(TOOL_STREAM_CHUNK_PREFIX):
+            self.tool_result_text.insertPlainText(message[len(TOOL_STREAM_CHUNK_PREFIX):])
+            return True
+        if message == TOOL_STREAM_DONE_EVENT:
+            self._show_tool_stream_result()
+            return True
+        if message.startswith(TOOL_STREAM_ERROR_PREFIX):
+            error = message[len(TOOL_STREAM_ERROR_PREFIX):]
+            self._display_result(self._tr("tab_llm", "title.tool_stream_fail"),
+                                 error, is_error=True)
+            self.tool_result_text.setPlainText(
+                self._tr("common", "error.prefix", error=error))
+            return True
+        return False
+
+    def _show_tool_stream_result(self):
+        """工具流式完成事件后拉取聚合结果，在结果面板展示（含片段数对照）"""
+        result = self.llm_service.get_last_tool_stream_result().get("result") or {}
+        content = self._tr("tab_llm", "msg.tool_stream_result",
+                           turns=result.get("turn_count", 0),
+                           chunks=result.get("chunk_count", 0),
+                           final=result.get("final_text", ""))
+        self._display_result(self._tr("tab_llm", "title.tool_stream_result"), content)
 
     def _dispatch_chat_stream_event(self, message: str):
         """UI 线程分发聊天流式事件：片段增量刷新 / 完成展示 / 失败提示"""
@@ -380,7 +411,7 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
         return form
 
     def _build_conv_send_buttons(self) -> QHBoxLayout:
-        """构建会话发送按钮行：发送 / 流式发送"""
+        """构建会话发送按钮行：发送 / 流式发送 / 流式发送（带图，images 多模态演示）"""
         send_row = QHBoxLayout()
         send_row.setSpacing(8)
         self.conv_send_btn = self._make_button("btn.send_msg", self._on_send_conversation,
@@ -389,10 +420,13 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
         self.conv_stream_btn = self._make_button("btn.stream", self._on_stream_conversation,
                                                  variant="primary")
         send_row.addWidget(self.conv_stream_btn)
+        self.conv_stream_img_btn = self._make_button(
+            "btn.stream_img", self._on_stream_conversation_with_image)
+        send_row.addWidget(self.conv_stream_img_btn)
         return send_row
 
     def _build_llm_tool_group(self) -> QGroupBox:
-        """构建「工具调用」分组（注册/注销/查看工具 + 工具对话）"""
+        """构建「工具调用」分组（注册/注销/查看工具 + 工具对话/工具流式对话）"""
         group = self._make_group("group.tool")
         form = QFormLayout()
         form.setSpacing(6)
@@ -404,6 +438,11 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
         self.tool_chat_btn = self._make_button("btn.tool_chat", self._on_tool_chat,
                                                variant="primary")
         form.addRow("", self.tool_chat_btn)
+        self.tool_stream_btn = self._make_button(
+            "btn.tool_chat_stream", self._on_tool_chat_stream, variant="primary")
+        form.addRow("", self.tool_stream_btn)
+        self.tool_result_text = self._make_result_area(80)
+        form.addRow(self._make_label("common", "label.result"), self.tool_result_text)
         group.setLayout(form)
         return group
 
@@ -469,13 +508,21 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
         self._display_result(self._tr("tab_llm", title_key), error, is_error=True)
 
     def _collect_model_lines(self, models) -> list:
-        """收集模型展示行并填充模型列表（服务层统一返回 List[dict]）"""
+        """收集模型展示行并填充模型列表（附 capability_label 本地化能力标签）"""
         lines = []
         for m in models:
             name = m.get("name", m.get("id", "unknown"))
-            lines.append(name)
-            self.models_list.addItem(name)
+            text = self._format_model_line(name, m.get("capabilities", []))
+            lines.append(text)
+            self.models_list.addItem(text)
         return lines
+
+    def _format_model_line(self, name: str, capabilities: list) -> str:
+        """格式化模型展示行：有能力标签时追加 [标签1/标签2]"""
+        if not capabilities:
+            return name
+        return self._tr("tab_llm", "item.model", name=name,
+                        capabilities="/".join(str(c) for c in capabilities))
 
     def _on_send_chat(self):
         """发起聊天（后台任务执行，完成/失败经 notifier 事件上抛）"""
@@ -532,6 +579,14 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
         self.conv_result_text.clear()
         self._request_conversation_send(conversation_id, stream=True)
 
+    def _on_stream_conversation_with_image(self):
+        """流式发送并附带演示图片（stream_send_message 的 images 多模态参数演示）"""
+        conversation_id = self._selected_conversation_id()
+        if conversation_id is None:
+            return
+        self.conv_result_text.clear()
+        self._request_conversation_send(conversation_id, stream=True, with_image=True)
+
     def _on_show_conversation_detail(self):
         conversation_id = self._selected_conversation_id()
         if conversation_id is None:
@@ -547,11 +602,13 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
         self._show_conv_op_result("op.delete_conv", result)
         self._on_refresh_conversations()
 
-    def _request_conversation_send(self, conversation_id: str, stream: bool):
+    def _request_conversation_send(self, conversation_id: str, stream: bool,
+                                   with_image: bool = False):
         """按模式调用服务发起会话消息（均为后台任务，结果经 notifier 上抛）"""
         content = self.conv_message_input.text()
         if stream:
-            result = self.llm_service.stream_conversation_message(conversation_id, content)
+            result = self.llm_service.stream_conversation_message(
+                conversation_id, content, with_image=with_image)
         else:
             result = self.llm_service.send_conversation_message(conversation_id, content)
         self._log(self._tr("tab_llm", "log.conv_send", result=result))
@@ -650,6 +707,16 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
         self._log(self._tr("tab_llm", "log.tool_chat", result=result))
         if not result.get("success"):
             self._display_result(self._tr("tab_llm", "title.tool_chat_start_fail"),
+                                 result.get("error", ""), is_error=True)
+
+    def _on_tool_chat_stream(self):
+        """发起工具流式对话（后台任务，StreamChunk 片段经 notifier 上抛）"""
+        message = self.tool_message_input.text()
+        self.tool_result_text.clear()
+        result = self.llm_service.chat_with_tools_stream_demo(message)
+        self._log(self._tr("tab_llm", "log.tool_stream", result=result))
+        if not result.get("success"):
+            self._display_result(self._tr("tab_llm", "title.tool_stream_start_fail"),
                                  result.get("error", ""), is_error=True)
 
     def _show_tool_op_result(self, title: str, result: dict, key: str):

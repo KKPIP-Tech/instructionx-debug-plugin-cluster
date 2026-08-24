@@ -1,17 +1,24 @@
 """
 Framework API Demo LLM 演示服务
 
-演示 ILLMService（llm_facade）接口：Provider 实例列表、模型列表、
-聊天（含流式）、嵌入调用、会话管理（创建/发送/流式发送/查询/删除）
-与工具调用（共享 ToolRegistry 注册/注销 + chat_with_tools 多轮循环），
-统一经基类解析的 self.llm（插件侧门面）访问。
-流式聊天为阻塞调用，经 BackgroundTaskManager 放到工作线程执行，
+演示 ILLMService（llm_facade）接口：Provider 实例列表、模型列表
+（含 capability_label 本地化能力标签）、聊天/嵌入（后台任务）、流式聊天、
+会话管理（创建/发送/流式发送（含 images 多模态参数）/查询/删除）与
+工具调用（共享 ToolRegistry 注册/注销 + chat_with_tools /
+chat_with_tools_stream 多轮循环），统一经基类解析的 self.llm（插件侧门面）访问。
+阻塞型调用一律经 BackgroundTaskManager.register_async_task 提交任务线程池执行，
 片段/完成事件经基类 notifier 上抛，由 UI 层自行线程封送。
 """
 
 import base64
 from typing import Any, Callable, Dict, List, Optional
 
+from core.llm.model_schema import (
+    CAPABILITY_EMBEDDING,
+    CAPABILITY_TOOLS,
+    CAPABILITY_VISION,
+    capability_label,
+)
 from core.llm.types import (
     AudioResult,
     Conversation,
@@ -29,6 +36,26 @@ from .base import Service
 
 # 默认实例引用（语义等同 core.llm.types.DEFAULT_PROVIDER，字面量演示 ILLMService 约定）
 DEFAULT_PROVIDER_REF = "default"
+
+
+def _model_capability_keys(model) -> List[str]:
+    """提取模型能力键：优先统一 schema 的 extra.capabilities，回退旧布尔位
+
+    旧 ModelInfo 布尔位与统一 schema 的映射仅覆盖演示需要的三项
+    （视觉/工具调用/嵌入），无声明时返回空列表。
+    """
+    extra = getattr(model, "extra", None)
+    caps = extra.get("capabilities") if isinstance(extra, dict) else None
+    if isinstance(caps, list):
+        return list(caps)
+    keys: List[str] = []
+    if getattr(model, "support_vision", False):
+        keys.append(CAPABILITY_VISION)
+    if getattr(model, "support_function_calling", False):
+        keys.append(CAPABILITY_TOOLS)
+    if getattr(model, "support_embedding", False):
+        keys.append(CAPABILITY_EMBEDDING)
+    return keys
 
 # 聊天/嵌入后台任务名（register_async_task 的 name 参数）
 CHAT_TASK_NAME = "llm_chat"
@@ -59,11 +86,23 @@ CONV_STREAM_ERROR_PREFIX = "[会话流式失败] "
 
 # 工具调用后台任务名（register_async_task 的 name 参数）
 TOOL_CHAT_TASK_NAME = "llm_tool_chat"
+TOOL_STREAM_TASK_NAME = "llm_tool_chat_stream"
 # 工具调用演示的最大工具调用轮数（防无限循环，与框架默认一致）
 TOOL_CHAT_MAX_TURNS = 5
 # 工具调用演示 notifier 事件前缀（前缀独立，避免与聊天/会话事件串台）
 TOOL_DONE_EVENT = "[工具对话完成]"
 TOOL_ERROR_PREFIX = "[工具对话失败] "
+# 工具流式对话演示 notifier 事件前缀（StreamChunk 片段协议）
+TOOL_STREAM_CHUNK_PREFIX = "[工具流式片段] "
+TOOL_STREAM_DONE_EVENT = "[工具流式完成]"
+TOOL_STREAM_ERROR_PREFIX = "[工具流式失败] "
+
+# 会话流式「带图」演示用的最小图片：1x1 透明 PNG（base64 常量，
+# 演示 stream_send_message 的 images 多模态参数真实代码路径）
+_DEMO_IMAGE_BASE64 = (
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJ"
+    "AAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+)
 
 # 多模态后台任务名（register_async_task 的 name 参数）
 IMAGE_TASK_NAME = "llm_generate_image"
@@ -94,6 +133,8 @@ class LLMDemoService(Service):
         self._last_conv_stream_result: Optional[Dict[str, Any]] = None
         # 最近一次工具对话的聚合结果（工作线程写入，UI 在完成事件后读取）
         self._last_tool_chat_result: Optional[Dict[str, Any]] = None
+        # 最近一次工具流式对话的聚合结果（工作线程写入，UI 在完成事件后读取）
+        self._last_tool_stream_result: Optional[Dict[str, Any]] = None
         # 最近一次图片生成 / 语音合成的聚合结果（工作线程写入，UI 在完成事件后读取）
         self._last_image_result: Optional[Dict[str, Any]] = None
         self._last_audio_result: Optional[Dict[str, Any]] = None
@@ -126,18 +167,31 @@ class LLMDemoService(Service):
         }
 
     def get_models(self, provider: Optional[str] = None) -> Dict[str, Any]:
-        """演示 ILLMService.get_models（provider 缺省时用 "default" 默认实例）"""
+        """演示 ILLMService.get_models + capability_label（模型能力标签本地化）
+
+        provider 缺省时用 "default" 默认实例；每个模型条目附带
+        capabilities 字段（能力键经 capability_label 按当前界面语言本地化）。
+        """
         target = provider or DEFAULT_PROVIDER_REF
         try:
             models = self.llm.get_models(provider=target)
             return {
                 "success": True,
-                "models": [{"id": m.id, "name": m.name} for m in models],
+                "models": [self._model_to_dict(m) for m in models],
                 "provider": self.llm.resolve_provider_id(target),
             }
         except Exception as e:
             self.logger.error(f"[{self.plugin_id}] 获取模型列表失败(provider={target}): {e}")
             return {"success": False, "error": str(e)}
+
+    @staticmethod
+    def _model_to_dict(model) -> Dict[str, Any]:
+        """模型条目转展示字典：id/name + capability_label 本地化能力标签"""
+        return {
+            "id": model.id,
+            "name": model.name,
+            "capabilities": [capability_label(c) for c in _model_capability_keys(model)],
+        }
 
     # ------------------------------------------------------------------
     #  聊天 / 嵌入演示（阻塞 HTTP，经后台任务执行）
@@ -357,17 +411,23 @@ class LLMDemoService(Service):
             self.logger.error(get_name(), f"[{self.plugin_id}] 发起会话消息失败({conversation_id}): {e}")
             return {"success": False, "error": str(e)}
 
-    def stream_conversation_message(self, conversation_id: str, content: str) -> Dict[str, Any]:
+    def stream_conversation_message(self, conversation_id: str, content: str,
+                                    with_image: bool = False) -> Dict[str, Any]:
         """演示 ILLMService.stream_send_message（阻塞调用，经后台任务执行）
 
         StreamChunk 回调逐段经 notifier 上抛（CONV_STREAM_CHUNK_PREFIX 事件），
         完整文本在完成事件后由 UI 经 get_last_conversation_stream_result 拉取。
+        with_image=True 时附带 1x1 演示 PNG（base64），演示 images 多模态
+        参数的真实代码路径（需 Provider 模型支持视觉能力才有实际效果）。
         """
+        started_key = "msg.conv_stream_img_started" if with_image else "msg.conv_stream_started"
+        started_default = ("会话流式消息（带演示图片）已发起（后台任务执行）" if with_image
+                           else "会话流式消息已发起（后台任务执行）")
         try:
             return self._submit_async_task(
-                CONV_STREAM_TASK_NAME, self._run_conv_stream, (conversation_id, content),
-                self._on_conv_stream_done,
-                "msg.conv_stream_started", "会话流式消息已发起（后台任务执行）")
+                CONV_STREAM_TASK_NAME, self._run_conv_stream,
+                (conversation_id, content, with_image),
+                self._on_conv_stream_done, started_key, started_default)
         except Exception as e:
             self.logger.error(get_name(), f"[{self.plugin_id}] 发起会话流式消息失败({conversation_id}): {e}")
             return {"success": False, "error": str(e)}
@@ -451,17 +511,22 @@ class LLMDemoService(Service):
         except Exception as e:
             self.logger.error(get_name(), f"[{self.plugin_id}] 会话消息完成回调处理失败: {e}")
 
-    def _run_conv_stream(self, conversation_id: str, content: str) -> Dict[str, Any]:
+    def _run_conv_stream(self, conversation_id: str, content: str,
+                         with_image: bool = False) -> Dict[str, Any]:
         """在工作线程执行 stream_send_message：StreamChunk 逐段上抛，返回聚合结果"""
         chunks: List[str] = []
+        # images 多模态参数演示：with_image 时附带 1x1 演示 PNG 的 base64
+        images = [_DEMO_IMAGE_BASE64] if with_image else None
         full_text = self.llm.stream_send_message(
-            conversation_id, content, callback=self._make_conv_stream_callback(chunks),
+            conversation_id, content, images=images,
+            callback=self._make_conv_stream_callback(chunks),
         )
         result: Dict[str, Any] = {
             "success": True,
             "conversation_id": conversation_id,
             "response": full_text,
             "chunk_count": len(chunks),
+            "with_image": with_image,
         }
         self._last_conv_stream_result = result
         return result
@@ -618,6 +683,67 @@ class LLMDemoService(Service):
             self.logger.info(get_name(), f"[{self.plugin_id}] 工具对话任务完成({task_id}): {status}")
         except Exception as e:
             self.logger.error(get_name(), f"[{self.plugin_id}] 工具对话完成回调处理失败: {e}")
+
+    def chat_with_tools_stream_demo(self, message: str) -> Dict[str, Any]:
+        """演示 ILLMService.chat_with_tools_stream（流式多轮工具调用）
+
+        与 chat_with_tools 同为多轮阻塞循环，但模型输出经 StreamChunk
+        回调逐段返回；经 register_async_task 提交任务线程池，片段经
+        notifier 上抛（TOOL_STREAM_CHUNK_PREFIX 事件），聚合结果在完成
+        事件后由 UI 经 get_last_tool_stream_result 拉取展示。
+        """
+        try:
+            registry = self.llm.get_shared_tool_registry()
+            self._register_all_demo_tools(registry)
+            return self._submit_async_task(
+                TOOL_STREAM_TASK_NAME, self._run_tool_chat_stream, (message,),
+                self._on_tool_stream_done,
+                "msg.tool_stream_started", "工具流式对话已发起（后台任务执行）")
+        except Exception as e:
+            self.logger.error(get_name(), f"[{self.plugin_id}] 发起工具流式对话失败: {e}")
+            return {"success": False, "error": str(e)}
+
+    def get_last_tool_stream_result(self) -> Dict[str, Any]:
+        """返回最近一次工具流式对话的聚合结果（供 UI 在完成事件后拉取展示）"""
+        return {"success": True, "result": self._last_tool_stream_result}
+
+    def _run_tool_chat_stream(self, message: str) -> Dict[str, Any]:
+        """在工作线程执行 chat_with_tools_stream：StreamChunk 逐段上抛，返回聚合结果"""
+        chunks: List[str] = []
+        messages: List[Dict[str, str]] = [{"role": "user", "content": message}]
+        chat_result = self.llm.chat_with_tools_stream(
+            messages, callback=self._make_tool_stream_callback(chunks),
+            provider=DEFAULT_PROVIDER_REF, max_turns=TOOL_CHAT_MAX_TURNS,
+        )
+        result = self._build_tool_chat_result(chat_result)
+        result["chunk_count"] = len(chunks)
+        self._last_tool_stream_result = result
+        return result
+
+    def _make_tool_stream_callback(self, chunks: List[str]) -> Callable[[StreamChunk], None]:
+        """构造工具流式回调（StreamChunk）：收集增量片段并经 notifier 上抛，异常仅记日志"""
+
+        def on_chunk(chunk: StreamChunk) -> None:
+            try:
+                if chunk.content:
+                    chunks.append(chunk.content)
+                    self._notify_event(f"{TOOL_STREAM_CHUNK_PREFIX}{chunk.content}")
+            except Exception as e:
+                self.logger.error(get_name(), f"[{self.plugin_id}] 工具流式回调处理失败: {e}")
+
+        return on_chunk
+
+    def _on_tool_stream_done(self, task_id: str, status, result, error) -> None:
+        """工具流式任务完成回调（工作线程）：经 notifier 上抛完成/失败事件"""
+        try:
+            if error:
+                self._notify_event(f"{TOOL_STREAM_ERROR_PREFIX}{error}")
+                self.logger.error(get_name(), f"[{self.plugin_id}] 工具流式任务失败({task_id}): {error}")
+                return
+            self._notify_event(TOOL_STREAM_DONE_EVENT)
+            self.logger.info(get_name(), f"[{self.plugin_id}] 工具流式任务完成({task_id}): {status}")
+        except Exception as e:
+            self.logger.error(get_name(), f"[{self.plugin_id}] 工具流式完成回调处理失败: {e}")
 
     # ------------------------------------------------------------------
     #  多模态演示（图像生成 / 语音合成）

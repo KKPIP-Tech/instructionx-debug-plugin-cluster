@@ -29,11 +29,11 @@ Framework API Demo 插件用于演示 InstructionX 框架提供的核心 API 接
 ### ILLMService（llm_facade，LLM 插件服务门面）
 
 - Provider 实例列表（`list_providers()` / `get_default_provider_id()` / `resolve_provider_id()`）
-- 模型列表查询（`get_models()`）
+- 模型列表查询（`get_models()`，附 `capability_label()` 本地化能力标签）
 - 聊天（`chat()`）与流式聊天（`stream_chat()`，均经后台任务执行 + notifier 事件上抛 UI）
 - 嵌入（`embed()`，后台任务执行 + 完成事件上抛 UI）
-- 会话管理（`create_conversation()` / `send_message()` / `stream_send_message()` / `get_conversation()` / `list_conversations()` / `delete_conversation()`）
-- 工具调用（共享 `ToolRegistry` 注册 / 注销 / 查询 + `chat_with_tools()` 多轮循环；入口经 `IPlugin.llm_tools` 声明工具清单）
+- 会话管理（`create_conversation()` / `send_message()` / `stream_send_message()`（含 `images` 多模态参数演示）/ `get_conversation()` / `list_conversations()` / `delete_conversation()`）
+- 工具调用（共享 `ToolRegistry` 注册 / 注销 / 查询 + `chat_with_tools()` / `chat_with_tools_stream()` 多轮循环；入口经 `IPlugin.llm_tools` 声明工具清单）
 - 多模态（`generate_image()` / `text_to_speech()`，结果经 `save_asset()` 落盘）
 - 用量统计与 Provider 校验（`get_usage_stats()` / `validate_provider()`）
 

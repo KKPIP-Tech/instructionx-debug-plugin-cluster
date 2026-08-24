@@ -162,6 +162,17 @@
     <text key="btn.list_tools">List Registered Tools</text>
     <text key="default.tool_message">What time is it now? Help me calculate 12*(3+4)</text>
     <text key="btn.tool_chat">Tool Chat</text>
+    <text key="btn.tool_chat_stream">Tool Chat (Streaming)</text>
+    <text key="btn.stream_img">Send Streaming (with Image)</text>
+    <text key="item.model">{name} [{capabilities}]</text>
+    <text key="title.tool_stream_result">Tool Chat Streaming Response</text>
+    <text key="title.tool_stream_fail">Tool Chat Streaming Failed</text>
+    <text key="title.tool_stream_start_fail">Failed to Start Tool Chat Streaming</text>
+    <text key="msg.tool_stream_result">Tool call turns: {turns}  Stream chunks: {chunks}
+
+Final reply:
+{final}</text>
+    <text key="log.tool_stream">Tool chat streaming started: {result}</text>
     <text key="group.embed">Embedding Test</text>
     <text key="default.embed_text">Hello world</text>
     <text key="btn.embed">Send Embedding</text>
@@ -329,12 +340,13 @@ Provider: {provider}</text>
      via register_async_task()
 
 3. ILLMService (llm_facade)
-   - list_providers() / get_models() / validate_provider()
-   - chat() / stream_chat() / embed()
+   - list_providers() / get_models() (with capability_label labels) / validate_provider()
+   - chat() / stream_chat() / embed() (all run as background tasks)
    - Conversations: create_conversation() / send_message() / stream_send_message()
-     / get_conversation() / list_conversations() / delete_conversation()
+     (incl. images multimodal param demo) / get_conversation() / list_conversations()
+     / delete_conversation()
    - Tool calling: get_shared_tool_registry() (register/unregister/list_tools)
-     / chat_with_tools(); entry point IPlugin.llm_tools hook
+     / chat_with_tools() / chat_with_tools_stream(); entry point IPlugin.llm_tools hook
    - Multimodal: generate_image() / text_to_speech()
    - get_usage_stats()
 
@@ -470,6 +482,8 @@ Provider: {provider}</text>
     <text key="err.conv_not_found">Conversation not found: {id}</text>
     <text key="err.delete_failed">Failed to delete conversation: {id}</text>
     <text key="msg.tool_chat_started">Tool chat started (runs as background task)</text>
+    <text key="msg.tool_stream_started">Tool chat streaming started (runs as background task)</text>
+    <text key="msg.conv_stream_img_started">Conversation streaming message (with demo image) started (runs as background task)</text>
     <text key="msg.image_started">Image generation started (runs as background task)</text>
     <text key="msg.tts_started">Speech synthesis started (runs as background task)</text>
     <text key="err.no_default_provider">No provider specified and no default instance available</text>
