@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """布局演示的示例数据与卡片构建器（Demo 程序专用）。
 
-InstructionX_UIKit 的 12 个布局预设全部为 API 驱动、不含任何假数据；
+InstructionX_UIKit 的 13 个布局预设全部为 API 驱动、不含任何假数据；
 本模块集中存放演示用的示例内容（原是布局内置的占位数据，已迁入
 Demo），``layouts.py`` 各演示页从这里取数据并传给布局。
 
@@ -50,6 +50,7 @@ USAGE = {
     "centered_container": 'create_centered_container(title=..., actions=[...], cards=[(标题, 描述, 色块键)])',
     "waterfall": 'create_waterfall(items=[(标题, 色块键, 档位2-6), ...])',
     "media_left_right": 'create_media_left_right(sections=[(标题, 正文, 色块键)], link_text="了解更多")',
+    "chat_conversation": 'create_chat_conversation(messages=[{"role": "user", "content": ...}, {"role": "assistant", "content": "# markdown", "info": "模型名"}])',
 }
 
 # ---------------------------------------------------------------------------
@@ -450,3 +451,39 @@ def media_left_right(tr) -> dict:
         (tr(f"ml.section.{i}.title"), tr(f"ml.section.{i}.body"), color_keys[i - 1])
         for i in range(1, 4))
     return dict(sections=sections, link_text=tr("ml.link"))
+
+# ---------------------------------------------------------------------------
+# 流式对话
+# ---------------------------------------------------------------------------
+
+#: set_message_stats 演示：以真实值覆盖首条 AI 消息的统计展示
+CHAT_STATS_DEMO = {"tokens": 386, "elapsed": 2.4, "speed": 160.8}
+
+#: 首条 AI 消息索引（chat_messages 交替 user/assistant，第 2 条为首个 AI 消息）
+CHAT_FIRST_ASSISTANT_INDEX = 1
+
+
+def chat_messages(tr) -> list:
+    """示例对话：[{"role", "content", "info"}, ...]。
+
+    内容覆盖 MarkdownView 主要特性：行内样式、列表、引用、分割线、表格、
+    代码围栏、行内 / 块级公式、Mermaid 图、链接；AI 气泡附 info 自定义
+    文案（模型名称）。
+    """
+    info = tr("chat.info")
+    messages = []
+    for i in range(1, 6):
+        messages.append({"role": "user", "content": tr(f"chat.user.{i}")})
+        messages.append({"role": "assistant", "info": info,
+                         "content": tr(f"chat.assistant.{i}")})
+    return messages
+
+
+def chat_stream_reply(tr) -> str:
+    """模拟流式回复正文（提交 / 重新生成时由演示控制器逐段追加）。"""
+    return tr("chat.stream_reply")
+
+
+def chat_stream_continue(tr) -> str:
+    """「继续生成」演示文本（接到 continueRequested 信号后向原消息追加）。"""
+    return tr("chat.stream_continue")

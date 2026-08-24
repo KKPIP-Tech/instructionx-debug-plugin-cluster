@@ -30,6 +30,7 @@
     <text key="page.centered_container">Centered Container</text>
     <text key="page.waterfall">Waterfall</text>
     <text key="page.media_left_right">Media Left-Right</text>
+    <text key="page.chat_conversation">Chat Conversation</text>
     <text key="page.button">Button</text>
     <text key="page.icon_button">IconButton</text>
     <text key="page.checkbox">CheckBox</text>
@@ -180,6 +181,8 @@ Dark {dark}</text>
     <text key="waterfall.desc">Waterfall of uneven-height cards in 2-4 columns.</text>
     <text key="media_left_right.title">Media Left-Right</text>
     <text key="media_left_right.desc">Alternating media-left/text-right and text-left/media-right sections.</text>
+    <text key="chat_conversation.title">Chat Conversation</text>
+    <text key="chat_conversation.desc">AI chat page: Markdown message bubbles + streaming append + bubble action bar + bottom input area.</text>
   </group>
   <!-- Layout demo sample data (layout_samples.py) -->
   <group name="layout_samples">
@@ -357,6 +360,127 @@ with tokens and breakpoints</text>
     <text key="ml.section.3.title">Feature 3: Responsive Breakpoints</text>
     <text key="ml.section.3.body">Layouts adapt across five breakpoints (xs to xl) by window width: grid column counts, sidebar collapsing and media stacking all happen in resizeEvent.</text>
     <text key="ml.link">Learn More</text>
+    <text key="chat.info">InstructionX-Lite</text>
+    <text key="chat.user.1">Which Markdown syntax does this UI Kit's Markdown component support?</text>
+    <text key="chat.assistant.1"><![CDATA[**MarkdownView** is built on the Qt built-in engine and supports:
+
+- Headings, **bold**, *italic*, ~~strikethrough~~
+- Ordered / unordered / task lists
+- `inline code` and code fences
+- Tables, quotes, dividers and links
+
+```python
+from InstructionX_UIKit.components import MarkdownView
+
+view = MarkdownView("# Hello")
+```]]></text>
+    <text key="chat.user.2">Do code blocks get syntax highlighting?</text>
+    <text key="chat.assistant.2"><![CDATA[No. Code text keeps the body text color, distinguished only by the mono font family and background.
+
+| Feature | Status |
+|------|------|
+| Syntax highlighting | Not supported |
+| Mono font family | Supported |
+| Background | `bg.subtle` token |]]></text>
+    <text key="chat.user.3">Can it render math formulas?</text>
+    <text key="chat.assistant.3"><![CDATA[Yes, LaTeX syntax is supported. Inline formulas like $E=mc^2$, and block formulas:
+
+$$\frac{-b \pm \sqrt{b^2-4ac}}{2a}$$
+
+Formulas render asynchronously via matplotlib mathtext and are cached; streaming append hits the cache at zero cost.]]></text>
+    <text key="chat.user.4">Can it draw Mermaid diagrams?</text>
+    <text key="chat.assistant.4"><![CDATA[Yes, rendered by the official mermaid.js engine (WebEngine, bundled, no network) with full diagram types. Diagrams are interactive: **drag to pan, Ctrl+wheel to zoom**, with a toolbar for zoom in / out / reset / fit-width.
+
+```mermaid
+flowchart LR
+    A[User question] --> B{Understand intent}
+    B -- Clear --> C[Search knowledge base]
+    B -- Vague --> D[Ask for clarification]
+    C --> E[Generate answer]
+    D --> E
+```
+
+Sequence diagrams are supported too:
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant A as Assistant
+    U->>A: Send question
+    A->>A: Reason and retrieve
+    A-->>U: Stream the answer
+```]]></text>
+    <text key="chat.user.5">Show me all the remaining formats in one go.</text>
+    <text key="chat.assistant.5"><![CDATA[Sure, here are all the remaining formats.
+
+## Heading Levels
+
+Supports six heading levels from `#` to `######`; paragraphs wrap automatically.
+
+### Quotes and Dividers
+
+> Quote blocks use the secondary text color,
+> and can span multiple lines.
+
+---
+
+### Nested and Task Lists
+
+- Fruits
+  - Apple
+  - Banana
+- [x] Finished item
+- [ ] Pending item
+
+### Links
+
+Project repository: [InstructionX_UIKit](https://github.com/KKPIP-Tech/InstructionX_UIKit); clicking a link emits the `linkActivated` signal.
+
+> Note: footnotes, embedded HTML and network images are not supported.]]></text>
+    <text key="chat.stream_reply"><![CDATA[Sure, this is a **full-format streaming output** demo:
+
+1. The caller invokes `append_to_message(index, chunk)` per token;
+2. The layout grows bubble heights and follows the scroll automatically;
+3. Reading history by scrolling up is never interrupted.
+
+> The layout itself carries no AI logic; message data is fully caller-driven.
+
+Inline formulas like $e^{i\pi}+1=0$ and block formulas render live mid-stream:
+
+$$\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}$$
+
+And tables:
+
+| Stage | Status |
+|------|------|
+| Receiving tokens | In progress |
+| Rendering | Live |
+
+Code fences degrade to plain text until closed, then reflow:
+
+```python
+reply = ""
+for token in stream:
+    reply += token
+    view.append_markdown(token)
+```
+
+Same for Mermaid diagrams—rendered asynchronously once the fence closes:
+
+```mermaid
+flowchart LR
+    T[token stream] --> P[Incremental parsing]
+    P --> R[Live rendering]
+```
+
+Streaming finished, thanks for watching.]]></text>
+    <text key="chat.stream_continue"><![CDATA[**(Continued)** Additional note: copy / delete / edit on the action bar are executed directly by the layout, while regenerate / continue only emit the `regenerateRequested` / `continueRequested` signals—the concrete behavior is entirely up to the caller.]]></text>
+    <text key="chat.status.ready">Last action: none (try sending a message, or hover a bubble for the action bar)</text>
+    <text key="chat.status.submitted">Last action: submitted a new message; AI is streaming a reply</text>
+    <text key="chat.status.deleted">Last action: deleted message #{n} (executed by the layout)</text>
+    <text key="chat.status.edited">Last action: edited message #{n} (executed by the layout)</text>
+    <text key="chat.status.regenerate">Last action: regenerating message #{n} (simulated streaming replay)</text>
+    <text key="chat.status.continue">Last action: continuing message #{n} (appending demo text)</text>
   </group>
   <!-- Basic widgets gallery -->
   <group name="basic_widgets">

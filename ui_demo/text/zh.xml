@@ -30,6 +30,7 @@
     <text key="page.centered_container">居中容器</text>
     <text key="page.waterfall">瀑布流</text>
     <text key="page.media_left_right">图文左右</text>
+    <text key="page.chat_conversation">流式对话</text>
     <text key="page.button">Button 按钮</text>
     <text key="page.icon_button">IconButton 图标按钮</text>
     <text key="page.checkbox">CheckBox 复选框</text>
@@ -180,6 +181,8 @@
     <text key="waterfall.desc">2-4 列不等高卡片瀑布流。</text>
     <text key="media_left_right.title">图文左右</text>
     <text key="media_left_right.desc">图左文右 / 图右文左交替段落。</text>
+    <text key="chat_conversation.title">流式对话</text>
+    <text key="chat_conversation.desc">AI 对话页面：Markdown 消息气泡 + 流式追加 + 气泡操作条 + 底部输入区。</text>
   </group>
   <!-- 布局演示示例数据（layout_samples.py） -->
   <group name="layout_samples">
@@ -357,6 +360,127 @@
     <text key="ml.section.3.title">特性三：响应式断点</text>
     <text key="ml.section.3.body">布局按窗口宽度在 xs 到 xl 五档断点间自适应：网格重排列数、侧栏折叠、图文上下堆叠，全部在 resizeEvent 中完成。</text>
     <text key="ml.link">了解更多</text>
+    <text key="chat.info">InstructionX-Lite</text>
+    <text key="chat.user.1">这个 UI Kit 的 Markdown 组件支持哪些语法？</text>
+    <text key="chat.assistant.1"><![CDATA[**MarkdownView** 基于 Qt 内置引擎，支持：
+
+- 标题、**加粗**、*斜体*、~~删除线~~
+- 有序 / 无序 / 任务列表
+- `行内代码` 与代码围栏
+- 表格、引用、分割线、链接
+
+```python
+from InstructionX_UIKit.components import MarkdownView
+
+view = MarkdownView("# 你好")
+```]]></text>
+    <text key="chat.user.2">代码块会做语法高亮吗？</text>
+    <text key="chat.assistant.2"><![CDATA[不会。代码块文字颜色与正文一致，仅以等宽字族和底色区分。
+
+| 特性 | 状态 |
+|------|------|
+| 语法高亮 | 不支持 |
+| 等宽字族 | 支持 |
+| 底色 | `bg.subtle` 令牌 |]]></text>
+    <text key="chat.user.3">能渲染数学公式吗？</text>
+    <text key="chat.assistant.3"><![CDATA[可以，支持 LaTeX 语法。行内公式如 $E=mc^2$，块级公式：
+
+$$\frac{-b \pm \sqrt{b^2-4ac}}{2a}$$
+
+公式由 matplotlib mathtext 后台异步渲染并缓存，流式追加时命中缓存零耗时。]]></text>
+    <text key="chat.user.4">能画 Mermaid 图吗？</text>
+    <text key="chat.assistant.4"><![CDATA[可以，由官方 mermaid.js 引擎渲染（WebEngine，随包分发不联网），全量图型可用。图表可交互：**拖动平移、Ctrl+滚轮缩放**，右上角工具条支持放大 / 缩小 / 复位 / 适宽。
+
+```mermaid
+flowchart LR
+    A[用户提问] --> B{理解意图}
+    B -- 明确 --> C[检索知识库]
+    B -- 模糊 --> D[请求澄清]
+    C --> E[生成回答]
+    D --> E
+```
+
+时序图同样支持：
+
+```mermaid
+sequenceDiagram
+    participant U as 用户
+    participant A as 助手
+    U->>A: 发送问题
+    A->>A: 推理与检索
+    A-->>U: 流式返回回答
+```]]></text>
+    <text key="chat.user.5">剩下的格式一口气展示一下吧。</text>
+    <text key="chat.assistant.5"><![CDATA[好的，以下是其余全部格式。
+
+## 标题层级
+
+支持 `#` 至 `######` 六级标题，正文段落自动换行。
+
+### 引用与分割线
+
+> 引用块使用次级文字颜色，
+> 可以跨越多行。
+
+---
+
+### 嵌套与任务列表
+
+- 水果
+  - 苹果
+  - 香蕉
+- [x] 已完成事项
+- [ ] 待办事项
+
+### 链接
+
+项目仓库：[InstructionX_UIKit](https://github.com/KKPIP-Tech/InstructionX_UIKit)，点击链接时发射 `linkActivated` 信号。
+
+> 提示：脚注、内嵌 HTML 与网络图片不在支持之列。]]></text>
+    <text key="chat.stream_reply"><![CDATA[好的，这是一次**全格式流式输出**演示：
+
+1. 调用方收到 token 后调用 `append_to_message(index, chunk)`；
+2. 布局自动增长气泡高度并跟随滚动；
+3. 用户上翻阅读历史时不会被打断。
+
+> 布局本身不承载任何 AI 逻辑，消息数据完全由调用方驱动。
+
+流式途中也能实时渲染行内公式 $e^{i\pi}+1=0$ 与块级公式：
+
+$$\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}$$
+
+以及表格：
+
+| 阶段 | 状态 |
+|------|------|
+| 接收 token | 进行中 |
+| 渲染 | 实时 |
+
+代码围栏在闭合前按纯文本降级显示，闭合后重排：
+
+```python
+reply = ""
+for token in stream:
+    reply += token
+    view.append_markdown(token)
+```
+
+Mermaid 图同理，围栏闭合后异步渲染并就位：
+
+```mermaid
+flowchart LR
+    T[token 流] --> P[增量解析]
+    P --> R[实时渲染]
+```
+
+流式输出结束，感谢观看。]]></text>
+    <text key="chat.stream_continue"><![CDATA[**（继续生成）** 补充说明：操作条的复制 / 删除 / 编辑由布局直接执行，重新生成 / 继续生成仅发射 `regenerateRequested` / `continueRequested` 信号，具体行为完全由调用方决定。]]></text>
+    <text key="chat.status.ready">最近操作：暂无（试试发送消息，或悬停气泡使用操作条）</text>
+    <text key="chat.status.submitted">最近操作：提交了新消息，AI 正在流式回复</text>
+    <text key="chat.status.deleted">最近操作：删除第 {n} 条消息（由布局直接执行）</text>
+    <text key="chat.status.edited">最近操作：编辑第 {n} 条消息（由布局直接执行）</text>
+    <text key="chat.status.regenerate">最近操作：重新生成第 {n} 条消息（模拟流式重放）</text>
+    <text key="chat.status.continue">最近操作：继续生成第 {n} 条消息（追加演示文本）</text>
   </group>
   <!-- 基础控件全家福 -->
   <group name="basic_widgets">
