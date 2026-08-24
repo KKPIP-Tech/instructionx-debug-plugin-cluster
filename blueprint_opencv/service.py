@@ -59,6 +59,11 @@ ASSET_PATH_PREFIX = "assets/plugins"
 # 预置示例图资产路径（相对插件目录，见 SPEC §8 assets.preset_graph）
 PRESET_GRAPH_RELATIVE_PATH = "assets/preset_graph.json"
 
+#: 插件根目录（预置图内相对路径的解析基准）
+_PLUGIN_ROOT = Path(__file__).resolve().parent
+#: 节点属性中的文件路径参数键（预置图相对路径解析对象）
+_FILE_PATH_PROPERTY = "file_path"
+
 # 管线执行后台任务名（register_async_task 的 name 参数）
 RUN_TASK_NAME = "blueprint_opencv.run_pipeline"
 
@@ -316,14 +321,30 @@ class BlueprintOpenCVService(QObject):
             return None
 
     def _read_preset_graph(self) -> Dict[str, Any]:
-        """读取插件资产中的预置示例图；缺失/损坏时记日志并回退空图"""
-        preset_path = Path(__file__).parent / PRESET_GRAPH_RELATIVE_PATH
+        """读取插件资产中的预置示例图；缺失/损坏时记日志并回退空图
+
+        预置图中的 file_path 属性以相对插件目录路径存放（资产可移植，
+        不绑定开发机绝对路径），读出后统一解析为绝对路径。
+        """
+        preset_path = _PLUGIN_ROOT / PRESET_GRAPH_RELATIVE_PATH
         try:
             with open(preset_path, "rb") as f:
-                return json.loads(f.read().decode("utf-8"))
+                graph_dict = json.loads(f.read().decode("utf-8"))
         except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
             self._logger.warning(LOG_TAG, f"预置示例图不可用（回退空图）: {e}")
             return dict(runtime_registry.EMPTY_GRAPH)
+        return self._resolve_preset_paths(graph_dict)
+
+    @staticmethod
+    def _resolve_preset_paths(graph_dict: Dict[str, Any]) -> Dict[str, Any]:
+        """把预置图中相对插件目录的 file_path 属性解析为绝对路径（就地修改）。"""
+        nodes = graph_dict.get("graph", graph_dict).get("nodes", [])
+        for node in nodes:
+            props = node.get("properties", {})
+            path = str(props.get(_FILE_PATH_PROPERTY, "") or "")
+            if path and not Path(path).is_absolute():
+                props[_FILE_PATH_PROPERTY] = str(_PLUGIN_ROOT / path)
+        return graph_dict
 
     @staticmethod
     def _asset_filename(name: str) -> str:
