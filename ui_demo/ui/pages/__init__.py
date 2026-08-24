@@ -74,6 +74,7 @@ USAGE = {
     "empty": 'Empty(description="暂无数据")',
     "tooltip": 'set_tooltip(btn, "提示文本")',
     "popover": 'Popover(title="标题", content=widget)  # show_at(anchor)',
+    "markdown_view": 'MarkdownView("# 标题")  # append_markdown(chunk) 流式追加；```mermaid 围栏渲染图表',
     # -- 组件 · 反馈 ------------------------------------------------------
     "tabs": 'Tabs(variant="line")  # addTab("标签一", widget)',
     "anchor": 'Anchor()  # set_items([(key, title, target_widget), ...])',

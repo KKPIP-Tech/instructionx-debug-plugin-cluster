@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""组件 · 展示演示页：18 个数据展示组件，每组件一页，覆盖主要变体。
+"""组件 · 展示演示页：19 个数据展示组件，每组件一页，覆盖主要变体。
 
 页面 = 标题 + 说明 + 分区演示，紧凑排布；亮 / 暗主题切换自动换肤。
 文案经 ``bind_tr`` 按 ``display`` 分组取词（键前缀 = 组件导航键）。
@@ -41,6 +41,7 @@ from InstructionX_UIKit.theme import T, set_property
 from core.interfaces import ILocalizationFacade
 
 from .common import Section, bind_tr, col, hint_label, make_page, row
+from .markdown_view import create_markdown_view_page
 from .playground import PlaygroundPanel, with_playground
 
 _POPOVERS = []  # 防止弹出层被 GC
@@ -497,4 +498,5 @@ DISPLAY_PAGES = [
     ("empty", create_empty_page),
     ("tooltip", create_tooltip_page),
     ("popover", create_popover_page),
+    ("markdown_view", create_markdown_view_page),
 ]

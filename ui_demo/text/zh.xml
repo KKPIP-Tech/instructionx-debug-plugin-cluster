@@ -68,6 +68,7 @@
     <text key="page.empty">Empty 空状态</text>
     <text key="page.tooltip">Tooltip 工具提示</text>
     <text key="page.popover">Popover 气泡卡片</text>
+    <text key="page.markdown_view">MarkdownView Markdown</text>
     <text key="page.tabs">Tabs 标签页</text>
     <text key="page.anchor">Anchor 锚点</text>
     <text key="page.breadcrumb">Breadcrumb 面包屑</text>
@@ -739,6 +740,133 @@
     <text key="popover.pop.body">按状态、时间或负责人筛选列表数据。
 点击外部区域关闭。</text>
     <text key="popover.hint">点击按钮相对锚点弹出带箭头气泡卡片。</text>
+  </group>
+  <!-- MarkdownView 演示页（markdown_view.py）；Markdown 示例正文用 CDATA 原样保留换行 -->
+  <group name="markdown_view">
+    <text key="title">MarkdownView Markdown 渲染</text>
+    <text key="desc">Qt 内置引擎原生渲染 Markdown，令牌化样式，支持流式追加、LaTeX 公式与 Mermaid 图表。</text>
+    <text key="sec.basic">基础渲染</text>
+    <text key="sec.math">数学公式（LaTeX）</text>
+    <text key="sec.mermaid">Mermaid 图表</text>
+    <text key="sec.mermaid_view">MermaidView 独立使用</text>
+    <text key="sec.stream">流式追加（模拟 AI 逐字输出，含 LaTeX 公式与 Mermaid 实时渲染）</text>
+    <text key="sec.empty">空状态</text>
+    <text key="replay">重新播放</text>
+    <text key="hint.mermaid">图表是可交互的：拖动平移、Ctrl+滚轮缩放，右上角工具条可放大 / 缩小 / 复位 / 适宽。该查看器即 MermaidView，以叠加层方式嵌在文档图位上；WebEngine 不可用时自动降级为内置自绘渲染器（flowchart / sequenceDiagram / pie 子集），交互保留。</text>
+    <text key="hint.mermaid_view">MermaidView 可脱离 MarkdownView 单独使用：MermaidView("flowchart LR\n    A[开始] --&gt; B[结束]")；语法错误经 render_failed 信号上报。</text>
+    <text key="sample.basic"><![CDATA[## 渲染能力一览
+
+正文支持 **加粗**、*斜体*、~~删除线~~ 与 `行内代码`。
+
+- 无序列表项
+- 支持任务列表：
+- [x] 已完成的事项
+- [ ] 待办事项
+
+> 引用块使用次要文本色，适合展示引用与提示。
+
+```python
+def fibonacci(n):
+    a, b = 0, 1
+    for _ in range(n):
+        a, b = b, a + b
+    return a
+```
+
+| 语法 | 支持情况 |
+|------|----------|
+| 表格 | 支持 |
+| 代码围栏 | 支持（等宽字体 + 底色，不做语法高亮） |
+
+[链接使用主题主色](https://github.com/KKPIP-Tech/InstructionX_UIKit)]]></text>
+    <text key="sample.math"><![CDATA[行内公式：质能方程 $E=mc^2$，以及欧拉恒等式 $e^{i\pi}+1=0$。
+
+块级公式（求根公式）：
+
+$$\frac{-b \pm \sqrt{b^2-4ac}}{2a}$$
+
+也支持 `\[...\]` 与 `\begin{equation}` 环境：
+
+\[\int_0^\infty e^{-x^2}\,dx = \frac{\sqrt{\pi}}{2}\]
+
+\begin{equation}
+a^2 + b^2 = c^2
+\end{equation}
+
+公式由 matplotlib mathtext 在后台线程异步渲染并缓存，渲染期间以源码占位；
+代码围栏与行内代码中的 `$...$` 不会被当作公式。]]></text>
+    <text key="sample.mermaid"><![CDATA[Mermaid 围栏渲染为可交互图表（官方 mermaid.js 引擎，随包分发不联网），
+官方全量图型可用，随主题令牌着色：
+
+```mermaid
+flowchart LR
+    A[用户提问] --> B{理解意图}
+    B -- 明确 --> C[检索知识库]
+    B -- 模糊 --> D[请求澄清]
+    C --> E[生成回答]
+    D --> E
+```
+
+```mermaid
+sequenceDiagram
+    participant U as 用户
+    participant A as 助手
+    U->>A: 发送问题
+    A->>A: 推理与检索
+    A-->>U: 流式返回回答
+```
+
+```mermaid
+pie title 本周时间分布
+    "编码": 40
+    "阅读文档": 25
+    "讨论设计": 20
+    "其他": 15
+```
+
+流式追加中未闭合的 mermaid 围栏按代码块降级显示，闭合后重排为图表；
+语法错误时显示失败占位图。]]></text>
+    <text key="sample.stream"><![CDATA[## 流式渲染能力演示
+
+这段内容由**逐 token 追加**生成，涵盖 Markdown 与 LaTeX 的主要渲染能力。
+
+### 行内公式
+
+质能方程 $E=mc^2$、欧拉恒等式 $e^{i\pi}+1=0$。
+
+### 块级公式
+
+求根公式：
+
+$$
+\frac{-b \pm \sqrt{b^2-4ac}}{2a}
+$$
+
+### 表格与代码
+
+| 语法 | 写法 |
+|------|------|
+| 行内公式 | `$...$` |
+| 块级公式 | `$$...$$` / `\[...\]` |
+
+```python
+view = MarkdownView()
+for token in stream:       # 逐 token 到达
+    view.append_markdown(token)
+```
+
+Mermaid 围栏在闭合后异步渲染并就位：
+
+```mermaid
+flowchart LR
+    T[token 流] --> P[增量解析]
+    P --> R[实时渲染]
+```
+
+> 公式由 matplotlib mathtext 后台异步渲染，命中 LRU 缓存零耗时。]]></text>
+    <text key="sample.standalone"><![CDATA[flowchart LR
+    A[开始] --> B[处理]
+    B --> C[结束]]]></text>
   </group>
   <group name="feedback">
     <text key="tabs.sec">三种样式</text>
