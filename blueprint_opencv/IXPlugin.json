@@ -8,7 +8,7 @@
         "en": "A node-based OpenCV image-processing blueprint editor built on InstructionX_UIKit Blueprint: 20 nodes, an exec/data dual-chain execution engine, worker-thread processing, and cross-thread preview marshalling."
     },
     "author": "InstructionX Team",
-    "homepage": "https://github.com/KKPIP-Tech/InstructionX",
+    "homepage": "https://github.com/KKPIP-Tech/instructionx-debug-plugin-cluster",
     "keywords": ["instructionx", "plugin", "blueprint", "opencv", "image", "node-editor"],
     "dependencies": {"opencv-python": ">=4.8.0", "numpy": ">=1.24.0"}
 }

@@ -74,7 +74,7 @@ blueprint_opencv/
 关键设计：
 
 - **线程边界**：`function/` 仅在工作线程活动（纯 numpy/PNG 字节），`ui/` 仅在 UI 线程；两者之间只传不可变数据，经 service 的 Qt 信号（`preview_ready` / `node_status_changed` / `run_finished`）自动排队封送，QPixmap 只在 UI 线程创建。
-- **注册幂等**：`register_all_node_types()` 先查后注册，插件热重载不产生重复节点。
+- **注册幂等**：`ui/node_bootstrap.ensure_node_types_registered()` 先查后注册，插件热重载不产生重复节点。
 - **停止语义**：协作式停止，执行引擎在每个节点开始前检查停止标志。
 
 详细技术方案见 `docs/req/2026-07-30/SPEC-blueprint-opencv-20260730.md`；蓝图列表面板与已保存蓝图列表的需求与方案见同目录 `PRD-node-list-panel-20260730.md` / `SPEC-node-list-panel-20260730.md`、`PRD-graph-list-20260730.md` / `SPEC-graph-list-20260730.md`。

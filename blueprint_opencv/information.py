@@ -59,8 +59,8 @@ class BlueprintOpenCVPluginInfo(IPluginInfo):
 
     @property
     def developer(self) -> str:
-        """开发者名称"""
-        return "InstructionX"
+        """开发者名称（与 IXPlugin.json 的 author 保持一致）"""
+        return "InstructionX Team"
 
     @property
     def developer_email(self) -> str:
@@ -171,7 +171,12 @@ class BlueprintOpenCVPluginInfo(IPluginInfo):
 
     @property
     def skill_description(self) -> str:
-        """插件简短描述"""
+        """插件简短描述
+
+        硬编码中文属框架限制：IPluginInfo 无 i18n 机制（元数据在插件
+        语言包注册前读取），IXPlugin.json 的 name/description 多语言
+        字段由框架 resolve_i18n_field 解析，本属性保持中文单一文案。
+        """
         return "OpenCV 节点化图像处理蓝图编辑器"
 
     @property
