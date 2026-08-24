@@ -13,6 +13,8 @@ MainWindow 依据 ``NAV`` 构建左侧导航树并懒加载右侧页面。
 开发者看 Demo 即可学会用法。
 """
 
+from utils.logging_tools import LoggerManager, get_name
+
 from . import (
     anim_painted,
     anim_property,
@@ -26,6 +28,8 @@ from . import (
     tokens,
 )
 from .common import usage_section
+
+_logger = LoggerManager()
 
 #: 页面键 -> 最小调用示例（注入到页面顶部「用法」分区；布局页自带用法，不在此列）
 #: 注意：示例为代码（代码即文档），不参与多语言翻译
@@ -110,8 +114,9 @@ def _with_usage(key, factory):
             try:
                 content = page.widget()
                 content.layout().insertWidget(2, usage_section(code, i18n))
-            except (AttributeError, TypeError):
-                pass  # 非 make_page 结构的页面不注入
+            except (AttributeError, TypeError) as exc:
+                # 非 make_page 结构的页面不注入（如蓝图页为自定义 QWidget）
+                _logger.debug(get_name(), f"页面 {key} 用法分区注入跳过: {exc!r}")
         return page
     return make
 

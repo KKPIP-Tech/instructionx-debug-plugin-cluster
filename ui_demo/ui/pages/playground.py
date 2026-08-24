@@ -36,8 +36,11 @@ from InstructionX_UIKit.components.spin_box import DoubleSpinBox, SpinBox
 from InstructionX_UIKit.theme import T, set_property
 
 from core.interfaces import ILocalizationFacade
+from utils.logging_tools import LoggerManager, get_name
 
 from .common import bind_tr
+
+_logger = LoggerManager()
 
 __all__ = [
     "ParamForm",
@@ -402,13 +405,13 @@ def swap_widget(container: QWidget, widget: QWidget,
 
 
 def _stop_handle(handle):
-    """安全停止动画句柄（无 stop 方法的句柄忽略）。"""
+    """安全停止动画句柄；异常记 DEBUG 日志（无 stop 方法的句柄忽略）。"""
     if handle is None:
         return
     try:
         handle.stop()
-    except Exception:  # noqa: BLE001
-        pass
+    except Exception as exc:  # noqa: BLE001
+        _logger.debug(get_name(), f"停止动画句柄失败（已忽略）: {exc!r}")
 
 
 class ParamCard(QFrame):
@@ -486,12 +489,12 @@ class ParamCard(QFrame):
         self._play = play
 
     def replay(self):
-        """停止旧句柄并按当前参数重放。"""
+        """停止旧句柄并按当前参数重放（异常记 DEBUG 日志，不中断演示）。"""
         if self._on_stop is not None:
             try:
                 self._on_stop(self.handle)
-            except Exception:  # noqa: BLE001
-                pass
+            except Exception as exc:  # noqa: BLE001
+                _logger.debug(get_name(), f"自定义停止回调异常（已忽略）: {exc!r}")
         else:
             _stop_handle(self.handle)
         self.handle = None
@@ -499,7 +502,8 @@ class ParamCard(QFrame):
             return None
         try:
             self.handle = self._play()
-        except Exception:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001
+            _logger.debug(get_name(), f"动画播放回调异常（已忽略）: {exc!r}")
             self.handle = None
         return self.handle
 

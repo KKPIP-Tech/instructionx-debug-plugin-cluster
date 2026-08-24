@@ -26,6 +26,9 @@ from InstructionX_UIKit.theme import T, ThemeManager, set_property
 from InstructionX_UIKit.tokens import MONO_FAMILY
 
 from core.interfaces import ILocalizationFacade
+from utils.logging_tools import LoggerManager, get_name
+
+_logger = LoggerManager()
 
 __all__ = [
     "make_page",
@@ -302,8 +305,8 @@ class DemoCard(QFrame):
         self.play_button = play_btn
 
     def _safe_play(self):
-        """执行播放回调（吞掉异常以免打断 Demo 交互）。"""
+        """执行播放回调；异常记 DEBUG 日志，不打断 Demo 交互。"""
         try:
             self._play()
-        except Exception:  # noqa: BLE001
-            pass
+        except Exception as exc:  # noqa: BLE001
+            _logger.debug(get_name(), f"演示卡播放回调异常（已忽略）: {exc!r}")
