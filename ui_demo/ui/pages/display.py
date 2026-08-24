@@ -44,8 +44,6 @@ from .common import Section, bind_tr, col, hint_label, make_page, row
 from .markdown_view import create_markdown_view_page
 from .playground import PlaygroundPanel, with_playground
 
-_POPOVERS = []  # 防止弹出层被 GC
-
 #: 走马灯演示页背景色
 _CAROUSEL_COLORS = ["#7C5CFC", "#3E7E5F", "#C08A3E"]
 
@@ -471,11 +469,14 @@ def create_popover_page(i18n: Optional[ILocalizationFacade] = None) -> QWidget:
     anchor = QPushButton(tr("popover.btn"))
     set_property(anchor, "variant", "primary")
     pop = Popover(tr("popover.pop.title"), tr("popover.pop.body"))
-    _POPOVERS.append(pop)
     anchor.clicked.connect(lambda: pop.show_for(anchor, placement="bottom"))
     s.layout().addWidget(row(anchor))
     s.layout().addWidget(hint_label(tr("popover.hint"), role="tertiary"))
-    return make_page(tr("popover.title"), tr("popover.desc"), [s])
+    page = make_page(tr("popover.title"), tr("popover.desc"), [s])
+    # 弹出层无父控件，随页面实例持有防止被 GC（页面销毁即释放，
+    # 不使用模块级列表以免无限增长）
+    page._keep_popups = [pop]
+    return page
 
 
 #: 展示组件页注册表：(导航键, 页面工厂)；标题由 MainWidget 经 ``nav:page.<键>`` 取词

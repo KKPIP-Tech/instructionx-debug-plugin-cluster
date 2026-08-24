@@ -46,8 +46,6 @@ from core.interfaces import ILocalizationFacade
 from .common import Section, bind_tr, col, hint_label, make_page, row
 from .playground import PlaygroundPanel, swap_widget, with_playground
 
-_KEEP = []  # 防止弹出层 / 引导层被 GC
-
 
 def _tr_of(i18n):
     """本页统一取词闭包（分组 ``feedback``）。"""
@@ -434,20 +432,24 @@ def create_drawer_page(i18n: Optional[ILocalizationFacade] = None) -> QWidget:
     tr = _tr_of(i18n)
     s = Section(tr("drawer.sec"))
     btns = []
+    opened = []  # 已打开抽屉随页面实例持有（防止被 GC；页面销毁即释放）
     for pos in ("right", "left", "top", "bottom"):
         b = _primary(tr("drawer.btn", pos=pos))
-        b.clicked.connect(lambda _=False, p=pos, bb=b: _open_drawer(bb, p, tr))
+        b.clicked.connect(lambda _=False, p=pos, bb=b: _open_drawer(bb, p, tr, opened))
         btns.append(b)
     s.layout().addWidget(row(*btns))
     s.layout().addWidget(hint_label(tr("drawer.hint"), role="tertiary"))
-    return make_page(tr("drawer.title"), tr("drawer.desc"), [s])
+    page = make_page(tr("drawer.title"), tr("drawer.desc"), [s])
+    page._keep_popups = opened
+    return page
 
 
-def _open_drawer(btn, position, tr):
+def _open_drawer(btn, position, tr, keep):
+    """打开一个抽屉并登记到页面级持有列表（防止演示期间被 GC）。"""
     dr = Drawer(btn.window(), position=position, size=300,
                 title=tr("drawer.btn", pos=position))
     dr.set_content(QLabel(tr("drawer.content", pos=position)))
-    _KEEP.append(dr)
+    keep.append(dr)
     dr.open()
 
 
@@ -544,18 +546,21 @@ def create_tour_page(i18n: Optional[ILocalizationFacade] = None) -> QWidget:
     target1 = _primary(tr("tour.target.a"))
     target2 = QPushButton(tr("tour.target.b"))
     start = _primary(tr("tour.btn.start"))
+    opened = []  # 引导层实例随页面持有（防止被 GC；页面销毁即释放）
 
     def _start():
         tour = Tour(start.window())
         tour.add_step(target1, tr("tour.step.1.title"), tr("tour.step.1.body"))
         tour.add_step(target2, tr("tour.step.2.title"), tr("tour.step.2.body"))
-        _KEEP.append(tour)
+        opened.append(tour)
         tour.start()
 
     start.clicked.connect(_start)
     s.layout().addWidget(row(target1, target2, start))
     s.layout().addWidget(hint_label(tr("tour.hint"), role="tertiary"))
-    return make_page(tr("tour.title"), tr("tour.desc"), [s])
+    page = make_page(tr("tour.title"), tr("tour.desc"), [s])
+    page._keep_popups = opened
+    return page
 
 
 #: 反馈组件页注册表：(导航键, 页面工厂)；标题由 MainWidget 经 ``nav:page.<键>`` 取词
