@@ -61,8 +61,12 @@ from .playground import ParamForm
 __all__ = ["create_page", "register_demo_node_types", "PROPERTY_SCHEMAS",
            "REGISTRY_OWNER"]
 
-#: offscreen 下降级读写当前工作目录的该文件（不弹文件对话框）
+#: offscreen 下降级读写的 JSON 文件名（不弹文件对话框）
 FALLBACK_JSON = "blueprint_demo.json"
+
+#: offscreen 降级文件的存放目录（框架根 temp/ 下，避免污染仓库根目录；
+#: 框架 .gitignore 已排除该目录）
+_OFFSCREEN_FALLBACK_DIR = "temp"
 
 
 class _RunState(Enum):
@@ -771,9 +775,13 @@ class BlueprintDemoPage(QWidget):
 
     # ------------------------------------------------------------------ 序列化
     def _json_path(self, save: bool) -> str:
-        """取 JSON 路径：offscreen 降级为 cwd 下固定文件，否则弹文件对话框。"""
+        """取 JSON 路径：offscreen 降级为框架根 temp/ 下固定文件，否则弹文件对话框。"""
         if os.environ.get("QT_QPA_PLATFORM") == "offscreen":
-            return str(Path.cwd() / FALLBACK_JSON)
+            # 仅 offscreen 自动化测试路径触发（真实运行弹文件对话框）；
+            # 写 temp/ 而非 cwd，避免在框架根目录散落演示产物
+            fallback_dir = Path.cwd() / _OFFSCREEN_FALLBACK_DIR
+            fallback_dir.mkdir(parents=True, exist_ok=True)
+            return str(fallback_dir / FALLBACK_JSON)
         if save:
             path, _ = QFileDialog.getSaveFileName(
                 self, self._tr("dlg.save"), FALLBACK_JSON, self._tr("dlg.filter"))
