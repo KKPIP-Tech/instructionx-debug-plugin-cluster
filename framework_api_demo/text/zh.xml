@@ -102,6 +102,8 @@
     <text key="btn.clear">清理已完成任务</text>
     <text key="btn.cancel">取消任务</text>
     <text key="btn.stop_long">停止长期任务</text>
+    <text key="btn.stop_long_keep">停止并保留记录</text>
+    <text key="btn.check_running">查询运行中</text>
     <text key="btn.status">查询状态</text>
     <text key="group.scheduled">定时任务控制</text>
     <text key="label.task_id">任务 ID:</text>
@@ -116,6 +118,10 @@
     <text key="title.unregister_scheduled">注销定时任务</text>
     <text key="title.cancel">取消任务</text>
     <text key="title.stop_long">停止长期任务</text>
+    <text key="title.stop_long_keep">停止长期任务（保留记录）</text>
+    <text key="title.check_running">长期任务运行判定（is_long_task_running）</text>
+    <text key="msg.check_running">运行中: {running}（对照 current_status: {status}）</text>
+    <text key="status.not_running">未在运行</text>
     <text key="title.status">查询状态</text>
     <text key="title.enable">启用定时任务</text>
     <text key="title.disable">禁用定时任务</text>
@@ -439,7 +445,8 @@ Provider: {provider}</text>
     <text key="msg.long_stop_signal">长期任务收到停止信号: {name}</text>
     <text key="msg.long_status">长期任务状态: {name} -&gt; {status}</text>
     <text key="msg.long_stopped_ok">长期任务 {id} 已停止</text>
-    <text key="err.long_not_running">长期任务 {id} 不存在或未在运行</text>
+    <text key="msg.long_stopped_keep">长期任务 {id} 已停止（保留存储记录）</text>
+    <text key="err.long_not_running">长期任务 {id} 不存在、未在运行，且无残留存储记录可删除</text>
     <text key="msg.cancelled">任务 {id} 已标记取消</text>
     <text key="err.not_running">任务 {id} 不在运行列表中</text>
     <text key="err.not_found">任务 {id} 不存在</text>

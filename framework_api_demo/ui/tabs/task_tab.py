@@ -126,7 +126,7 @@ class TaskTab(BaseTab):
         return group
 
     def _build_task_action_rows(self) -> list:
-        """构建任务操作按钮行（拆为两行，适配收窄后的面板宽度，作用于列表选中项）"""
+        """构建任务操作按钮行（拆为三行，适配收窄后的面板宽度，作用于列表选中项）"""
         manage_row = QHBoxLayout()
         manage_row.setSpacing(8)
         self.cancel_task_btn = self._make_button("btn.cancel", self._on_cancel_task)
@@ -137,7 +137,14 @@ class TaskTab(BaseTab):
         self.status_btn = self._make_button("btn.status", self._on_query_status)
         status_row.addWidget(self.status_btn)
         status_row.addStretch()
-        return [manage_row, status_row]
+        long_row = QHBoxLayout()
+        self.check_running_btn = self._make_button(
+            "btn.check_running", self._on_check_long_running)
+        long_row.addWidget(self.check_running_btn)
+        self.stop_long_keep_btn = self._make_button(
+            "btn.stop_long_keep", self._on_stop_long_task_keep)
+        long_row.addWidget(self.stop_long_keep_btn)
+        return [manage_row, status_row, long_row]
 
     def _build_scheduled_control_group(self) -> QGroupBox:
         group = self._make_group("group.scheduled")
@@ -252,6 +259,37 @@ class TaskTab(BaseTab):
             self._show_op_result(self._tr("tab_task", "title.stop_long"),
                                  self.task_service.stop_long_task(task_id))
             self._on_query_tasks()
+
+    def _on_stop_long_task_keep(self):
+        """停止长期任务但保留存储记录（delete_from_storage=False 语义演示）"""
+        task_id = self._selected_task_id()
+        if task_id:
+            self._show_op_result(
+                self._tr("tab_task", "title.stop_long_keep"),
+                self.task_service.stop_long_task(task_id, delete_from_storage=False))
+            self._on_query_tasks()
+
+    def _on_check_long_running(self):
+        """查询长期任务是否在运行（is_long_task_running 运行时表口径演示）"""
+        task_id = self._selected_task_id()
+        if not task_id:
+            return
+        self._show_running_check_result(
+            self.task_service.is_long_task_running_demo(task_id))
+
+    def _show_running_check_result(self, result: dict):
+        """展示 is_long_task_running 判定结果（并列展示 current_status 作对照）"""
+        title = self._tr("tab_task", "title.check_running")
+        self._log(f"{title}: {result}")
+        if not result.get("success"):
+            self._display_result(self._tr("common", "result.fail", title=title),
+                                 result.get("error", ""), is_error=True)
+            return
+        running_key = "status.running" if result.get("running") else "status.not_running"
+        content = self._tr("tab_task", "msg.check_running",
+                           running=self._tr("tab_task", running_key),
+                           status=result.get("current_status"))
+        self._display_result(self._tr("common", "result.success", title=title), content)
 
     def _on_query_status(self):
         task_id = self._selected_task_id()

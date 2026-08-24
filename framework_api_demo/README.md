@@ -20,7 +20,8 @@ Framework API Demo 插件用于演示 InstructionX 框架提供的核心 API 接
 
 - 同步 / 异步任务创建（`register_sync_task()` / `register_async_task()`，带完成回调）
 - 定时任务创建、启用 / 禁用、注销（`register_scheduled_task()` / `enable_scheduled_task()` / `disable_scheduled_task()` / `unregister_scheduled_task()`）
-- 长期任务创建与优雅停止（`register_long_running_task()` / `stop_long_running_task()` / `update_long_running_task_status()`，stop_event 模式）
+- 长期任务创建与优雅停止（`register_long_running_task()` / `stop_long_running_task(delete_from_storage=)` / `update_long_running_task_status()`，stop_event 模式；含「停止并保留存储记录」语义演示）
+- 长期任务运行判定（`is_long_task_running()`，运行时表口径，与 `current_status` 自由文本对照）
 - 任务取消与状态查询（`cancel_task()` / `get_task_status()` / `get_task()`）
 - 任务列表查询与已完成任务清理（`get_tasks_by_plugin()` / `get_scheduled_tasks()` / `get_long_running_tasks()` / `clear_completed_tasks()`）
 - 定时任务间隔范围由 `config/default.json` 的 `task` 段配置（UI SpinBox 实时读取）

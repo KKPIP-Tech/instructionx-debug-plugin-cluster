@@ -205,19 +205,48 @@ class TaskDemoService(Service):
         except Exception as e:
             self.logger.error(get_name(), f"长期任务状态回调处理失败 {name}: {e}")
 
-    def stop_long_task(self, task_id: str) -> Dict[str, Any]:
-        """演示停止长期任务（触发 stop_callback，func 经 stop_event 优雅退出）"""
+    def stop_long_task(self, task_id: str, delete_from_storage: bool = True) -> Dict[str, Any]:
+        """演示停止长期任务（触发 stop_callback，func 经 stop_event 优雅退出）
+
+        delete_from_storage=True（默认）：停止并从持久化存储删除记录；
+        False：仅停止并在存储中保留「已停止」记录（演示两种语义）。
+        框架新版返回 False 的完整语义：任务不在运行时表，且删除语义下
+        存储记录删除失败（通常即不存在该任务的残留记录）。
+        """
         try:
-            stopped = self.tm.stop_long_running_task(task_id)
+            stopped = self.tm.stop_long_running_task(
+                task_id, delete_from_storage=delete_from_storage)
         except Exception as e:
             return {"success": False, "error": str(e)}
         if stopped:
-            return {"success": True, "message": self._tr(
-                "svc_task", "msg.long_stopped_ok",
-                default="长期任务 {id} 已停止", id=task_id)}
+            key = "msg.long_stopped_ok" if delete_from_storage else "msg.long_stopped_keep"
+            default = ("长期任务 {id} 已停止" if delete_from_storage
+                       else "长期任务 {id} 已停止（保留存储记录）")
+            return {"success": True, "message": self._tr("svc_task", key, default=default, id=task_id)}
         return {"success": False, "error": self._tr(
             "svc_task", "err.long_not_running",
-            default="长期任务 {id} 不存在或未在运行", id=task_id)}
+            default="长期任务 {id} 不存在、未在运行，且无残留存储记录可删除", id=task_id)}
+
+    def is_long_task_running_demo(self, task_id: str) -> Dict[str, Any]:
+        """演示 is_long_task_running 判定口径
+
+        长期任务的 current_status 同时承载生命周期状态与插件自由文本
+        （update_long_running_task_status 写入的就是状态描述），不能作为
+        「是否在运行」的依据；is_long_task_running 查询运行时表，是唯一
+        可靠口径。本演示把两种口径并列返回供对照。
+        """
+        try:
+            running = self.tm.is_long_task_running(task_id)
+            stored = {t.task_id: t for t in self.tm.get_long_running_tasks(self.plugin_id)}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+        task = stored.get(task_id)
+        return {
+            "success": True,
+            "task_id": task_id,
+            "running": running,
+            "current_status": task.current_status if task is not None else None,
+        }
 
     # ------------------------------------------------------------------
     #  任务取消 / 状态查询

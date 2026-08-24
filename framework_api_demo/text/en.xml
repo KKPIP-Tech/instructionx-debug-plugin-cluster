@@ -101,6 +101,8 @@
     <text key="btn.clear">Clear Completed Tasks</text>
     <text key="btn.cancel">Cancel Task</text>
     <text key="btn.stop_long">Stop Long-Running Task</text>
+    <text key="btn.stop_long_keep">Stop (Keep Record)</text>
+    <text key="btn.check_running">Check Running</text>
     <text key="btn.status">Query Status</text>
     <text key="group.scheduled">Scheduled Task Control</text>
     <text key="label.task_id">Task ID:</text>
@@ -115,6 +117,10 @@
     <text key="title.unregister_scheduled">Unregister Scheduled Task</text>
     <text key="title.cancel">Cancel Task</text>
     <text key="title.stop_long">Stop Long-Running Task</text>
+    <text key="title.stop_long_keep">Stop Long-Running Task (Keep Record)</text>
+    <text key="title.check_running">Long-Running Task Running Check (is_long_task_running)</text>
+    <text key="msg.check_running">Running: {running} (compare current_status: {status})</text>
+    <text key="status.not_running">Not running</text>
     <text key="title.status">Query Status</text>
     <text key="title.enable">Enable Scheduled Task</text>
     <text key="title.disable">Disable Scheduled Task</text>
@@ -439,7 +445,8 @@ Provider: {provider}</text>
     <text key="msg.long_stop_signal">Long-running task received stop signal: {name}</text>
     <text key="msg.long_status">Long-running task status: {name} -&gt; {status}</text>
     <text key="msg.long_stopped_ok">Long-running task {id} stopped</text>
-    <text key="err.long_not_running">Long-running task {id} does not exist or is not running</text>
+    <text key="msg.long_stopped_keep">Long-running task {id} stopped (storage record kept)</text>
+    <text key="err.long_not_running">Long-running task {id} does not exist, is not running, and has no residual storage record to delete</text>
     <text key="msg.cancelled">Task {id} marked as cancelled</text>
     <text key="err.not_running">Task {id} is not in the running list</text>
     <text key="err.not_found">Task {id} does not exist</text>
