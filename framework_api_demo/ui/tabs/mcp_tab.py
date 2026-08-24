@@ -19,6 +19,10 @@ from InstructionX_UIKit.components import Button, ListWidget, Message, TextArea
 from core.interfaces import ILocalizationFacade
 from utils.thread_utils import run_in_ui_thread
 
+from ..metrics import (
+    BRIDGE_NOTE_MAX_HEIGHT, GROUP_SPACING, MCP_LIST_MAX_HEIGHT,
+    REMOTE_CONFIG_MAX_HEIGHT, SERVER_STATUS_MAX_HEIGHT,
+)
 from .base_tab import BaseTab
 
 # 结果面板展示 JSON 的缩进宽度
@@ -77,10 +81,10 @@ class MCPTab(BaseTab):
         """内置 MCP Server 分组：状态展示 + 启动/停止/刷新"""
         group = self._make_group("group.server")
         layout = QVBoxLayout()
-        layout.setSpacing(8)
+        layout.setSpacing(GROUP_SPACING)
         self.server_status_text = TextArea()
         self.server_status_text.setReadOnly(True)
-        self.server_status_text.setMaximumHeight(90)
+        self.server_status_text.setMaximumHeight(SERVER_STATUS_MAX_HEIGHT)
         layout.addWidget(self.server_status_text)
         for row in self._build_server_button_rows():
             layout.addLayout(row)
@@ -105,17 +109,17 @@ class MCPTab(BaseTab):
         """桥接工具分组：说明文案 + 本插件自动桥接的 MCP 工具清单"""
         group = self._make_group("group.bridge")
         layout = QVBoxLayout()
-        layout.setSpacing(8)
+        layout.setSpacing(GROUP_SPACING)
         self.bridge_note_text = TextArea()
         self.bridge_note_text.setReadOnly(True)
-        self.bridge_note_text.setMaximumHeight(70)
+        self.bridge_note_text.setMaximumHeight(BRIDGE_NOTE_MAX_HEIGHT)
         self.bridge_note_text.setPlainText(self._tr("tab_mcp", "note.bridge"))
         layout.addWidget(self.bridge_note_text)
         self.list_bridge_btn = self._make_button(
             "btn.list_bridge", self._on_list_bridged_tools, variant="primary")
         layout.addWidget(self.list_bridge_btn)
         self.bridge_tools_list = ListWidget()
-        self.bridge_tools_list.setMaximumHeight(90)
+        self.bridge_tools_list.setMaximumHeight(MCP_LIST_MAX_HEIGHT)
         layout.addWidget(self.bridge_tools_list)
         group.setLayout(layout)
         return group
@@ -124,9 +128,9 @@ class MCPTab(BaseTab):
         """远程 MCP Server 分组：可编辑配置 + 连接/断开/刷新/查看工具"""
         group = self._make_group("group.remote")
         layout = QVBoxLayout()
-        layout.setSpacing(8)
+        layout.setSpacing(GROUP_SPACING)
         self.remote_config_text = TextArea()
-        self.remote_config_text.setMaximumHeight(130)
+        self.remote_config_text.setMaximumHeight(REMOTE_CONFIG_MAX_HEIGHT)
         sample = self.mcp_service.get_remote_demo_config()
         self.remote_config_text.setPlainText(
             json.dumps(sample, indent=JSON_DISPLAY_INDENT, ensure_ascii=False)
@@ -135,7 +139,7 @@ class MCPTab(BaseTab):
         for row in self._build_remote_button_rows():
             layout.addLayout(row)
         self.remote_list = ListWidget()
-        self.remote_list.setMaximumHeight(90)
+        self.remote_list.setMaximumHeight(MCP_LIST_MAX_HEIGHT)
         layout.addWidget(self.remote_list)
         group.setLayout(layout)
         return group

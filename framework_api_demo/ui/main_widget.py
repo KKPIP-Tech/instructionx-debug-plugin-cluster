@@ -22,6 +22,10 @@ from InstructionX_UIKit.components import Button, Tabs, TextArea
 from core.i18n import get_language_manager
 from core.interfaces import ILocalizationFacade
 
+from .metrics import (
+    LEFT_PANEL_SPACING, LOG_PANEL_MAX_HEIGHT, MAIN_MARGIN, MAIN_SPACING,
+    PANEL_INNER_SPACING, TAB_BAR_H_PADDING,
+)
 from .tabs import APITab, DataTab, InfoTab, LLMTab, MCPTab, TaskTab
 
 # 右侧 Tab 操作面板固定宽度（像素）：各 Tab 的宽按钮行已压缩为多行排布，
@@ -117,8 +121,8 @@ class MainWidget(QWidget):
     def _build_widget_layout(self):
         """构建主控件左右分栏布局（右侧固定宽度，左侧弹性）"""
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(12, 12, 12, 12)
-        layout.setSpacing(12)
+        layout.setContentsMargins(MAIN_MARGIN, MAIN_MARGIN, MAIN_MARGIN, MAIN_MARGIN)
+        layout.setSpacing(MAIN_SPACING)
 
         layout.addWidget(self._build_left_panel(), stretch=1)
         layout.addWidget(self._build_right_panel(), stretch=0)
@@ -128,7 +132,7 @@ class MainWidget(QWidget):
         panel = QWidget()
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(8)
+        layout.setSpacing(LEFT_PANEL_SPACING)
         layout.addWidget(self._build_result_group(), stretch=3)
         layout.addWidget(self._build_log_group(), stretch=1)
         return panel
@@ -137,7 +141,7 @@ class MainWidget(QWidget):
         """构建「操作结果」分组：只读展示区 + 清除按钮"""
         self._result_group = QGroupBox(self._tr("main", "panel.result.title"))
         layout = QVBoxLayout()
-        layout.setSpacing(4)
+        layout.setSpacing(PANEL_INNER_SPACING)
         self.result_display = TextArea()
         self.result_display.setReadOnly(True)
         self.result_display.setFont(QFont(MONO_FAMILY))
@@ -152,11 +156,11 @@ class MainWidget(QWidget):
         """构建「执行日志」分组：只读限高日志区"""
         self._log_group = QGroupBox(self._tr("main", "panel.log.title"))
         layout = QVBoxLayout()
-        layout.setSpacing(4)
+        layout.setSpacing(PANEL_INNER_SPACING)
         self.log_text = TextArea()
         self.log_text.setReadOnly(True)
         self.log_text.setFont(QFont(MONO_FAMILY))
-        self.log_text.setMaximumHeight(160)
+        self.log_text.setMaximumHeight(LOG_PANEL_MAX_HEIGHT)
         layout.addWidget(self.log_text)
         self._log_group.setLayout(layout)
         return self._log_group
@@ -173,7 +177,8 @@ class MainWidget(QWidget):
         # 实例级收窄标签头内边距（UIKit 默认左右 16px），使 6 个标签在
         # 固定宽度内完整显示；仅作用于本实例 tabBar，不影响全局主题
         self._tab_widget.tabBar().setStyleSheet(
-            "QTabBar::tab { padding-left: 6px; padding-right: 6px; }"
+            f"QTabBar::tab {{ padding-left: {TAB_BAR_H_PADDING}px; "
+            f"padding-right: {TAB_BAR_H_PADDING}px; }}"
         )
         self._populate_tabs()
         layout.addWidget(self._tab_widget)

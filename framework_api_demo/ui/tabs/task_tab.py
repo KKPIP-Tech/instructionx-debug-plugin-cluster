@@ -17,6 +17,7 @@ from InstructionX_UIKit.components import Button, ComboBox, LineEdit, ListWidget
 from core.interfaces import ILocalizationFacade
 from utils.thread_utils import run_in_ui_thread
 
+from ..metrics import FORM_SPACING, GROUP_SPACING, ROW_SPACING, TASK_LIST_MAX_HEIGHT
 from .base_tab import BaseTab
 
 #: 列表项类型标记（存于 item 的 UserRole+1），用于按类型分发操作按钮
@@ -83,7 +84,7 @@ class TaskTab(BaseTab):
     def _build_task_create_group(self) -> QGroupBox:
         group = self._make_group("group.create")
         form = QFormLayout()
-        form.setSpacing(6)
+        form.setSpacing(FORM_SPACING)
         self.task_name_input = LineEdit(text="demo_task")
         form.addRow(self._make_tab_label("label.name"), self.task_name_input)
         self.task_type_combo = ComboBox(items=list(_TASK_TYPES))
@@ -111,12 +112,12 @@ class TaskTab(BaseTab):
     def _build_task_query_group(self) -> QGroupBox:
         group = self._make_group("group.query")
         layout = QVBoxLayout()
-        layout.setSpacing(8)
+        layout.setSpacing(GROUP_SPACING)
         self.query_tasks_btn = self._make_button(
             "btn.query", self._on_query_tasks, variant="primary")
         layout.addWidget(self.query_tasks_btn)
         self.tasks_list = ListWidget()
-        self.tasks_list.setMaximumHeight(100)
+        self.tasks_list.setMaximumHeight(TASK_LIST_MAX_HEIGHT)
         layout.addWidget(self.tasks_list)
         for row in self._build_task_action_rows():
             layout.addLayout(row)
@@ -128,7 +129,7 @@ class TaskTab(BaseTab):
     def _build_task_action_rows(self) -> list:
         """构建任务操作按钮行（拆为三行，适配收窄后的面板宽度，作用于列表选中项）"""
         manage_row = QHBoxLayout()
-        manage_row.setSpacing(8)
+        manage_row.setSpacing(ROW_SPACING)
         self.cancel_task_btn = self._make_button("btn.cancel", self._on_cancel_task)
         manage_row.addWidget(self.cancel_task_btn)
         self.stop_long_btn = self._make_button("btn.stop_long", self._on_stop_long_task)
@@ -149,9 +150,9 @@ class TaskTab(BaseTab):
     def _build_scheduled_control_group(self) -> QGroupBox:
         group = self._make_group("group.scheduled")
         layout = QVBoxLayout()
-        layout.setSpacing(8)
+        layout.setSpacing(GROUP_SPACING)
         form = QFormLayout()
-        form.setSpacing(6)
+        form.setSpacing(FORM_SPACING)
         self.scheduled_id_input = LineEdit(
             placeholder=self._tr("tab_task", "placeholder.scheduled_id"))
         self._bind(self.scheduled_id_input, "tab_task", "placeholder.scheduled_id",
@@ -165,7 +166,7 @@ class TaskTab(BaseTab):
     def _build_scheduled_button_row(self) -> QHBoxLayout:
         """构建定时任务控制按钮行：启用 / 禁用 / 注销"""
         row = QHBoxLayout()
-        row.setSpacing(8)
+        row.setSpacing(ROW_SPACING)
         self.enable_scheduled_btn = self._make_button("btn.enable", self._on_enable_scheduled)
         row.addWidget(self.enable_scheduled_btn)
         self.disable_scheduled_btn = self._make_button("btn.disable", self._on_disable_scheduled)

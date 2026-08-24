@@ -20,13 +20,11 @@ from InstructionX_UIKit.components import Button, LineEdit, TextArea
 
 from core.interfaces import ILocalizationFacade
 
+from ..metrics import GROUP_SPACING
 from .base_tab import BaseTab
 
 # 结果面板展示 JSON 的缩进宽度
 _JSON_INDENT = 2
-
-# 分组内布局默认间距（像素）
-_GROUP_SPACING = 8
 
 
 class _ThemeConnectionGuard(QObject):
@@ -105,7 +103,7 @@ class InfoTab(BaseTab):
     def _build_info_group(self) -> QGroupBox:
         group = self._make_group("group.info")
         layout = QVBoxLayout()
-        layout.setSpacing(8)
+        layout.setSpacing(GROUP_SPACING)
         self.get_info_btn = self._make_button(
             "btn.get_info", self._on_get_framework_info, variant="primary")
         layout.addWidget(self.get_info_btn)

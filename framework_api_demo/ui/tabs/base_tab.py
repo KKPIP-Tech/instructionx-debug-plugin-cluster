@@ -15,6 +15,8 @@ from InstructionX_UIKit.components import Button
 
 from core.interfaces import ILocalizationFacade
 
+from ..metrics import TAB_CONTENT_MARGIN, TAB_CONTENT_SPACING
+
 
 class BaseTab:
     """演示 Tab 基类
@@ -104,8 +106,10 @@ class BaseTab:
 
         widget = QWidget()
         layout = QVBoxLayout(widget)
-        layout.setSpacing(10)
-        layout.setContentsMargins(4, 4, 4, 4)
+        layout.setSpacing(TAB_CONTENT_SPACING)
+        layout.setContentsMargins(
+            TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN,
+            TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN)
 
         scroll.setWidget(widget)
         return scroll, layout

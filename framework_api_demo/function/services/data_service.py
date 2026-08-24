@@ -6,6 +6,7 @@ Framework API Demo 数据演示服务
 """
 
 import hashlib
+import threading
 from typing import Any, Callable, Dict, List, Optional
 
 from core.data.data_provider import DataNamespace
@@ -34,6 +35,8 @@ class DataDemoService(Service):
         # 订阅事件缓存与 UI 通知回调（订阅回调在工作线程触发，
         # 事件先入缓存，UI 经 notifier 封送后自行拉取展示）
         self._events: List[Dict[str, Any]] = []
+        # 订阅回调在工作线程执行、UI 线程拉取展示，跨线程读写需加锁
+        self._events_lock = threading.Lock()
         self._event_notifier = event_notifier
 
     def register_demo_plugin(self) -> Dict[str, Any]:
@@ -181,8 +184,9 @@ class DataDemoService(Service):
             return {"success": False, "error": str(e)}
 
     def get_subscription_events(self) -> Dict[str, Any]:
-        """返回已收集的订阅事件列表（供 UI 拉取展示）"""
-        return {"success": True, "events": list(self._events)}
+        """返回已收集的订阅事件列表（供 UI 拉取展示，加锁复制快照）"""
+        with self._events_lock:
+            return {"success": True, "events": list(self._events)}
 
     def get_active_instance_demo(self) -> Dict[str, Any]:
         """演示按插件类型查询当前活跃实例 ID"""
@@ -202,9 +206,10 @@ class DataDemoService(Service):
                 "old_value": old_value,
                 "new_value": new_value,
             }
-            self._events.append(event)
-            if len(self._events) > MAX_SUBSCRIPTION_EVENTS:
-                del self._events[:len(self._events) - MAX_SUBSCRIPTION_EVENTS]
+            with self._events_lock:
+                self._events.append(event)
+                if len(self._events) > MAX_SUBSCRIPTION_EVENTS:
+                    del self._events[:len(self._events) - MAX_SUBSCRIPTION_EVENTS]
             self._notify_event(self._tr(
                 "svc_data", "event.subscription", default="订阅事件: {id}.{key} = {value}",
                 id=target_plugin_id, key=key, value=new_value))
