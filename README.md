@@ -4,11 +4,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.14+-blue.svg)](https://www.python.org/)
 [![PySide6](https://img.shields.io/badge/PySide6-6.10+-green.svg)](https://doc.qt.io/qtforpython/)
-[![License](https://img.shields.io/badge/License-Modified%20Apache%202.0-orange.svg)](#license)
 
-**InstructionX 框架官方插件集合**
-
-[English](./README_en.md) | 中文
+**InstructionX 框架官方插件集合（Debug Plugin Cluster）**
 
 </div>
 
@@ -33,7 +30,7 @@
 
 | 插件 | ID | 描述 |
 |------|-----|------|
-| **Framework API Demo** | `framework-api-demo` | 框架所有核心 API 的完整演示，包括 DataProvider、BackgroundTaskManager、LLMProvider、PluginManager、LoggerManager |
+| **Framework API Demo** | `framework-api-demo` | 框架所有核心 API 的完整演示，包括 DataProvider、BackgroundTaskManager、LLMProvider、PluginManager、LoggerManager、FontManager |
 | **UI Demo** | `ui-demo` | InstructionX_UIKit 组件体系展示，包括基础控件、输入、展示、反馈、布局、动画、图表、蓝图节点图等 |
 | **Blueprint OpenCV** | `blueprint-opencv` | 蓝图节点化 OpenCV 图像处理：拖拉拽节点、参数调节、实时预览、蓝图工作流存档管理 |
 
@@ -59,10 +56,12 @@
 
 | 接口 | 功能 | 正常状态 | 错误状态 |
 |-----|------|---------|---------|
-| `register_sync_task()` | 注册同步任务 | 返回 task_id | - |
-| `register_async_task()` | 注册异步任务 | 返回 task_id | - |
+| `register_sync_task()` | 注册同步任务（在调用线程**立即执行**） | 返回 task_id | - |
+| `register_async_task()` | 注册异步任务（在线程池后台执行） | 返回 task_id | - |
 | `register_scheduled_task()` | 注册定时任务 | 返回 task_id | - |
 | `register_long_running_task()` | 注册长期任务 | 返回 task_id | - |
+| `stop_long_running_task()` | 停止长期任务（可清理存储残留） | 返回 True/False | - |
+| `is_long_task_running()` | 判定长期任务是否运行中 | 返回 True/False | - |
 | `get_tasks_by_plugin()` | 获取插件任务列表 | 返回 List[BackgroundTask] | - |
 | `get_scheduled_tasks()` | 获取定时任务列表 | 返回 List[ScheduledTask] | - |
 | `get_task_status()` | 获取任务状态 | 返回 TaskStatus 或 None | - |
@@ -106,7 +105,9 @@
 | `error()` | 错误日志 | 返回 None | - |
 | `critical()` | 严重错误日志 | 返回 None | - |
 
-### 6. IPlugin 基类 (core/plugin/plugin_interface.py)
+> 签名说明：各级方法签名为 `info(module_name, message)`——第一参数是模块名，第二参数才是日志内容；插件侧通常直接使用注入的 `services.logger`（已绑定模块名）。
+
+### 6. IPlugin 基类（抽象接口 `core/interfaces/i_plugin.py`，框架实现 `core/plugin/plugin_interface.py`）
 
 | 属性/方法 | 功能 |
 |----------|------|
@@ -116,6 +117,19 @@
 | `on_plugin_loaded()` | 插件加载完成回调 |
 | `skill_icon` | 技能图标 |
 | `skill_description` | 技能描述 |
+
+### 7. PluginServices 依赖注入（core/interfaces/plugin_services.py）
+
+插件构造函数接收 `services: PluginServices`，经它获取全部框架服务（始终注入、无需自行实例化单例）：
+
+| 字段 | 功能 |
+|------|------|
+| `data_provider` | 数据持久化与发布订阅 |
+| `task_manager` | 后台任务管理 |
+| `llm` | LLM 插件服务门面（ILLMService） |
+| `font_manager` | 字体安装/卸载/预览 |
+| `localization` | 插件取词门面（`tr(group, key, **params)`） |
+| `logger` | 绑定插件模块名的日志器 |
 
 ---
 
@@ -132,13 +146,13 @@
 #### 方法一：GitHub 安装（推荐）
 
 1. 打开 InstructionX 应用
-2. 进入 `Edit` > `Install GitHub Plugin`
+2. 进入「编辑 > 插件管理...」，在插件管理对话框中选择「从 GitHub 安装」
 3. 输入插件仓库地址：
    ```
-   https://github.com/KKPIP-Tech/InstructionX-Plugins
+   https://github.com/KKPIP-Tech/instructionx-debug-plugin-cluster
    ```
 4. 选择要安装的插件
-5. 点击 Install，插件将下载到 `plugin/` 目录
+5. 点击安装，插件将下载到 `plugin/` 目录
 
 #### 方法二：手动安装
 
@@ -165,121 +179,28 @@ IX_For_Debug_Cluster/
 
 ## 插件使用指南
 
-详见各插件目录下的 `README.md`，其中 **Framework API Demo** 插件包含最详细的 API 文档。
+详见 `blueprint_opencv/README.md` 与 `framework_api_demo/README.md`，其中 **Framework API Demo** 插件包含最详细的 API 文档。
 
 ---
 
 ## 开发指南
 
-### 创建新插件
+插件开发请遵循以下权威文档（本 README 不再内嵌代码示例，避免多源失真）：
 
-#### 1. 创建插件目录结构
+- `PLUGIN_STRUCTURE_GUIDE.md` — 本插件集的目录结构、职责划分、导入、配置与文档规范；
+- 框架仓库根目录 `AGENTS-for-PLUGIN-DEV.md` — 插件开发硬性规则（分层职责、导入规范、错误处理、设计模式等）；
+- 框架仓库 `docs/core/plugin-system/plugin-development.md` — 从零开发插件的完整指南；
+- 参考实现：`framework_api_demo/`（框架服务注入、i18n 取词、热重载清理的样板）。
 
-```
-plugin/
-└── my_awesome_plugin/
-    ├── __init__.py
-    ├── entrance.py
-    ├── service.py
-    └── IXPlugin.json
-```
+### 最佳实践（要点）
 
-#### 2. 编写 IXPlugin.json
-
-```json
-{
-    "id": "my-awesome-plugin",
-    "name": "My Awesome Plugin",
-    "version": "release.1.0.0",
-    "main": "entrance.py",
-    "description": "一个很棒的插件",
-    "author": "Your Name",
-    "author_email": "you@example.com",
-    "homepage": "https://github.com/KKPIP-Tech/InstructionX",
-    "keywords": ["instructionx", "plugin", "awesome"],
-    "dependencies": {}
-}
-```
-
-#### 3. 编写 service.py
-
-```python
-"""业务逻辑层"""
-
-class MyService:
-    def __init__(self, plugin_id):
-        self.plugin_id = plugin_id
-
-    def do_awesome_thing(self, input_text: str) -> str:
-        """主要功能"""
-        return input_text.upper()
-
-    def register_api(self) -> dict:
-        """返回 API 方法供跨插件调用"""
-        return {
-            "do_awesome_thing": self.do_awesome_thing
-        }
-```
-
-#### 4. 编写 entrance.py
-
-```python
-"""插件入口 - UI 实现"""
-
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QTextEdit
-from core.plugin.plugin_interface import IPlugin
-
-class MyAwesomePlugin(IPlugin):
-    @property
-    def plugin_name(self) -> str:
-        return "My\nAwesome"
-
-    def _create_widget(self, parent=None, data_provider=None) -> QWidget:
-        self.service = MyService(self.plugin_id)
-
-        widget = QWidget(parent)
-        layout = QVBoxLayout(widget)
-        layout.addWidget(QLabel("My Awesome Plugin"))
-
-        self.input_text = QTextEdit()
-        layout.addWidget(self.input_text)
-
-        self.output_text = QTextEdit()
-        self.output_text.setReadOnly(True)
-        layout.addWidget(self.output_text)
-
-        btn = QPushButton("Do Awesome Thing")
-        btn.clicked.connect(self._on_button_clicked)
-        layout.addWidget(btn)
-
-        return widget
-
-    def _on_button_clicked(self):
-        input_data = self.input_text.toPlainText()
-        result = self.service.do_awesome_thing(input_data)
-        self.output_text.setText(result)
-
-    def on_plugin_loaded(self):
-        from core.plugin.manager import PluginManager
-        pm = PluginManager()
-        pm.register_plugin_api(self.plugin_id, self.service.register_api())
-```
-
-#### 5. 测试插件
-
-1. 将插件目录复制到 `[InstructionX]/plugin/`
-2. 启动 InstructionX
-3. 在技能面板中找到插件并测试
-
-### 最佳实践
-
-1. **分离 UI 与逻辑**：业务逻辑放在 `service.py`，UI 放在 `entrance.py`
-2. **使用 DataProvider 持久化**：不要使用全局变量存储需要持久化的数据
-3. **优雅处理错误**：用 try/except 包装 API 调用
-4. **记录重要事件**：使用 LoggerManager 进行调试日志
-5. **插件 ID 一致性**：使用与 `IXPlugin.json` 相同的 ID 格式
-6. **线程安全**：长时间运行的操作使用 QThread，通过信号更新 UI
-7. **资源清理**：如需要，在析构函数中清理资源
+1. **分层职责**：`entrance.py` 只做胶水层，业务逻辑在 `function/`，对外 API 在 `service.py`，UI 只做渲染与事件分发
+2. **框架服务注入**：统一经构造函数注入的 `PluginServices` 获取框架服务，不自行实例化框架单例
+3. **跨插件 API**：在 `information.py` 声明 `service_api` 并提供 `service.py`（类名以 `Service` 结尾），框架自动注册并同步为 MCP 工具，无需手动 `register_plugin_api`
+4. **数据持久化**：使用 DataProvider，不用全局变量存需持久化的数据
+5. **错误处理**：不裸 `except`、不静默吞异常；面向用户的错误弹窗 + 记日志
+6. **线程安全**：阻塞操作放入后台任务（`register_async_task`）；工作线程回调更新 UI 须经 `utils.thread_utils` 封送
+7. **多语言（可选）**：提供 `text/<语言代码>.xml` 语言包，经 `services.localization` 取词；IXPlugin.json 的 `name`/`description` 支持多语言字典
 
 ---
 
@@ -298,6 +219,7 @@ plugin/
 │   ├── function/                        # 业务逻辑（节点目录/执行引擎）
 │   ├── ui/                              # 视图层（蓝图画布/列表面板）
 │   ├── config/                          # 配置文件
+│   ├── text/                            # 语言包（zh.xml / en.xml）
 │   ├── assets/                          # 示例图片
 │   ├── docs/                            # 插件文档（PRD/SPEC）
 │   └── IXPlugin.json
@@ -309,6 +231,9 @@ plugin/
 │   ├── function/                        # 业务逻辑
 │   ├── ui/                              # 视图层
 │   ├── config/                          # 配置文件
+│   ├── text/                            # 语言包（zh.xml / en.xml）
+│   ├── assets/                          # 资源文件
+│   ├── icons/                           # 图标资源
 │   ├── docs/                            # 插件文档（PRD/SPEC/实现文档）
 │   ├── IXPlugin.json
 │   └── README.md                        # API 详细文档
@@ -320,6 +245,7 @@ plugin/
     ├── function/                        # 业务逻辑（含组件目录）
     ├── ui/                              # 视图层（pages/ 各组件演示页）
     ├── config/                          # 配置文件
+    ├── text/                            # 语言包（zh.xml / en.xml）
     ├── docs/                            # 插件文档（PRD/SPEC）
     └── IXPlugin.json
 ```
@@ -328,9 +254,7 @@ plugin/
 
 ## License
 
-本项目基于 **Modified Apache License 2.0** 许可证。
-
-详细信息请参阅 InstructionX 主仓库的 [LICENSE](https://github.com/KKPIP-Tech/InstructionX/blob/main/LICENSE) 文件。
+本仓库为 InstructionX 官方插件集，许可条款与 InstructionX 主仓库保持一致，请参阅主仓库的 [LICENSE](https://github.com/KKPIP-Tech/InstructionX/blob/main/LICENSE) 文件。
 
 ---
 
