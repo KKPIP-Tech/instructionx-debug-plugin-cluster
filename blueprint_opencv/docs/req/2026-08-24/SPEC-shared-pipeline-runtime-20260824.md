@@ -1,7 +1,21 @@
 # SPEC：双 Service 实例共享管线运行态
 
 - 创建日期：2026-08-24
-- 修改日期：2026-08-24
+- 修改日期：2026-08-25（修订：双模块身份问题与主实例委托）
+
+> **修订注记（2026-08-25）**：端到端验证发现框架以两种包名加载本插件
+> （entrance 经 `blueprint_opencv.entrance`，自动注册经
+> `plugin.blueprint_opencv.service`），两套模块身份的 runtime_registry
+> 各持独立 `_RUNTIMES`，「模块级注册表按 plugin_id 共享」在真实加载
+> 路径下不成立。最终方案叠加**主实例委托**：`BlueprintOpenCVService.
+> __init__` 经 `_resolve_runtime()` 先查 PluginManager 单例中本插件实例
+> 的活动 Service（`_service`，entrance 在 on_plugin_loaded 创建，先于
+> 自动注册就位），复用其 PipelineRuntime 对象引用（对象引用跨模块身份
+> 有效，鸭子类型访问不要求类身份一致）；取不到（独立运行/测试）才回退
+> 本身份的注册表。runtime_registry 保留，服务主实例身份的创建与卸载
+> 清理。验证：`temp/e2e_plugin_load_smoke.py`（PluginManager 真实加载
+> 路径，双实例共享断言 + API 实例读 UI 图快照）与
+> `temp/bp_shared_runtime_smoke.py`（独立运行回退路径）全部通过。
 
 ## 技术方案与决策（Why）
 

@@ -10,9 +10,16 @@ entrance 为 UI 创建的实例并存。若每个实例各自持有 PipelineCont
 （数据损坏）。
 
 本模块以 ``plugin_id`` 为键提供进程内唯一的 :class:`PipelineRuntime`
-（PipelineController + 当前图快照），同一插件的全部 Service 实例共享
-同一运行实例；插件卸载时由 entrance 调用 :func:`drop_pipeline_runtime`
-显式清理，热重载后可干净重建。
+（PipelineController + 当前图快照）；插件卸载时由 entrance 调用
+:func:`drop_pipeline_runtime` 显式清理，热重载后可干净重建。
+
+注意（框架双模块身份限制）：框架以两种包名加载本插件——entrance 经
+``blueprint_opencv.entrance``、自动注册经 ``plugin.blueprint_opencv.
+service`` 导入——两套身份各持一份本模块的 ``_RUNTIMES``，模块级注册表
+**无法跨身份共享**。真正的跨身份共享由 service 层的「主实例委托」完成
+（``BlueprintOpenCVService._resolve_runtime``：自动注册路径创建的实例
+经 PluginManager 单例找到 entrance 的活动 Service，直接复用其
+PipelineRuntime 对象引用）；本注册表只服务主实例所在身份的创建与清理。
 """
 
 import threading

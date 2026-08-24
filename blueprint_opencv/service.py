@@ -27,6 +27,7 @@ from typing import Any, Callable, Dict, Optional
 from PySide6.QtCore import QObject, Signal
 
 from core.data.data_provider import DataProvider, DataProviderError
+from core.plugin.manager import PluginManager
 from core.task.background_task import BackgroundTaskManager
 from utils.logging_tools import LoggerManager
 
@@ -105,7 +106,35 @@ class BlueprintOpenCVService(QObject):
         # 共享运行实例（按 plugin_id 进程内唯一）：框架自动注册跨插件 API
         # 时自行实例化的第二个本类对象解析到同一 runtime，避免 MCP
         # run_pipeline 跑空图、save_graph 以空图覆盖用户存档
-        self._runtime = runtime_registry.get_pipeline_runtime(self._plugin_id)
+        self._runtime = self._resolve_runtime()
+
+    def _resolve_runtime(self) -> "runtime_registry.PipelineRuntime":
+        """解析共享运行实例。
+
+        框架以两种模块身份加载本插件（`_load_plugin_from_directory` 用
+        包名 `blueprint_opencv` 加载 entrance，`_auto_register_plugin_api`
+        用包名 `plugin.blueprint_opencv` 导入本模块），两套身份的
+        runtime_registry 各持一份独立 _RUNTIMES，模块级注册表无法跨身份
+        共享。因此优先复用「主实例」（entrance 在 on_plugin_loaded 创建、
+        挂在插件实例 `_service` 上的活动 Service，其对象引用跨模块身份
+        有效）的运行实例；取不到（独立运行/测试）才回退本身份的注册表。
+        """
+        primary = self._find_primary_service()
+        if primary is not None and primary is not self:
+            return primary._runtime
+        return runtime_registry.get_pipeline_runtime(self._plugin_id)
+
+    def _find_primary_service(self) -> Optional["BlueprintOpenCVService"]:
+        """经 PluginManager 单例查本插件实例的活动 Service（无则 None）。
+
+        插件实例在框架注册表中先于一动注册就位（manager.py 先行
+        `_plugin_registry[plugin_id] = plugin_instance`），因此自动注册
+        路径实例化本类时主实例已存在；鸭子类型访问，不要求类身份一致。
+        """
+        plugin = PluginManager().get_plugin_by_id(self._plugin_id)
+        if plugin is None:
+            return None
+        return getattr(plugin, "_service", None)
 
     # ------------------------------------------------------------------
     #  跨插件 API 实体方法（与 information.py 的 service_api 声明一致）
