@@ -26,7 +26,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from InstructionX_UIKit.theme import T
+from InstructionX_UIKit.theme import T, set_property
 from InstructionX_UIKit.layouts.helpers import (
     TokenColorChip,
     apply_token_font,
@@ -105,7 +105,7 @@ def build_holy_grail_center(tr) -> QWidget:
     lay.addWidget(chip)
     for text in (tr("hg.center.para.1"), tr("hg.center.para.2")):
         para = QLabel(text)
-        para.setProperty("role", "secondary")
+        set_property(para, "role", "secondary")
         para.setWordWrap(True)
         lay.addWidget(para)
     lay.addStretch(1)
@@ -120,7 +120,7 @@ def build_holy_grail_side(tr) -> QWidget:
     lay.setSpacing(T("space.2"))
     head = QLabel(tr("hg.side.head"))
     apply_token_font(head, "font.sm", "font.weight.semibold")
-    head.setProperty("role", "tertiary")
+    set_property(head, "role", "tertiary")
     lay.addWidget(head)
     listing = QListWidget()
     listing.addItems(tr(f"hg.side.item.{i}") for i in range(1, 5))
@@ -173,13 +173,13 @@ def _stat_card(title, value, note):
     lay.setContentsMargins(T("space.4"), T("space.3"), T("space.4"), T("space.3"))
     lay.setSpacing(T("space.1"))
     head = QLabel(title)
-    head.setProperty("role", "secondary")
+    set_property(head, "role", "secondary")
     lay.addWidget(head)
     number = QLabel(value)
     apply_token_font(number, "font.display", "font.weight.bold")
     lay.addWidget(number)
     foot = QLabel(note)
-    foot.setProperty("role", "tertiary")
+    set_property(foot, "role", "tertiary")
     apply_token_font(foot, "font.sm")
     lay.addWidget(foot)
     return card
@@ -209,7 +209,7 @@ def _sidebar_panel(tr) -> QFrame:
     chip.setMinimumHeight(T("space.16") * 2)
     panel_lay.addWidget(chip)
     note = QLabel(tr("sb.panel.note"))
-    note.setProperty("role", "secondary")
+    set_property(note, "role", "secondary")
     note.setWordWrap(True)
     panel_lay.addWidget(note)
     return panel
@@ -223,7 +223,7 @@ def build_sidebar_content(tr) -> QWidget:
     lay.setSpacing(T("space.4"))
 
     crumb = QLabel(tr("sb.crumb"))
-    crumb.setProperty("role", "tertiary")
+    set_property(crumb, "role", "tertiary")
     apply_token_font(crumb, "font.sm")
     lay.addWidget(crumb)
     title = QLabel(tr("sb.title"))
@@ -273,7 +273,7 @@ def build_split_panel_content(tr) -> QWidget:
     chip.setMinimumHeight(T("space.16") + T("space.8"))
     lay.addWidget(chip)
     note = QLabel(tr("sp.content.note"))
-    note.setProperty("role", "secondary")
+    set_property(note, "role", "secondary")
     note.setWordWrap(True)
     lay.addWidget(note)
     lay.addStretch(1)
@@ -321,7 +321,7 @@ def _dash_stat_cards(tr) -> list:
         apply_token_font(number, "font.display", "font.weight.bold")
         lay.addWidget(number)
         foot = QLabel(tr(f"db.stat.{name}.note"))
-        foot.setProperty("role", "secondary")
+        set_property(foot, "role", "secondary")
         apply_token_font(foot, "font.sm")
         lay.addWidget(foot)
         lay.addStretch(1)
@@ -339,7 +339,7 @@ def _dash_feed_card(tr) -> QFrame:
         dot.setFixedSize(T("space.2"), T("space.2"))
         line.addWidget(dot, 0, Qt.AlignVCenter)
         label = QLabel(tr(f"db.feed.{i}"))
-        label.setProperty("role", "secondary")
+        set_property(label, "role", "secondary")
         line.addWidget(label, 1)
         lay.addLayout(line)
     lay.addStretch(1)
@@ -351,7 +351,7 @@ def _dash_quota_card(tr) -> QFrame:
     card, lay = titled_card(tr("db.quota.title"))
     for name_key, value in (("storage", 65), ("compute", 42)):
         label = QLabel(tr(f"db.quota.{name_key}"))
-        label.setProperty("role", "secondary")
+        set_property(label, "role", "secondary")
         lay.addWidget(label)
         bar = QProgressBar()
         bar.setRange(0, 100)
@@ -366,7 +366,7 @@ def _dash_todo_card(tr) -> QFrame:
     card, lay = titled_card(tr("db.todo.title"))
     for i in range(1, 4):
         label = QLabel(f"· {tr(f'db.todo.{i}')}")
-        label.setProperty("role", "secondary")
+        set_property(label, "role", "secondary")
         lay.addWidget(label)
     lay.addStretch(1)
     return card
@@ -376,7 +376,7 @@ def _dash_banner_card(tr) -> QFrame:
     """「公告」卡片（12 列跨度）。"""
     card, lay = titled_card(tr("db.banner.title"))
     banner = QLabel(tr("db.banner.text"))
-    banner.setProperty("role", "secondary")
+    set_property(banner, "role", "secondary")
     banner.setWordWrap(True)
     lay.addWidget(banner)
     return card
