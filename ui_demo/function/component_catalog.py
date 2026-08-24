@@ -14,7 +14,7 @@ COMPONENT_CATALOG = [
     ("布局预设", [
         "顶部导航栏", "圣杯布局", "卡片网格", "单列堆叠", "侧边栏布局",
         "列表-详情", "分栏面板", "仪表盘网格", "英雄区", "居中容器",
-        "瀑布流", "图文左右",
+        "瀑布流", "图文左右", "流式对话",
     ]),
     ("组件 · 输入", [
         "Button 按钮", "IconButton 图标按钮", "CheckBox 复选框",
@@ -31,7 +31,7 @@ COMPONENT_CATALOG = [
         "Statistic 统计数值", "Calendar 日历", "Carousel 走马灯",
         "ImageView 图片", "QRCodeView 二维码", "CommentView 评论",
         "Collapse 折叠面板", "Empty 空状态", "Tooltip 工具提示",
-        "Popover 气泡卡片",
+        "Popover 气泡卡片", "MarkdownView Markdown 渲染",
     ]),
     ("组件 · 反馈", [
         "Tabs 标签页", "Anchor 锚点", "Breadcrumb 面包屑",

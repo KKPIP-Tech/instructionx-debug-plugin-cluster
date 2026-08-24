@@ -315,7 +315,7 @@ Dark {dark}</text>
     <text key="db.todo.2">Add dual-theme component screenshots</text>
     <text key="db.todo.3">Write usage docs</text>
     <text key="db.banner.title">Announcement</text>
-    <text key="db.banner.text">All 12 layout preset scenarios are covered; column spans reflow by breakpoint and cards stack vertically in narrow windows.</text>
+    <text key="db.banner.text">All 13 layout preset scenarios are covered; column spans reflow by breakpoint and cards stack vertically in narrow windows.</text>
     <text key="hero.kicker">InstructionX_UIKit · Layout Presets</text>
     <text key="hero.title">Build responsive UIs
 with tokens and breakpoints</text>

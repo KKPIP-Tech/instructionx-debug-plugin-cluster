@@ -35,7 +35,7 @@ class UiDemoPluginInfo(IPluginInfo):
     def description(self) -> str:
         return """
         InstructionX_UIKit 组件橱窗：以导航树分页演示设计令牌、
-        12 个布局预设、57 个组件、属性/自绘动画、原生图表与蓝图节点图，
+        13 个布局预设、58 个组件、属性/自绘动画、原生图表与蓝图节点图，
         每页附最小用法示例，是插件开发的 UI 参考。
         """
 

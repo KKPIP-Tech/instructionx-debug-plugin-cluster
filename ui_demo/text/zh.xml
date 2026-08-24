@@ -315,7 +315,7 @@
     <text key="db.todo.2">补齐组件双主题截图</text>
     <text key="db.todo.3">撰写使用文档</text>
     <text key="db.banner.title">公告</text>
-    <text key="db.banner.text">布局预设已覆盖全部 12 个场景；跨度随断点自动重排，窗口收窄时卡片纵向堆叠。</text>
+    <text key="db.banner.text">布局预设已覆盖全部 13 个场景；跨度随断点自动重排，窗口收窄时卡片纵向堆叠。</text>
     <text key="hero.kicker">InstructionX_UIKit · 布局预设</text>
     <text key="hero.title">用令牌与断点
 搭建响应式界面</text>

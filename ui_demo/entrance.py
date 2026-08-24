@@ -12,7 +12,7 @@ from .ui.main_widget import MainWidget
 class UiDemoPlugin(IPlugin):
     """InstructionX_UIKit 组件橱窗插件。
 
-    以导航树分页演示 UIKit 的设计令牌、12 个布局、57 个组件、
+    以导航树分页演示 UIKit 的设计令牌、13 个布局、58 个组件、
     动画、图表与蓝图节点图，页面移植自 UIKit 仓库 Demo。
     """
 
