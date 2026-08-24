@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Blueprint OpenCV 插件默认语言文件（zh，简体中文）
+  规则：本文件必须完整覆盖插件源码中的全部 tr(group, key) 调用（回退终点）；
+  其他语言文件（en.xml）的 group 名与键名必须与本文件一致。
+  校验：.venv\Scripts\python.exe scripts/check_i18n_completeness.py
+-->
+<texts language="zh">
+  <group name="toolbar">
+    <text key="run">运行</text>
+    <text key="stop">停止</text>
+    <text key="save">保存</text>
+    <text key="save_as">另存为</text>
+    <text key="fit">适应视图</text>
+    <text key="status.ready">就绪</text>
+    <text key="status.running">运行中…</text>
+    <text key="status.stopping">正在停止（当前节点执行完后中断）…</text>
+  </group>
+  <group name="panel">
+    <text key="section.graphs">蓝图</text>
+    <text key="section.nodes">节点</text>
+    <text key="section.params">参数</text>
+    <text key="section.preview">预览</text>
+  </group>
+  <group name="main">
+    <text key="status.saved">已保存「{name}」（{count} 个节点）</text>
+    <text key="status.loaded">已加载「{name}」{suffix}</text>
+    <text key="status.load_fallback_suffix">（存档缺失 / 损坏，已回退示例图）</text>
+    <text key="status.load_no_data">加载成功，但未能取回图数据（见日志）</text>
+    <text key="status.run_done">运行完成：{count} 个节点 · 总耗时 {ms} ms</text>
+    <text key="status.run_interrupted">运行中断：{reason}</text>
+    <text key="error.unknown">未知错误</text>
+    <text key="dialog.save_as_title">另存为蓝图</text>
+    <text key="dialog.save_as_label">存档名称：</text>
+    <text key="dialog.overwrite_title">覆盖存档</text>
+    <text key="dialog.overwrite_text">已存在同名存档「{name}」，确定覆盖吗？</text>
+    <text key="fail.run">运行失败</text>
+    <text key="fail.save">保存失败</text>
+    <text key="fail.load">加载失败</text>
+  </group>
+  <group name="graph_list">
+    <text key="empty">暂无已保存蓝图</text>
+    <text key="save_as">另存为</text>
+    <text key="load">加载</text>
+    <text key="rename">重命名</text>
+    <text key="delete">删除</text>
+    <text key="dialog.rename_title">重命名存档</text>
+    <text key="dialog.rename_label">新名称：</text>
+    <text key="dialog.delete_title">删除存档</text>
+    <text key="dialog.delete_text">确定删除存档「{name}」吗？该操作不可撤销。</text>
+    <text key="row.info">{count} 个节点 · {time}</text>
+    <text key="row.unknown_count">?</text>
+    <text key="fail.rename">重命名失败</text>
+    <text key="fail.delete">删除失败</text>
+  </group>
+  <group name="node_list">
+    <text key="empty">画布暂无节点</text>
+    <text key="locate">定位</text>
+    <text key="rename">重命名</text>
+    <text key="delete">删除</text>
+    <text key="dialog.rename_title">重命名节点</text>
+    <text key="dialog.rename_label">新标题：</text>
+    <text key="row.info">{type_name} · {status}</text>
+  </group>
+  <group name="property">
+    <text key="hint.select_node">在画布中选中一个节点，查看 / 编辑其参数。</text>
+    <text key="hint.no_params">该节点无可编辑参数。</text>
+    <text key="hint.unknown_type">未知参数类型：{type}（{key}）</text>
+    <text key="header.type_id">类型：{type_name}    ID：{node_id}</text>
+    <text key="header.status">状态：{status}</text>
+    <text key="header.elapsed">耗时：{ms} ms</text>
+    <text key="browse">浏览…</text>
+    <text key="dialog.open_title">选择图片文件</text>
+    <text key="dialog.save_title">选择保存路径</text>
+    <text key="dialog.file_filter">图片文件 (*.png *.jpg *.jpeg *.bmp);;所有文件 (*)</text>
+  </group>
+  <group name="preview">
+    <text key="hint.empty">运行管线后，preview 节点的结果将显示在这里。</text>
+    <text key="hint.decode_failed">预览图解码失败（非有效 PNG 数据）。</text>
+    <text key="dialog.title">预览</text>
+    <text key="dialog.close">关闭</text>
+    <text key="info.result">结果：{width}×{height} · {channels} 通道 · 耗时 {ms} ms</text>
+  </group>
+  <group name="status">
+    <text key="idle">空闲</text>
+    <text key="running">运行中</text>
+    <text key="done">完成</text>
+    <text key="error">错误</text>
+  </group>
+  <group name="categories">
+    <text key="input">输入</text>
+    <text key="basic">基础</text>
+    <text key="filter">滤波</text>
+    <text key="threshold">阈值与边缘</text>
+    <text key="morphology">形态学</text>
+    <text key="adjust">调整</text>
+    <text key="output">输出</text>
+  </group>
+  <group name="nodes">
+    <text key="node.load_image.title">加载图片</text>
+    <text key="node.load_image.desc">从文件路径读取图片（BGR 三通道）</text>
+    <text key="node.generate_noise.title">生成噪声</text>
+    <text key="node.generate_noise.desc">生成高斯 / 均匀 / 椒盐噪声图</text>
+    <text key="node.solid_color.title">纯色图像</text>
+    <text key="node.solid_color.desc">生成指定颜色的纯色图</text>
+    <text key="node.grayscale.title">灰度化</text>
+    <text key="node.grayscale.desc">彩色图转单通道灰度图</text>
+    <text key="node.invert.title">反色</text>
+    <text key="node.invert.desc">按位取反，生成负片效果</text>
+    <text key="node.resize.title">缩放</text>
+    <text key="node.resize.desc">按倍率或目标宽高缩放图像</text>
+    <text key="node.flip.title">翻转</text>
+    <text key="node.flip.desc">水平 / 垂直 / 双向翻转图像</text>
+    <text key="node.rotate.title">旋转</text>
+    <text key="node.rotate.desc">90° 顺时针 / 180° / 90° 逆时针旋转</text>
+    <text key="node.gaussian_blur.title">高斯模糊</text>
+    <text key="node.gaussian_blur.desc">高斯加权平滑（sigma 为 0 时由核大小推导）</text>
+    <text key="node.median_blur.title">中值模糊</text>
+    <text key="node.median_blur.desc">中值滤波去噪（对椒盐噪声效果好）</text>
+    <text key="node.bilateral.title">双边滤波</text>
+    <text key="node.bilateral.desc">保边平滑滤波</text>
+    <text key="node.threshold.title">固定阈值</text>
+    <text key="node.threshold.desc">固定阈值二值化（自动转灰度）</text>
+    <text key="node.adaptive_threshold.title">自适应阈值</text>
+    <text key="node.adaptive_threshold.desc">按局部邻域自适应二值化（自动转灰度）</text>
+    <text key="node.canny.title">Canny 边缘</text>
+    <text key="node.canny.desc">Canny 边缘检测</text>
+    <text key="node.morphology.title">形态学操作</text>
+    <text key="node.morphology.desc">腐蚀 / 膨胀 / 开闭 / 梯度 / 顶帽 / 黑帽</text>
+    <text key="node.brightness_contrast.title">亮度对比度</text>
+    <text key="node.brightness_contrast.desc">线性调整亮度与对比度</text>
+    <text key="node.sharpen.title">锐化</text>
+    <text key="node.sharpen.desc">反锐化掩模锐化</text>
+    <text key="node.hsv_convert.title">HSV 转换</text>
+    <text key="node.hsv_convert.desc">BGR 与 HSV 色彩空间互转</text>
+    <text key="node.preview.title">预览</text>
+    <text key="node.preview.desc">透传图像并把结果上抛到预览面板</text>
+    <text key="node.save_image.title">保存图片</text>
+    <text key="node.save_image.desc">把图像写入指定文件路径</text>
+  </group>
+  <group name="params">
+    <text key="param.load_image.file_path">图片路径</text>
+    <text key="param.generate_noise.width">宽度</text>
+    <text key="param.generate_noise.height">高度</text>
+    <text key="param.generate_noise.noise_type">噪声类型</text>
+    <text key="param.solid_color.width">宽度</text>
+    <text key="param.solid_color.height">高度</text>
+    <text key="param.solid_color.color">颜色</text>
+    <text key="param.resize.scale_mode">缩放模式</text>
+    <text key="param.resize.width">宽度</text>
+    <text key="param.resize.height">高度</text>
+    <text key="param.resize.scale">缩放倍率</text>
+    <text key="param.resize.interpolation">插值方式</text>
+    <text key="param.flip.direction">方向</text>
+    <text key="param.rotate.angle">角度</text>
+    <text key="param.gaussian_blur.ksize">核大小</text>
+    <text key="param.gaussian_blur.sigma_x">Sigma X</text>
+    <text key="param.median_blur.ksize">核大小</text>
+    <text key="param.bilateral.d">邻域直径</text>
+    <text key="param.bilateral.sigma_color">颜色 Sigma</text>
+    <text key="param.bilateral.sigma_space">空间 Sigma</text>
+    <text key="param.threshold.thresh">阈值</text>
+    <text key="param.threshold.max_value">最大值</text>
+    <text key="param.threshold.thresh_type">阈值类型</text>
+    <text key="param.adaptive_threshold.max_value">最大值</text>
+    <text key="param.adaptive_threshold.method">自适应方法</text>
+    <text key="param.adaptive_threshold.thresh_type">阈值类型</text>
+    <text key="param.adaptive_threshold.block_size">邻域块大小</text>
+    <text key="param.adaptive_threshold.c">常数 C</text>
+    <text key="param.canny.low">低阈值</text>
+    <text key="param.canny.high">高阈值</text>
+    <text key="param.morphology.op">操作</text>
+    <text key="param.morphology.ksize">核大小</text>
+    <text key="param.morphology.iterations">迭代次数</text>
+    <text key="param.morphology.shape">结构元形状</text>
+    <text key="param.brightness_contrast.alpha">对比度</text>
+    <text key="param.brightness_contrast.beta">亮度</text>
+    <text key="param.sharpen.strength">强度</text>
+    <text key="param.hsv_convert.direction">方向</text>
+    <text key="param.save_image.file_path">保存路径</text>
+  </group>
+  <group name="node_body">
+    <text key="not_set">（未设置）</text>
+  </group>
+</texts>

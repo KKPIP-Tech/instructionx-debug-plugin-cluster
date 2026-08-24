@@ -6,6 +6,9 @@
 保证亮 / 暗主题切换后无需重启即可正确换肤。
 """
 
+import weakref
+from typing import Callable, Optional
+
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPen
 from PySide6.QtWidgets import (
@@ -22,6 +25,11 @@ from PySide6.QtWidgets import (
 from InstructionX_UIKit.theme import T, ThemeManager, set_property
 from InstructionX_UIKit.tokens import MONO_FAMILY
 
+from core.interfaces import ILocalizationFacade
+from utils.logging_tools import LoggerManager, get_name
+
+_logger = LoggerManager()
+
 __all__ = [
     "make_page",
     "Section",
@@ -31,12 +39,67 @@ __all__ = [
     "DemoCard",
     "hint_label",
     "code_label",
+    "title_label",
     "usage_section",
+    "bind_tr",
+    "connect_theme_refresh",
 ]
 
 
-def _title_label(text: str) -> QLabel:
-    """页面主标题：大字号 + 加粗，颜色随主题（QLabel 默认 text.primary）。"""
+def connect_theme_refresh(widget: QWidget,
+                          callback: Optional[Callable] = None) -> None:
+    """把 ``theme_changed`` 安全绑定到控件刷新，控件销毁后自动断开。
+
+    ``ThemeManager`` 为全局单例，直接向 ``theme_changed`` connect 捕获控件
+    强引用的 lambda，会在页面缓存清空（语言切换重建）或插件热重载后留下
+    悬挂回调，触发时访问已删除的 C++ 对象抛 ``RuntimeError``。本函数以
+    weakref 持有目标控件：目标被回收或 C++ 侧已销毁时主动 ``disconnect``。
+
+    参数:
+        widget: 目标控件（weakref 持有，不被本连接延长生命周期）。
+        callback: 主题切换回调，签名 ``callback(widget)``；
+            缺省为 ``QWidget.update``（整控件重绘）。
+    """
+    manager = ThemeManager.instance()
+    target_ref = weakref.ref(widget)
+    slot = callback or QWidget.update
+
+    def _on_theme(*_args) -> None:
+        target = target_ref()
+        if target is None:
+            manager.theme_changed.disconnect(_on_theme)
+            return
+        try:
+            slot(target)
+        except RuntimeError:
+            # 目标 C++ 侧已销毁（页面重建竞态），断开避免悬挂回调
+            manager.theme_changed.disconnect(_on_theme)
+
+    manager.theme_changed.connect(_on_theme)
+
+
+def bind_tr(i18n: Optional[ILocalizationFacade], group: str) -> Callable[..., str]:
+    """绑定取词门面与分组，返回 ``tr(key, **params)`` 闭包。
+
+    门面未注入时优雅降级返回键名（正常加载路径框架始终注入门面）。
+
+    参数:
+        i18n: 插件取词门面（可为 None）。
+        group: 语言文件内的分组名（一个页面模块一个分组）。
+    """
+    def tr(key: str, /, **params) -> str:
+        if i18n is None:
+            return key
+        return i18n.tr(group, key, **params)
+    return tr
+
+
+def title_label(text: str) -> QLabel:
+    """页面主标题：大字号 + 加粗，颜色随主题（QLabel 默认 text.primary）。
+
+    字号取 ``font.title.lg`` 令牌，供非 ``make_page`` 结构的页面
+    （如蓝图页）复用同一标题规格。
+    """
     lab = QLabel(text)
     font = QFont()
     font.setPixelSize(T("font.title.lg"))
@@ -66,14 +129,18 @@ def code_label(code: str) -> QLabel:
     return lab
 
 
-def usage_section(code: str) -> QGroupBox:
+def usage_section(code: str, i18n: Optional[ILocalizationFacade] = None) -> QGroupBox:
     """「用法」分区：展示该演示对应的最小 Kit 调用代码（单行灰字样式）。
 
     用法::
 
         page = make_page(title, desc, [usage_section('Button("确定", variant="primary")'), ...])
+
+    参数:
+        code: 最小调用示例代码（代码即文档，不翻译）。
+        i18n: 取词门面（分区标题用；可为 None）。
     """
-    box = Section("用法")
+    box = Section(bind_tr(i18n, "common")("usage.title"))
     box.layout().addWidget(code_label(code))
     return box
 
@@ -142,7 +209,7 @@ def make_page(title: str, description: str, sections) -> QScrollArea:
     lay.setContentsMargins(20, 18, 20, 24)
     lay.setSpacing(8)
 
-    lay.addWidget(_title_label(title))
+    lay.addWidget(title_label(title))
     if description:
         lay.addWidget(hint_label(description))
         lay.addSpacing(6)
@@ -178,7 +245,7 @@ class ColorBlock(QWidget):
         self._key = color_key
         self._on = text_on
         self.setMinimumSize(*size)
-        ThemeManager.instance().theme_changed.connect(lambda *_: self.update())
+        connect_theme_refresh(self)
 
     def paintEvent(self, event):  # noqa: N802
         painter = QPainter(self)
@@ -202,47 +269,54 @@ class DemoCard(QFrame):
         play: 点击「播放」时执行的可调用对象（重发动画）。
         hint: 动画的简短说明。
         demo_height: 演示区最小高度。
+        i18n: 取词门面（「播放」按钮文案用；可为 None）。
     """
 
     def __init__(self, title: str, demo: QWidget, play, hint: str = "",
-                 demo_height: int = 130, parent=None):
+                 demo_height: int = 130, parent=None,
+                 i18n: Optional[ILocalizationFacade] = None):
         super().__init__(parent)
         self.setFrameShape(QFrame.Shape.StyledPanel)  # 命中 QSS 卡片边框
-
         lay = QVBoxLayout(self)
         lay.setContentsMargins(12, 10, 12, 10)
         lay.setSpacing(6)
+        lay.addWidget(self._build_head(title))
+        if hint:
+            lay.addWidget(hint_label(hint, role="tertiary"))
+        lay.addWidget(self._build_demo_wrap(demo, demo_height), 1)
+        lay.addLayout(self._build_play_row(i18n))
+        self._play = play
 
+    def _build_head(self, title) -> QLabel:
+        """构建卡片标题标签（加粗字重取令牌）。"""
         head = QLabel(title)
         head_font = QFont()
         head_font.setWeight(QFont.Weight(T("font.weight.semibold")))
         head.setFont(head_font)
-        lay.addWidget(head)
+        return head
 
-        if hint:
-            lay.addWidget(hint_label(hint, role="tertiary"))
-
+    def _build_demo_wrap(self, demo, demo_height) -> QWidget:
+        """构建演示区容器（居中承载演示元件，最小高度可配）。"""
         demo_wrap = QWidget()
         demo_lay = QVBoxLayout(demo_wrap)
         demo_lay.setContentsMargins(0, 2, 0, 2)
         demo_lay.addWidget(demo, 0, Qt.AlignCenter)
         demo_wrap.setMinimumHeight(demo_height)
-        lay.addWidget(demo_wrap, 1)
+        return demo_wrap
 
+    def _build_play_row(self, i18n) -> QHBoxLayout:
+        """构建右对齐「播放」按钮行（点击走异常安全播放）。"""
         btn_row = QHBoxLayout()
         btn_row.addStretch(1)
-        play_btn = QPushButton("播放")
-        set_property(play_btn, "size", "sm")
-        play_btn.clicked.connect(self._safe_play)
-        btn_row.addWidget(play_btn)
-        lay.addLayout(btn_row)
-
-        self._play = play
-        self.play_button = play_btn
+        self.play_button = QPushButton(bind_tr(i18n, "common")("demo_card.play"))
+        set_property(self.play_button, "size", "sm")
+        self.play_button.clicked.connect(self._safe_play)
+        btn_row.addWidget(self.play_button)
+        return btn_row
 
     def _safe_play(self):
-        """执行播放回调（吞掉异常以免打断 Demo 交互）。"""
+        """执行播放回调；异常记 DEBUG 日志，不打断 Demo 交互。"""
         try:
             self._play()
-        except Exception:  # noqa: BLE001
-            pass
+        except Exception as exc:  # noqa: BLE001
+            _logger.debug(get_name(), f"演示卡播放回调异常（已忽略）: {exc!r}")

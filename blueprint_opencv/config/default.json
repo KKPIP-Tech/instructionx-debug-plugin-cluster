@@ -13,7 +13,6 @@
     "min_canvas_width": 480
   },
   "assets": {
-    "sample_image": "assets/sample.png",
-    "preset_graph": "assets/preset_graph.json"
+    "sample_image": "assets/sample.png"
   }
 }

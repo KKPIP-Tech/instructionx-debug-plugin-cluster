@@ -4,10 +4,69 @@ Framework API Demo 插件元数据
 展示 InstructionX 框架提供的所有核心 API 接口的使用方法。
 """
 
+from typing import Any, Dict, Optional
+
 from core.interfaces import IPluginInfo
 from core.plugin.plugin_version import PluginVersion
 from core.plugin.plugin_icon import PluginIcon
-from typing import Dict, Any, Optional
+
+
+def _api_entry(desc: str, params: Dict, returns: Dict) -> Dict:
+    """构造一条 service_api 声明（description/parameters/returns 三段式）"""
+    return {"description": desc, "parameters": params, "returns": returns}
+
+
+# service_api 声明（模块级常量）：插件元数据与跨插件 API/MCP 工具自动注册的依据，
+# 必须与 service.py 的 FrameworkApiDemoService 实现保持同步
+SERVICE_API: Dict[str, Any] = {
+    "demo_data_operation": _api_entry(
+        "演示 DataProvider 数据操作",
+        {
+            "operation": {
+                "type": "str",
+                "description": "操作类型: read/write/list",
+                "required": True,
+            },
+            "key": {
+                "type": "str",
+                "description": "数据键名",
+                "required": False,
+            },
+            "value": {
+                "type": "any",
+                "description": "数据值",
+                "required": False,
+            },
+        },
+        {"type": "any", "description": "操作结果"},
+    ),
+    "demo_task_operation": _api_entry(
+        "演示任务操作",
+        {
+            "operation": {
+                "type": "str",
+                "description": "操作类型: create/query/cancel",
+                "required": True,
+            },
+            "task_type": {
+                "type": "str",
+                "description": "任务类型: sync/async/scheduled（仅 create 使用）",
+                "required": False,
+            },
+            "task_id": {
+                "type": "str",
+                "description": "目标任务 ID（cancel 操作必填）",
+                "required": False,
+            },
+        },
+        {"type": "any", "description": "操作结果"},
+    ),
+    "get_framework_info": _api_entry(
+        "获取框架信息",
+        {},
+        {"type": "dict", "description": "框架信息字典"},
+    ),
+}
 
 
 class FrameworkAPIDemoPluginInfo(IPluginInfo):
@@ -16,7 +75,7 @@ class FrameworkAPIDemoPluginInfo(IPluginInfo):
     @property
     def version(self) -> PluginVersion:
         """插件版本"""
-        return PluginVersion.from_string("release.1.0.3")
+        return PluginVersion.from_string("release.1.0.4")
 
     @property
     def developer(self) -> str:
@@ -61,59 +120,8 @@ class FrameworkAPIDemoPluginInfo(IPluginInfo):
 
     @property
     def service_api(self) -> Dict[str, Any]:
-        """Service API 定义"""
-        return {
-            "demo_data_operation": self._api(
-                "演示 DataProvider 数据操作",
-                {
-                    "operation": {
-                        "type": "str",
-                        "description": "操作类型: read/write/list",
-                        "required": True,
-                    },
-                    "key": {
-                        "type": "str",
-                        "description": "数据键名",
-                        "required": False,
-                    },
-                    "value": {
-                        "type": "any",
-                        "description": "数据值",
-                        "required": False,
-                    },
-                },
-                {"type": "any", "description": "操作结果"},
-            ),
-            "demo_task_operation": self._api(
-                "演示任务操作",
-                {
-                    "operation": {
-                        "type": "str",
-                        "description": "操作类型: create/query/cancel",
-                        "required": True,
-                    },
-                    "task_type": {
-                        "type": "str",
-                        "description": "任务类型: sync/async/scheduled（仅 create 使用）",
-                        "required": False,
-                    },
-                    "task_id": {
-                        "type": "str",
-                        "description": "目标任务 ID（cancel 操作必填）",
-                        "required": False,
-                    },
-                },
-                {"type": "any", "description": "操作结果"},
-            ),
-            "get_framework_info": self._api(
-                "获取框架信息",
-                {},
-                {"type": "dict", "description": "框架信息字典"},
-            ),
-        }
-
-    def _api(self, desc: str, params: Dict, returns: Dict) -> Dict:
-        return {"description": desc, "parameters": params, "returns": returns}
+        """Service API 定义（声明见模块级 SERVICE_API 常量）"""
+        return SERVICE_API
 
     @property
     def skill_icon(self) -> PluginIcon:

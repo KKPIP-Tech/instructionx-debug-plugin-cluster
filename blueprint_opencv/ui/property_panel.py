@@ -10,10 +10,10 @@
 SPEC §1.2 的外部属性面板方案一致。
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from PySide6.QtWidgets import (
-    QFileDialog,
+    QFileDialog,  # 系统级文件对话框：UIKit 无对应组件，保留原生（见 ui/dialogs.py 模块说明）
     QHBoxLayout,
     QLabel,
     QScrollArea,
@@ -25,7 +25,9 @@ from InstructionX_UIKit.components import Button, ColorPicker, ComboBox, LineEdi
 from InstructionX_UIKit.components.spin_box import DoubleSpinBox, SpinBox
 from InstructionX_UIKit.theme import set_property
 
-from .node_bootstrap import param_schema_of
+from core.interfaces import ILocalizationFacade
+
+from .node_bootstrap import param_label_of, param_schema_of
 
 __all__ = ["PropertyPanel"]
 
@@ -34,30 +36,32 @@ _CONTROL_SIZE = "sm"
 #: int / float 字段缺省 min/max 时的兜底范围（防御性，正常 schema 必带）
 _FALLBACK_INT_RANGE = (0, 9999)
 _FALLBACK_FLOAT_RANGE = (0.0, 9999.0)
-#: file_path 字段浏览按钮文案与对话框过滤
-_BROWSE_TEXT = "浏览…"
-_IMAGE_FILE_FILTER = "图片文件 (*.png *.jpg *.jpeg *.bmp);;所有文件 (*)"
+#: 取词分组名（与 text/zh.xml 一致）
+_GROUP = "property"
+#: 节点状态名取词分组
+_GROUP_STATUS = "status"
 #: 需要「保存」语义文件对话框的节点类型（其余按「打开」语义）
 _SAVE_DIALOG_TYPES = frozenset({"save_image"})
-#: 未选中提示
-_HINT_TEXT = "在画布中选中一个节点，查看 / 编辑其参数。"
 
 
 class PropertyPanel(QScrollArea):
     """节点参数面板：schema 驱动的自动表单。
 
+    参数:
+        parent: 父控件。
+        i18n: 插件取词门面（可选，未注入时显示键名兜底）。
+
     公开方法:
         ``bind_node(node)``：绑定并展示某节点的参数表单；
-        ``clear()``：清空回提示态。
+        ``clear()``：清空回提示态；
+        ``retranslate_ui()``：语言切换后重建当前表单 / 提示。
     """
 
-    def __init__(self, parent: QWidget = None) -> None:
-        """初始化滚动容器与空态提示。
-
-        参数:
-            parent: 父控件。
-        """
+    def __init__(self, parent: QWidget = None,
+                 i18n: Optional[ILocalizationFacade] = None) -> None:
+        """初始化滚动容器与空态提示。"""
         super().__init__(parent)
+        self._i18n = i18n
         self._bound_node = None
         self._status_info = None
         self.setWidgetResizable(True)
@@ -68,6 +72,26 @@ class PropertyPanel(QScrollArea):
         self.setWidget(self._host)
         self.clear()
 
+    def _tr(self, key: str, /, **params) -> str:
+        """取插件文案；门面未注入时优雅降级返回键名。"""
+        if self._i18n is None:
+            return key
+        return self._i18n.tr(_GROUP, key, **params)
+
+    def _status_text(self, status: str) -> str:
+        """取节点状态名的显示文案（status 分组，未知状态原样返回）。"""
+        if self._i18n is None:
+            return status
+        return self._i18n.tr(_GROUP_STATUS, status)
+
+    def retranslate_ui(self) -> None:
+        """语言切换后重建当前绑定节点的表单，未绑定时重取提示文案。"""
+        node = self._bound_node
+        if node is None:
+            self.clear()
+            return
+        self.bind_node(node)
+
     def bind_node(self, node) -> None:
         """绑定节点：展示标题 / 类型 / 状态，并按 schema 重建参数表单。
 
@@ -76,7 +100,7 @@ class PropertyPanel(QScrollArea):
         """
         self._clear_content()
         if node is None:
-            self._add_hint(_HINT_TEXT)
+            self._add_hint(self._tr("hint.select_node"))
             self._host_layout.addStretch(1)
             return
         self._bound_node = node
@@ -88,7 +112,7 @@ class PropertyPanel(QScrollArea):
     def clear(self) -> None:
         """解除绑定并清空内容，回退到未选中提示。"""
         self._clear_content()
-        self._add_hint(_HINT_TEXT)
+        self._add_hint(self._tr("hint.select_node"))
         self._host_layout.addStretch(1)
 
     # ------------------------------------------------------------------ 内部
@@ -124,7 +148,8 @@ class PropertyPanel(QScrollArea):
         font.setBold(True)
         title.setFont(font)
         self._host_layout.addWidget(title)
-        self._add_hint(f"类型：{node.type_name}    ID：{node.id}")
+        self._add_hint(self._tr("header.type_id", type_name=node.type_name,
+                                node_id=node.id))
         self._status_info = QLabel()
         set_property(self._status_info, "role", "tertiary")
         self._host_layout.addWidget(self._status_info)
@@ -134,7 +159,7 @@ class PropertyPanel(QScrollArea):
         """按 schema 逐字段生成表单行；无 schema 时给出说明。"""
         schema = param_schema_of(node.type_name)
         if not schema:
-            self._add_hint("该节点无可编辑参数。")
+            self._add_hint(self._tr("hint.no_params"))
             return
         for field in schema:
             self._add_field(node, field)
@@ -148,9 +173,12 @@ class PropertyPanel(QScrollArea):
         }
         builder = builders.get(field.get("type"))
         if builder is None:
-            self._add_hint(f"未知参数类型：{field.get('type')}（{field.get('key')}）")
+            self._add_hint(self._tr("hint.unknown_type",
+                                    type=field.get("type"),
+                                    key=field.get("key")))
             return
-        self._host_layout.addWidget(QLabel(str(field.get("label", ""))))
+        self._host_layout.addWidget(QLabel(param_label_of(
+            self._i18n, node.type_name, field)))
         builder(node, field)
 
     def _add_int(self, node, field: Dict[str, Any]) -> None:
@@ -206,7 +234,7 @@ class PropertyPanel(QScrollArea):
         edit = LineEdit(value, size=_CONTROL_SIZE)
         edit.textChanged.connect(
             lambda t, n=node, k=field["key"]: self._write_back(n, k, str(t)))
-        browse = Button(_BROWSE_TEXT, size=_CONTROL_SIZE)
+        browse = Button(self._tr("browse"), size=_CONTROL_SIZE)
         browse.clicked.connect(
             lambda _=False, n=node, e=edit: self._browse_file(n, e))
         row = QWidget()
@@ -218,10 +246,13 @@ class PropertyPanel(QScrollArea):
 
     def _browse_file(self, node, edit: LineEdit) -> None:
         """弹文件对话框并把选中路径写入输入框（触发 textChanged 写回）。"""
+        file_filter = self._tr("dialog.file_filter")
         if node.type_name in _SAVE_DIALOG_TYPES:
-            path, _ = QFileDialog.getSaveFileName(self, "选择保存路径", "", _IMAGE_FILE_FILTER)
+            path, _ = QFileDialog.getSaveFileName(
+                self, self._tr("dialog.save_title"), "", file_filter)
         else:
-            path, _ = QFileDialog.getOpenFileName(self, "选择图片文件", "", _IMAGE_FILE_FILTER)
+            path, _ = QFileDialog.getOpenFileName(
+                self, self._tr("dialog.open_title"), "", file_filter)
         if path:
             edit.setText(path)
 
@@ -236,10 +267,13 @@ class PropertyPanel(QScrollArea):
             self._refresh_status(self._bound_node)
 
     def _refresh_status(self, node) -> None:
-        """状态行：运行状态 + 耗时（若有）。"""
-        text = f"状态：{node.status}"
+        """状态行：运行状态（本地化）+ 耗时（若有）。"""
+        text = self._tr("header.status",
+                        status=self._status_text(str(node.status)))
         if node.elapsed_ms is not None:
-            text += f"    耗时：{node.elapsed_ms:.0f} ms"
+            # 固定宽空格作为两段文案的版式间隔（非语言内容），不入语言包
+            text += "    " + self._tr("header.elapsed",
+                                      ms=f"{node.elapsed_ms:.0f}")
         self._status_info.setText(text)
 
     def _add_hint(self, text: str) -> None:

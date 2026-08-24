@@ -1,10 +1,15 @@
 # SPEC — Blueprint OpenCV 插件技术方案
 
 > - 创建日期：2026-07-30
-> - 修改日期：2026-07-30
+> - 修改日期：2026-08-24
 > - 文档状态：草案（待开发者评审）
 > - 插件 id：`blueprint-opencv` / 目录：`plugin/blueprint_opencv/`
 > - 对应需求文档：`PRD-blueprint-opencv-20260730.md`（同目录）
+>
+> **修订注记（2026-08-24）**：本文初版中的部分表述已与实现脱节，本次修订
+> 就地更正（§1.2 body_builder、§1.3/§4.1 register_async_task、§2 目录结构、
+> §3.8/§5 注册载荷与 image_codec、§8 配置表）；当日本批优化的完整决策记录见
+> `docs/req/2026-08-24/SPEC-p1p2-optimization-20260824.md`。
 
 ---
 
@@ -23,17 +28,19 @@
 
 Blueprint 的 `register_node_type(..., body_builder=...)` 支持向节点体注入控件，但**画布置节点体为鼠标透明（只展示）**，无法在节点内直接编辑。因此本插件：
 
-- 节点体保持简洁（仅标题 + 引脚 + accent 色条），不使用 body_builder 注入交互控件；
+- 节点体保持简洁（仅标题 + 引脚 + accent 色条）；`body_builder` 仅用于**只读展示**——含 `file_path` 参数的节点（load_image / save_image）在体区显示当前文件名标签（`ui/node_bootstrap._make_path_body_builder`，标签随 `node.changed` 刷新、随语言切换重取词），不注入任何交互控件；
 - 参数编辑统一走**右侧属性面板**：监听 `canvas.selection_changed`，选中单节点时按其参数 schema（见 §3）重建 ParamForm 风格表单，修改即时写回 `node.properties[key] = value` 并 `node.changed.emit()`；
 - 节点 `properties` 随 `canvas.to_dict()` 一起序列化，保存/加载无损。
 
 该方案同时是 Blueprint 官方推荐的参数编辑范式，作为样板更具示范价值。
 
+> 修订注记（2026-08-24）：初版表述为「不使用 body_builder」，与实现不符（i18n 批次起 body_builder 已用于体区只读路径标签），就地更正。
+
 ### 1.3 为什么执行走工作线程
 
 cv2 处理（滤波、形态学、大图像 imencode）是 CPU 密集操作，在 UI 线程执行会冻结界面。方案：
 
-- 运行触发（UI 按钮或 service_api）→ `BackgroundTaskManager.register_sync_task` 把工作提交到框架线程池；
+- 运行触发（UI 按钮或 service_api）→ `BackgroundTaskManager.register_async_task` 把工作提交到框架线程池（`register_sync_task` 是调用方线程内联执行，不满足异步要求）；
 - 工作线程内执行管线、产出 **imencode 后的 PNG 字节**（不创建任何 Qt 对象）；
 - 结果经 `BlueprintOpenCVService` 的 Qt 信号上抛：信号接收方（UI 控件）在 UI 线程，Qt 自动排队到 UI 线程执行槽函数，槽内创建 QPixmap 并 `ImageView.set_source`；个别非信号路径用 `utils/thread_utils.run_in_ui_thread` 兜底；
 - 停止为协作式：执行引擎在每个节点开始前检查停止标志，当前节点执行完后中断。
@@ -49,7 +56,7 @@ cv2 处理（滤波、形态学、大图像 imencode）是 CPU 密集操作，�
 
 ### 1.5 节点类型注册的幂等性与同名冲突纠正
 
-节点注册数据由 `function/node_catalog.py` 的 `NODE_DEFINITIONS` / `registration_payloads()` 提供（纯数据，function 层不 import UIKit），注册动作在 `ui/node_bootstrap.py` 的 `ensure_node_types_registered()`（entrance 加载时、`ui/main_widget.py` 模块级及 `MainWidget.showEvent` 各调用一次）。
+节点注册数据由 `function/node_catalog.py` 的 `NODE_DEFINITIONS` 提供（纯数据，function 层不 import UIKit），注册动作在 `ui/node_bootstrap.py` 的 `ensure_node_types_registered()`（entrance 加载时、`ui/main_widget.py` 模块级及 `MainWidget.showEvent` 各调用一次）。
 
 UIKit `NodeRegistry` 是全局单例，其他插件可能用同名 `type_name` 注册引脚定义不同的 spec（如 ui_demo 蓝图演示页用 in/out/img 引脚注册同名 `load_image` / `gaussian_blur` / `resize`）。因此本插件采用「幂等 + 冲突纠正」语义：既有 spec 与本插件定义（引脚 id / data_type 序列）一致时跳过；同名异定义时重新注册纠正并记 WARNING，保证本插件画布创建的节点引脚 id 与 function 层 op 输出键（`image_out`）一致。热重载（重复 import / 重复调用）不产生重复注册/异常。注册表数据结构本身放在 `NODE_DEFINITIONS`（模块级常量，可安全重复构建）。
 
@@ -79,11 +86,12 @@ plugin/blueprint_opencv/
 ├── function/                     # 纯 Python 业务层（禁 PySide6）
 │   ├── __init__.py
 │   ├── constants.py              # 命名常量：引脚 id、分类 accent、状态枚举值、默认尺寸等
-│   ├── node_catalog.py           # NODE_DEFINITIONS 注册表 + registration_payloads()（纯数据，注册动作在 ui/node_bootstrap）
+│   ├── node_catalog.py           # NODE_DEFINITIONS 注册表 + defs_by_type()（纯数据，注册动作在 ui/node_bootstrap）
 │   ├── param_schema.py           # 参数 schema 类型定义与校验（供属性面板/引擎共用）
-│   ├── image_codec.py            # numpy ↔ PNG 字节 编解码（imencode/imdecode）、尺寸归一
-│   ├── executor.py               # PipelineExecutor：exec 拓扑排序 + 数据流求值 + 状态回调
-│   ├── pipeline_controller.py    # PipelineController：运行会话管理（停止标志、图快照、最近结果）
+│   ├── image_codec.py            # numpy → PNG 字节编码（imencode）与图像元信息
+│   ├── executor.py               # PipelineExecutor：exec 拓扑排序（三色标记判环）+ 数据流求值 + 状态回调
+│   ├── pipeline_controller.py    # PipelineController：运行会话管理（停止标志、图快照、最近结果、节点数上限）
+│   ├── runtime_registry.py       # 共享运行实例注册表（PipelineRuntime，按 plugin_id 进程内唯一）
 │   └── ops/                      # 节点 op 实现（op(inputs, props) -> outputs）
 │       ├── __init__.py           # 汇总导出
 │       ├── input_ops.py          # load_image / generate_noise / solid_color
@@ -95,10 +103,15 @@ plugin/blueprint_opencv/
 │       └── output_ops.py         # preview（透传捕获）/ save_image
 ├── ui/
 │   ├── __init__.py
-│   ├── main_widget.py            # 主界面组装：工具条 + 画布 + 右侧面板
-│   ├── toolbar.py                # 工具条（运行/停止/重置/清空/保存/加载/适应视图/状态标签）
+│   ├── main_widget.py            # 主界面组装：工具条 + 左侧面板 + 画布 + 右侧面板
+│   ├── toolbar.py                # 工具条（运行/停止/保存/另存为/适应视图/状态标签，显式运行态字段）
+│   ├── node_bootstrap.py         # 节点类型注册引导（幂等 + 同名异定义纠正）与 param_schema 查询
+│   ├── node_list_panel.py        # 节点列表面板（全量节点清单 + 定位/重命名/删除）
+│   ├── graph_list_panel.py       # 蓝图存档列表面板（另存为/加载/重命名/删除）
 │   ├── property_panel.py         # 参数面板：按 schema 重建表单，写回 node.properties
-│   └── preview_panel.py          # 预览区：ImageView + 结果信息（尺寸/通道/耗时）
+│   ├── preview_panel.py          # 预览区：ImageView + 结果信息（尺寸/通道/耗时）
+│   ├── plugin_config.py          # config/default.json 读取与缺省回退（ui 层唯一入口）
+│   └── dialogs.py                # 模态对话框统一封装（UIKit Dialog 替代原生弹窗）
 └── docs/
     └── req/2026-07-30/           # PRD 与本 SPEC
 ```
@@ -203,7 +216,9 @@ class NodeDefinition:
     description: str          # 节点一句话说明（菜单提示）
 ```
 
-`registration_payloads()` 遍历 `NODE_DEFINITIONS` 生成 `register_node_type(**payload)` 载荷，accent 按分类常量取色；注册动作由 `ui/node_bootstrap.ensure_node_types_registered()` 执行（幂等 + 同名冲突纠正，见 §1.5）。
+注册载荷由 `ui/node_bootstrap.ensure_node_types_registered()` 直接按 `NODE_DEFINITIONS` 组装 `register_node_type(...)` 参数（标题/分类/描述按当前语言取词，accent 按分类常量取色，含 `file_path` 参数的节点附加只读体区标签 body_builder），幂等 + 同名冲突纠正见 §1.5。
+
+> 修订注记（2026-08-24）：初版由 node_catalog 提供 `registration_payloads()` 载荷函数；注册动作上移到 ui 层后该函数无调用方，已随 2026-08-24 批次移除。
 
 ---
 
@@ -216,7 +231,7 @@ flowchart TD
     A[点击运行 / run_pipeline] --> B[PipelineController 取当前图快照<br/>canvas.to_dict]
     B --> C{校验: 存在 start?<br/>exec 链无环?}
     C -- 否 --> C1[中文弹窗 + ERROR 日志<br/>状态回 idle]
-    C -- 是 --> D[BackgroundTaskManager<br/>register_sync_task]
+    C -- 是 --> D[BackgroundTaskManager<br/>register_async_task]
     D --> E[工作线程: exec 链拓扑排序<br/>从 start 出发]
     E --> F[按序取下一个节点]
     F --> G{停止标志?}
@@ -276,7 +291,7 @@ classDiagram
         +load_graph(name) dict
         +list_node_types() dict
         +get_last_result_info() dict
-        -_controller PipelineController
+        -_runtime PipelineRuntime  (共享，按 plugin_id)
     }
     class PipelineController {
         +update_graph(graph_dict) void
@@ -294,12 +309,12 @@ classDiagram
     class node_catalog {
         <<module>>
         NODE_DEFINITIONS list
-        registration_payloads() list
+        defs_by_type() Dict
     }
     class image_codec {
         <<module>>
         encode_png(img) bytes
-        decode_png(data) ndarray
+        image_info(img) dict
     }
     class MainWidget {
         -_canvas BlueprintCanvas
@@ -319,7 +334,7 @@ classDiagram
     BlueprintOpenCVPlugin --> BlueprintOpenCVService : 创建
     BlueprintOpenCVPlugin --> MainWidget : 创建
     MainWidget --> BlueprintOpenCVService : 委托运行/保存
-    BlueprintOpenCVService --> PipelineController : 持有
+    BlueprintOpenCVService --> PipelineController : 经共享 PipelineRuntime
     PipelineController --> PipelineExecutor : 驱动
     PipelineExecutor --> node_catalog : 查 op/schema
     PipelineExecutor --> image_codec : preview 编码
@@ -431,19 +446,22 @@ class BlueprintOpenCVService(QObject):
     "min_canvas_width": 480
   },
   "assets": {
-    "sample_image": "assets/sample.png",
-    "preset_graph": "assets/preset_graph.json"
+    "sample_image": "assets/sample.png"
   }
 }
 ```
 
-| 键 | 用途 |
-|----|------|
-| `graph.default_name` / `storage_namespace` | DataProvider 存图的默认 key 与命名空间 |
-| `graph.max_nodes` | 防御性上限，超过拒绝运行（防失控大图） |
-| `preview.max_width/max_height` | 预览显示前的等比缩放上限（缩放仅影响显示，不影响数据） |
-| `panel.right_panel_width` / `min_canvas_width` | 右侧固定面板宽、画布最小宽 |
-| `assets.*` | 示例图与预置图资产相对路径 |
+| 键 | 用途 | 消费方 |
+|----|------|--------|
+| `graph.default_name` / `storage_namespace` | DataProvider 存图的默认 key 与命名空间 | service.py 同名常量（跨插件路径不读配置，配置值应与常量保持一致） |
+| `graph.max_nodes` | 防御性上限，超过拒绝运行（防失控大图） | ui 层读取后经 `service.set_max_nodes` 透传到 PipelineController；缺省为 `function/constants.py` 的 `DEFAULT_MAX_NODES` |
+| `preview.max_width/max_height` | 预览显示前的等比缩放上限（缩放仅影响显示，不影响数据） | `ui/preview_panel.py`（经 `ui/plugin_config.py`） |
+| `panel.right_panel_width` / `min_canvas_width` | 右侧固定面板宽、画布最小宽 | `ui/main_widget.py`（经 `ui/plugin_config.py`） |
+| `assets.sample_image` | 预置示例输入图相对路径（相对插件目录） | `ui/main_widget.build_preset_graph()`（经 `ui/plugin_config.py`） |
+
+配置读取统一收口在 `ui/plugin_config.py`（缺失/损坏记 WARNING 并回退上表缺省值）；service / function 层不读配置。预置示例图路径不进配置：`assets/preset_graph.json` 的唯一来源是 service.py 的 `PRESET_GRAPH_RELATIVE_PATH` 常量（跨插件 / MCP 路径不依赖配置文件）。
+
+> 修订注记（2026-08-24）：初版 `assets` 段含 `preset_graph` 键，因无 ui 层消费方且 service 层以常量为单一来源，本次从配置中删除；`preview.*` / `panel.min_canvas_width` / `graph.max_nodes` 由「声明未接线」补齐为实际消费。
 
 节点参数默认值不进配置文件，统一由 §3 的 param_schema `default` 字段承载（单一来源）。
 

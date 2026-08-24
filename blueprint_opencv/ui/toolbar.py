@@ -10,22 +10,30 @@
 工具条不再提供「加载图」按钮。
 """
 
+from typing import Optional
+
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QWidget
 
 from InstructionX_UIKit.components import Button
 from InstructionX_UIKit.theme import set_property
 
+from core.interfaces import ILocalizationFacade
+
 __all__ = ["ToolBar"]
 
 #: 按钮统一尺寸档（工具条紧凑风格）
 _BUTTON_SIZE = "sm"
-#: 初始状态文案
-_STATUS_READY = "就绪"
+#: 取词分组名（与 text/zh.xml 一致）
+_GROUP = "toolbar"
 
 
 class ToolBar(QWidget):
     """蓝图编辑器工具条。
+
+    参数:
+        parent: 父控件。
+        i18n: 插件取词门面（可选，未注入时显示键名兜底）。
 
     信号:
         run_requested: 点击「运行」。
@@ -41,29 +49,48 @@ class ToolBar(QWidget):
     save_requested = Signal()
     fit_requested = Signal()
 
-    def __init__(self, parent: QWidget = None) -> None:
-        """构建工具条按钮与状态标签。
-
-        参数:
-            parent: 父控件。
-        """
+    def __init__(self, parent: QWidget = None,
+                 i18n: Optional[ILocalizationFacade] = None) -> None:
+        """构建工具条按钮与状态标签（文案经 i18n 取词）。"""
         super().__init__(parent)
-        self._run_button = Button("运行", variant="primary", size=_BUTTON_SIZE)
-        self._stop_button = Button("停止", size=_BUTTON_SIZE)
-        self._save_current_button = Button("保存", size=_BUTTON_SIZE)
-        self._save_button = Button("另存为", size=_BUTTON_SIZE)
-        self._fit_button = Button("适应视图", size=_BUTTON_SIZE)
-        self._status_label = QLabel(_STATUS_READY)
+        self._i18n = i18n
+        #: 显式运行态字段（set_running 维护）：不再用「停止按钮是否禁用」
+        #: 反推运行态，避免视图状态与业务状态耦合
+        self._running = False
+        self._run_button = Button(self._tr("run"), variant="primary",
+                                  size=_BUTTON_SIZE)
+        self._stop_button = Button(self._tr("stop"), size=_BUTTON_SIZE)
+        self._save_current_button = Button(self._tr("save"), size=_BUTTON_SIZE)
+        self._save_button = Button(self._tr("save_as"), size=_BUTTON_SIZE)
+        self._fit_button = Button(self._tr("fit"), size=_BUTTON_SIZE)
+        self._status_label = QLabel(self._tr("status.ready"))
         self._build_layout()
         self._connect_buttons()
         self.set_running(False)
+
+    def _tr(self, key: str, /, **params) -> str:
+        """取插件文案；门面未注入时优雅降级返回键名。"""
+        if self._i18n is None:
+            return key
+        return self._i18n.tr(_GROUP, key, **params)
+
+    def retranslate_ui(self) -> None:
+        """语言切换后重设按钮与就绪状态文案（运行中状态由运行事件刷新）。"""
+        self._run_button.setText(self._tr("run"))
+        self._stop_button.setText(self._tr("stop"))
+        self._save_current_button.setText(self._tr("save"))
+        self._save_button.setText(self._tr("save_as"))
+        self._fit_button.setText(self._tr("fit"))
+        if not self._running:
+            self._status_label.setText(self._tr("status.ready"))
 
     def set_status(self, text: str) -> None:
         """更新状态标签文案（运行状态 / 耗时 / 错误摘要）。"""
         self._status_label.setText(str(text))
 
     def set_running(self, running: bool) -> None:
-        """切换运行态：运行中禁用「运行」、启用「停止」，反之亦然。"""
+        """切换运行态：记录显式状态字段并同步按钮可用性。"""
+        self._running = running
         self._run_button.setEnabled(not running)
         self._stop_button.setEnabled(running)
 

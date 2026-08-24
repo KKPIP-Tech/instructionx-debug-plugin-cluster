@@ -51,7 +51,10 @@ class TaskDemoService(Service):
 
         def on_completed(task_id: str, status, result, error) -> None:
             try:
-                message = f"任务回调: {task_name} [{status}] 结果={result} 错误={error}"
+                message = self._tr(
+                    "svc_task", "msg.callback",
+                    default="任务回调: {name} [{status}] 结果={result} 错误={error}",
+                    name=task_name, status=status, result=result, error=error)
                 self._notify_event(message)
                 self.logger.info(get_name(), f"任务完成回调 {task_name}({task_id}): {message}")
             except Exception as e:
@@ -63,7 +66,8 @@ class TaskDemoService(Service):
         """演示创建同步任务（带完成回调）"""
         def sync_func(seconds: int):
             time.sleep(seconds)
-            return f"同步任务完成，耗时 {seconds} 秒"
+            return self._tr("svc_task", "msg.sync_done",
+                            default="同步任务完成，耗时 {seconds} 秒", seconds=seconds)
 
         try:
             task_id = self.tm.register_sync_task(
@@ -71,7 +75,8 @@ class TaskDemoService(Service):
                 func=sync_func, args=(self.sync_seconds,),
                 callback=self._make_completion_callback(name),
             )
-            return {"success": True, "task_id": task_id, "message": "同步任务已创建并执行"}
+            return {"success": True, "task_id": task_id, "message": self._tr(
+                "svc_task", "msg.sync_created", default="同步任务已创建并执行")}
         except Exception as e:
             return {"success": False, "error": str(e)}
 
@@ -79,7 +84,8 @@ class TaskDemoService(Service):
         """演示创建异步任务（带完成回调）"""
         def async_func(seconds: int):
             time.sleep(seconds)
-            return f"异步任务完成，耗时 {seconds} 秒"
+            return self._tr("svc_task", "msg.async_done",
+                            default="异步任务完成，耗时 {seconds} 秒", seconds=seconds)
 
         try:
             task_id = self.tm.register_async_task(
@@ -88,15 +94,17 @@ class TaskDemoService(Service):
                 callback=self._make_completion_callback(name),
             )
             if task_id is None:
-                return {"success": False, "error": "任务管理器已关闭，无法创建任务"}
-            return {"success": True, "task_id": task_id, "message": "异步任务已创建"}
+                return {"success": False, "error": self._tr(
+                    "svc_task", "msg.manager_closed", default="任务管理器已关闭，无法创建任务")}
+            return {"success": True, "task_id": task_id, "message": self._tr(
+                "svc_task", "msg.async_created", default="异步任务已创建")}
         except Exception as e:
             return {"success": False, "error": str(e)}
 
     def create_scheduled_task(self, name: str = "scheduled_task", interval: int = 60) -> Dict[str, Any]:
         """演示创建定时任务（带完成回调）"""
         def scheduled_func():
-            return "定时任务执行"
+            return self._tr("svc_task", "msg.scheduled_run", default="定时任务执行")
 
         try:
             task_id = self.tm.register_scheduled_task(
@@ -105,8 +113,11 @@ class TaskDemoService(Service):
                 callback=self._make_completion_callback(name),
             )
             if task_id is None:
-                return {"success": False, "error": "任务管理器已关闭，无法创建任务"}
-            return {"success": True, "task_id": task_id, "message": f"定时任务已创建，间隔 {interval} 秒"}
+                return {"success": False, "error": self._tr(
+                    "svc_task", "msg.manager_closed", default="任务管理器已关闭，无法创建任务")}
+            return {"success": True, "task_id": task_id, "message": self._tr(
+                "svc_task", "msg.scheduled_created",
+                default="定时任务已创建，间隔 {interval} 秒", interval=interval)}
         except Exception as e:
             return {"success": False, "error": str(e)}
 
@@ -124,30 +135,44 @@ class TaskDemoService(Service):
         """
         stop_event = threading.Event()
         task_holder: Dict[str, str] = {}
+        try:
+            return self._register_long_task(name, stop_event, task_holder)
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def _make_long_func(self, stop_event: threading.Event,
+                        task_holder: Dict[str, str]) -> Callable[[], str]:
+        """构造长期任务循环体：每秒计数 +1 并上报状态，stop_event 置位后优雅退出"""
 
         def long_func() -> str:
             counter = 0
             while not stop_event.is_set():
                 time.sleep(LONG_TASK_TICK_SECONDS)
                 counter += 1
-                self._report_long_status(task_holder, f"已运行 {counter} 秒")
-            return f"长期任务优雅停止，共计数 {counter}"
+                self._report_long_status(task_holder, self._tr(
+                    "svc_task", "msg.long_running", default="已运行 {seconds} 秒", seconds=counter))
+            return self._tr("svc_task", "msg.long_stopped",
+                            default="长期任务优雅停止，共计数 {count}", count=counter)
 
-        try:
-            task_id = self.tm.register_long_running_task(
-                plugin_id=self.plugin_id, name=name,
-                func=long_func,
-                callback=self._make_completion_callback(name),
-                stop_callback=lambda: self._on_long_task_stop(name, stop_event),
-                status_callback=lambda tid, status: self._on_long_task_status(name, tid, status),
-                auto_restart=False,
-            )
-            if task_id is None:
-                return {"success": False, "error": "任务管理器已关闭，无法创建任务"}
-            task_holder["task_id"] = task_id
-            return {"success": True, "task_id": task_id, "message": "长期任务已创建（每秒计数 +1）"}
-        except Exception as e:
-            return {"success": False, "error": str(e)}
+        return long_func
+
+    def _register_long_task(self, name: str, stop_event: threading.Event,
+                            task_holder: Dict[str, str]) -> Dict[str, Any]:
+        """向框架注册长期任务（含完成/停止/状态回调）；管理器关闭时返回错误"""
+        task_id = self.tm.register_long_running_task(
+            plugin_id=self.plugin_id, name=name,
+            func=self._make_long_func(stop_event, task_holder),
+            callback=self._make_completion_callback(name),
+            stop_callback=lambda: self._on_long_task_stop(name, stop_event),
+            status_callback=lambda tid, status: self._on_long_task_status(name, tid, status),
+            auto_restart=False,
+        )
+        if task_id is None:
+            return {"success": False, "error": self._tr(
+                "svc_task", "msg.manager_closed", default="任务管理器已关闭，无法创建任务")}
+        task_holder["task_id"] = task_id
+        return {"success": True, "task_id": task_id, "message": self._tr(
+            "svc_task", "msg.long_created", default="长期任务已创建（每秒计数 +1）")}
 
     def _report_long_status(self, task_holder: Dict[str, str], status: str) -> None:
         """向框架上报长期任务状态（触发 status_callback）；task_id 未就绪时跳过"""
@@ -163,7 +188,9 @@ class TaskDemoService(Service):
         """长期任务停止回调：置位停止事件使 func 循环退出，并上抛通知"""
         try:
             stop_event.set()
-            self._notify_event(f"长期任务收到停止信号: {name}")
+            self._notify_event(self._tr(
+                "svc_task", "msg.long_stop_signal",
+                default="长期任务收到停止信号: {name}", name=name))
             self.logger.info(get_name(), f"长期任务停止回调: {name}")
         except Exception as e:
             self.logger.error(get_name(), f"长期任务停止回调处理失败 {name}: {e}")
@@ -171,20 +198,55 @@ class TaskDemoService(Service):
     def _on_long_task_status(self, name: str, task_id: str, status: str) -> None:
         """长期任务状态回调（工作线程）：经 notifier 上抛 + 记日志，异常不外抛"""
         try:
-            self._notify_event(f"长期任务状态: {name} -> {status}")
+            self._notify_event(self._tr(
+                "svc_task", "msg.long_status",
+                default="长期任务状态: {name} -> {status}", name=name, status=status))
             self.logger.info(get_name(), f"长期任务状态回调 {name}({task_id}): {status}")
         except Exception as e:
             self.logger.error(get_name(), f"长期任务状态回调处理失败 {name}: {e}")
 
-    def stop_long_task(self, task_id: str) -> Dict[str, Any]:
-        """演示停止长期任务（触发 stop_callback，func 经 stop_event 优雅退出）"""
+    def stop_long_task(self, task_id: str, delete_from_storage: bool = True) -> Dict[str, Any]:
+        """演示停止长期任务（触发 stop_callback，func 经 stop_event 优雅退出）
+
+        delete_from_storage=True（默认）：停止并从持久化存储删除记录；
+        False：仅停止并在存储中保留「已停止」记录（演示两种语义）。
+        框架新版返回 False 的完整语义：任务不在运行时表，且删除语义下
+        存储记录删除失败（通常即不存在该任务的残留记录）。
+        """
         try:
-            stopped = self.tm.stop_long_running_task(task_id)
+            stopped = self.tm.stop_long_running_task(
+                task_id, delete_from_storage=delete_from_storage)
         except Exception as e:
             return {"success": False, "error": str(e)}
         if stopped:
-            return {"success": True, "message": f"长期任务 {task_id} 已停止"}
-        return {"success": False, "error": f"长期任务 {task_id} 不存在或未在运行"}
+            key = "msg.long_stopped_ok" if delete_from_storage else "msg.long_stopped_keep"
+            default = ("长期任务 {id} 已停止" if delete_from_storage
+                       else "长期任务 {id} 已停止（保留存储记录）")
+            return {"success": True, "message": self._tr("svc_task", key, default=default, id=task_id)}
+        return {"success": False, "error": self._tr(
+            "svc_task", "err.long_not_running",
+            default="长期任务 {id} 不存在、未在运行，且无残留存储记录可删除", id=task_id)}
+
+    def is_long_task_running_demo(self, task_id: str) -> Dict[str, Any]:
+        """演示 is_long_task_running 判定口径
+
+        长期任务的 current_status 同时承载生命周期状态与插件自由文本
+        （update_long_running_task_status 写入的就是状态描述），不能作为
+        「是否在运行」的依据；is_long_task_running 查询运行时表，是唯一
+        可靠口径。本演示把两种口径并列返回供对照。
+        """
+        try:
+            running = self.tm.is_long_task_running(task_id)
+            stored = {t.task_id: t for t in self.tm.get_long_running_tasks(self.plugin_id)}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+        task = stored.get(task_id)
+        return {
+            "success": True,
+            "task_id": task_id,
+            "running": running,
+            "current_status": task.current_status if task is not None else None,
+        }
 
     # ------------------------------------------------------------------
     #  任务取消 / 状态查询
@@ -197,8 +259,10 @@ class TaskDemoService(Service):
         except Exception as e:
             return {"success": False, "error": str(e)}
         if cancelled:
-            return {"success": True, "message": f"任务 {task_id} 已标记取消"}
-        return {"success": False, "error": f"任务 {task_id} 不在运行列表中"}
+            return {"success": True, "message": self._tr(
+                "svc_task", "msg.cancelled", default="任务 {id} 已标记取消", id=task_id)}
+        return {"success": False, "error": self._tr(
+            "svc_task", "err.not_running", default="任务 {id} 不在运行列表中", id=task_id)}
 
     def get_task_status_demo(self, task_id: str) -> Dict[str, Any]:
         """演示查询任务状态与详情"""
@@ -208,12 +272,14 @@ class TaskDemoService(Service):
         except Exception as e:
             return {"success": False, "error": str(e)}
         if task is None:
-            return {"success": False, "error": f"任务 {task_id} 不存在"}
+            return {"success": False, "error": self._tr(
+                "svc_task", "err.not_found", default="任务 {id} 不存在", id=task_id)}
         return {
             "success": True,
             "task_id": task_id,
             "name": task.name,
-            "status": status.value if status is not None else "未知",
+            "status": status.value if status is not None else self._tr(
+                "svc_task", "status.unknown", default="未知"),
             "result": str(task.result),
             "error": str(task.error),
         }
@@ -224,7 +290,8 @@ class TaskDemoService(Service):
 
     def set_scheduled_enabled(self, task_id: str, enabled: bool) -> Dict[str, Any]:
         """演示启用/禁用定时任务"""
-        action = "启用" if enabled else "禁用"
+        action = self._tr("svc_task", "action.enable", default="启用") if enabled else self._tr(
+            "svc_task", "action.disable", default="禁用")
         try:
             if enabled:
                 done = self.tm.enable_scheduled_task(task_id)
@@ -233,8 +300,11 @@ class TaskDemoService(Service):
         except Exception as e:
             return {"success": False, "error": str(e)}
         if done:
-            return {"success": True, "message": f"定时任务 {task_id} 已{action}"}
-        return {"success": False, "error": f"定时任务 {task_id} 不存在"}
+            return {"success": True, "message": self._tr(
+                "svc_task", "msg.scheduled_toggled",
+                default="定时任务 {id} 已{action}", id=task_id, action=action)}
+        return {"success": False, "error": self._tr(
+            "svc_task", "err.scheduled_not_found", default="定时任务 {id} 不存在", id=task_id)}
 
     def unregister_scheduled(self, task_id: str) -> Dict[str, Any]:
         """演示注销定时任务（从运行列表与持久化存储中移除）"""
@@ -243,8 +313,12 @@ class TaskDemoService(Service):
         except Exception as e:
             return {"success": False, "error": str(e)}
         if done:
-            return {"success": True, "message": f"定时任务 {task_id} 已注销"}
-        return {"success": False, "error": f"定时任务 {task_id} 不在运行列表中"}
+            return {"success": True, "message": self._tr(
+                "svc_task", "msg.scheduled_unregistered",
+                default="定时任务 {id} 已注销", id=task_id)}
+        return {"success": False, "error": self._tr(
+            "svc_task", "err.scheduled_not_running",
+            default="定时任务 {id} 不在运行列表中", id=task_id)}
 
     # ------------------------------------------------------------------
     #  查询与清理
@@ -253,32 +327,42 @@ class TaskDemoService(Service):
     def query_tasks(self) -> Dict[str, Any]:
         """演示查询任务（普通任务 + 定时任务 + 长期任务）"""
         try:
-            all_tasks = self.tm.get_tasks_by_plugin(self.plugin_id)
-            scheduled_tasks = self.tm.get_scheduled_tasks(self.plugin_id)
-            long_tasks = self.tm.get_long_running_tasks(self.plugin_id)
             return {
                 "success": True,
-                "tasks": [
-                    {"task_id": t.task_id, "name": t.name, "status": t.status.value}
-                    for t in all_tasks
-                ],
-                "scheduled_tasks": [
-                    {"task_id": t.task_id, "name": t.name, "interval": t.interval, "enabled": t.enabled}
-                    for t in scheduled_tasks
-                ],
-                "long_running_tasks": [
-                    {"task_id": t.task_id, "name": t.name, "status": t.current_status}
-                    for t in long_tasks
-                ],
+                "tasks": self._collect_normal_tasks(),
+                "scheduled_tasks": self._collect_scheduled_tasks(),
+                "long_running_tasks": self._collect_long_tasks(),
             }
         except Exception as e:
             return {"success": False, "error": str(e)}
+
+    def _collect_normal_tasks(self) -> list:
+        """汇总普通任务展示字典（task_id/name/status）"""
+        return [
+            {"task_id": t.task_id, "name": t.name, "status": t.status.value}
+            for t in self.tm.get_tasks_by_plugin(self.plugin_id)
+        ]
+
+    def _collect_scheduled_tasks(self) -> list:
+        """汇总定时任务展示字典（task_id/name/interval/enabled）"""
+        return [
+            {"task_id": t.task_id, "name": t.name, "interval": t.interval, "enabled": t.enabled}
+            for t in self.tm.get_scheduled_tasks(self.plugin_id)
+        ]
+
+    def _collect_long_tasks(self) -> list:
+        """汇总长期任务展示字典（task_id/name/current_status）"""
+        return [
+            {"task_id": t.task_id, "name": t.name, "status": t.current_status}
+            for t in self.tm.get_long_running_tasks(self.plugin_id)
+        ]
 
     def clear_completed(self) -> Dict[str, Any]:
         """演示清理已完成任务"""
         try:
             count = self.tm.clear_completed_tasks(self.plugin_id)
-            return {"success": True, "message": f"已清理 {count} 个任务"}
+            return {"success": True, "message": self._tr(
+                "svc_task", "msg.cleared", default="已清理 {count} 个任务", count=count)}
         except Exception as e:
             return {"success": False, "error": str(e)}
 

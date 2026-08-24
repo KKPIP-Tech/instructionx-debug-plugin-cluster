@@ -209,3 +209,7 @@ __marimo__/
 .plugin_info.json
 
 .claude/
+
+
+# 插件运行日志
+logs/

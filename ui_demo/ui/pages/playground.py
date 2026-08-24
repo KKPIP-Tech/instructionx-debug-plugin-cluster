@@ -13,6 +13,8 @@
 QSS 或令牌，亮 / 暗主题切换无需重启即可正确换肤。
 """
 
+from typing import Optional
+
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import (
@@ -25,6 +27,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from InstructionX_UIKit import tokens as tk
 from InstructionX_UIKit.components.checkbox import CheckBox
 from InstructionX_UIKit.components.color_picker import ColorPicker
 from InstructionX_UIKit.components.combo_box import ComboBox
@@ -32,6 +35,17 @@ from InstructionX_UIKit.components.line_edit import LineEdit
 from InstructionX_UIKit.components.slider import Slider
 from InstructionX_UIKit.components.spin_box import DoubleSpinBox, SpinBox
 from InstructionX_UIKit.theme import T, set_property
+
+from core.interfaces import ILocalizationFacade
+from utils.logging_tools import LoggerManager, get_name
+
+from .common import bind_tr
+
+_logger = LoggerManager()
+
+#: PlaygroundPanel 默认固定宽度（px）；配置装载在 main_widget（避免循环
+#: 依赖），此处按命名常量兜底，调用方如需定制可显式传 ``width``
+DEFAULT_PANEL_WIDTH = 280
 
 __all__ = [
     "ParamForm",
@@ -49,6 +63,70 @@ def _small_button(text: str) -> QPushButton:
     return btn
 
 
+def _spec_int(form: "ParamForm", opts: dict, spec) -> None:
+    """int 规格：滑块 + 数值框，支持附加 kwargs dict。"""
+    _, key, label, default, lo, hi = spec[:6]
+    extra = spec[6] if len(spec) > 6 else {}
+    opts[key] = default
+    form.add_int(label, default, lo, hi,
+                 lambda v, k=key: opts.__setitem__(k, v),
+                 key=key, **extra)
+
+
+def _spec_float(form: "ParamForm", opts: dict, spec) -> None:
+    """float 规格：小数调节框，支持附加 kwargs dict。"""
+    _, key, label, default, lo, hi = spec[:6]
+    extra = spec[6] if len(spec) > 6 else {}
+    opts[key] = default
+    form.add_float(label, default, lo, hi,
+                   lambda v, k=key: opts.__setitem__(k, v),
+                   key=key, **extra)
+
+
+def _spec_choice(form: "ParamForm", opts: dict, spec) -> None:
+    """choice 规格：下拉（选项可为 (文本, 数据)）。"""
+    _, key, label, default, options = spec
+    opts[key] = default
+    form.add_choice(label, options, default,
+                    lambda v, k=key: opts.__setitem__(k, v), key=key)
+
+
+def _spec_easing(form: "ParamForm", opts: dict, spec) -> None:
+    """easing 规格：缓动下拉（选项与 InstructionX_UIKit 令牌同源）。"""
+    _, key, label, default = spec
+    opts[key] = default
+    # 缓动选项与 InstructionX_UIKit 令牌同源（tk.EASING 键名），避免硬编码漂移
+    form.add_choice(label, list(tk.EASING), default,
+                    lambda v, k=key: opts.__setitem__(k, v), key=key)
+
+
+def _spec_bool(form: "ParamForm", opts: dict, spec) -> None:
+    """bool 规格：开关。"""
+    _, key, label, default = spec
+    opts[key] = default
+    form.add_bool(label, default,
+                  lambda v, k=key: opts.__setitem__(k, v), key=key)
+
+
+def _spec_text(form: "ParamForm", opts: dict, spec) -> None:
+    """text 规格：单行文本。"""
+    _, key, label, default = spec
+    opts[key] = default
+    form.add_text(label, default,
+                  lambda v, k=key: opts.__setitem__(k, v), key=key)
+
+
+#: 规格类型 → 处理器（查表分发，替代 if-elif 长链）
+_SPEC_HANDLERS = {
+    "int": _spec_int,
+    "float": _spec_float,
+    "choice": _spec_choice,
+    "easing": _spec_easing,
+    "bool": _spec_bool,
+    "text": _spec_text,
+}
+
+
 def add_specs(form: "ParamForm", opts: dict, specs) -> None:
     """按规格元组批量向 ``form`` 添加参数控件，并以默认值初始化 ``opts``。
 
@@ -61,45 +139,11 @@ def add_specs(form: "ParamForm", opts: dict, specs) -> None:
         ("bool",   key, 标签, 默认)
         ("text",   key, 标签, 默认)
     """
-    easings = ["standard", "entrance", "spring", "emphasis", "linear"]
     for spec in specs:
-        kind = spec[0]
-        if kind == "int":
-            _, key, label, default, lo, hi = spec[:6]
-            extra = spec[6] if len(spec) > 6 else {}
-            opts[key] = default
-            form.add_int(label, default, lo, hi,
-                         lambda v, k=key: opts.__setitem__(k, v),
-                         key=key, **extra)
-        elif kind == "float":
-            _, key, label, default, lo, hi = spec[:6]
-            extra = spec[6] if len(spec) > 6 else {}
-            opts[key] = default
-            form.add_float(label, default, lo, hi,
-                           lambda v, k=key: opts.__setitem__(k, v),
-                           key=key, **extra)
-        elif kind == "choice":
-            _, key, label, default, options = spec
-            opts[key] = default
-            form.add_choice(label, options, default,
-                            lambda v, k=key: opts.__setitem__(k, v), key=key)
-        elif kind == "easing":
-            _, key, label, default = spec
-            opts[key] = default
-            form.add_choice(label, list(easings), default,
-                            lambda v, k=key: opts.__setitem__(k, v), key=key)
-        elif kind == "bool":
-            _, key, label, default = spec
-            opts[key] = default
-            form.add_bool(label, default,
-                          lambda v, k=key: opts.__setitem__(k, v), key=key)
-        elif kind == "text":
-            _, key, label, default = spec
-            opts[key] = default
-            form.add_text(label, default,
-                          lambda v, k=key: opts.__setitem__(k, v), key=key)
-        else:  # pragma: no cover - 规格错误
+        handler = _SPEC_HANDLERS.get(spec[0])
+        if handler is None:  # pragma: no cover - 规格错误
             raise ValueError(f"未知参数规格: {spec!r}")
+        handler(form, opts, spec)
 
 
 class ParamForm(QWidget):
@@ -166,6 +210,18 @@ class ParamForm(QWidget):
             ``SpinBox``（滑块可通过宿主控件的 ``.slider`` 访问）。
         """
         key = key or label
+        host, slider, spin = self._build_int_controls(value, minimum, maximum,
+                                                      step, special)
+        self._wire_int_controls(key, callback, slider, spin)
+        host.slider = slider  # 便于测试 / 外部访问
+        host.spin = spin
+        self._register(key, label, "int", value, host,
+                       lambda: spin.setValue(value))
+        self.controls[key] = spin  # 主控件登记为数值框
+        return spin
+
+    def _build_int_controls(self, value, minimum, maximum, step, special):
+        """构建滑块 + 数值框宿主，返回 (宿主, 滑块, 数值框)。"""
         host = QWidget()
         h = QHBoxLayout(host)
         h.setContentsMargins(0, 0, 0, 0)
@@ -178,7 +234,10 @@ class ParamForm(QWidget):
             spin.setSpecialValueText(special)
         h.addWidget(slider, 1)
         h.addWidget(spin, 0)
+        return host, slider, spin
 
+    def _wire_int_controls(self, key, callback, slider, spin) -> None:
+        """接线滑块与数值框的双向联动（数值框变化触发参数回调）。"""
         def _from_slider(v):
             spin.setValue(v)  # spin 的 valueChanged 完成回调
 
@@ -190,12 +249,6 @@ class ParamForm(QWidget):
 
         slider.valueChanged.connect(_from_slider)
         spin.valueChanged.connect(_from_spin)
-        host.slider = slider  # 便于测试 / 外部访问
-        host.spin = spin
-        self._register(key, label, "int", value, host,
-                       lambda: spin.setValue(value))
-        self.controls[key] = spin  # 主控件登记为数值框
-        return spin
 
     def add_float(self, label, value, minimum, maximum, callback,
                   key=None, step=0.1, decimals=2, suffix=""):
@@ -302,39 +355,49 @@ class PlaygroundPanel(QFrame):
     ``controls`` 字典暴露各参数主控件，便于测试与外部访问。
 
     参数:
-        title: 面板标题。
-        width: 固定宽度，默认 280。
+        title: 面板标题（None 时取语言文件 ``playground:panel.default_title``）。
+        width: 固定宽度，默认 ``DEFAULT_PANEL_WIDTH``。
+        i18n: 取词门面（默认标题与「重置」按钮文案用；可为 None）。
         parent: 父控件。
     """
 
-    def __init__(self, title: str = "参数调节", width: int = 280, parent=None):
+    def __init__(self, title: Optional[str] = None, width: int = DEFAULT_PANEL_WIDTH,
+                 i18n: Optional[ILocalizationFacade] = None, parent=None):
         super().__init__(parent)
         self.setFrameShape(QFrame.Shape.StyledPanel)  # 命中 QSS 卡片边框
         self.setFixedWidth(int(width))
-
+        tr = bind_tr(i18n, "playground")
         lay = QVBoxLayout(self)
         lay.setContentsMargins(12, 10, 12, 10)
         lay.setSpacing(8)
+        lay.addWidget(self._build_head(title, tr))
+        self._build_form_area(lay)
+        lay.addLayout(self._build_reset_row(tr))
+        self.controls = self.form.controls
+        self.changed = self.form.changed  # Signal(str, object)
 
-        head = QLabel(title)
+    def _build_head(self, title, tr) -> QLabel:
+        """构建面板标题标签（加粗字重取令牌）。"""
+        head = QLabel(title if title is not None else tr("panel.default_title"))
         font = QFont()
         font.setWeight(QFont.Weight(T("font.weight.semibold")))
         head.setFont(font)
-        lay.addWidget(head)
+        return head
 
+    def _build_form_area(self, lay) -> None:
+        """构建参数表单区（表单 + 拉伸占位）。"""
         self.form = ParamForm(self)
         lay.addWidget(self.form)
         lay.addStretch(1)
 
+    def _build_reset_row(self, tr) -> QHBoxLayout:
+        """构建右对齐「重置」按钮行。"""
         btn_row = QHBoxLayout()
         btn_row.addStretch(1)
-        self.reset_button = _small_button("重置")
+        self.reset_button = _small_button(tr("panel.reset"))
         self.reset_button.clicked.connect(self.form.reset)
         btn_row.addWidget(self.reset_button)
-        lay.addLayout(btn_row)
-
-        self.controls = self.form.controls
-        self.changed = self.form.changed  # Signal(str, object)
+        return btn_row
 
     # -- 委托 add_* ------------------------------------------------------
     def add_int(self, *args, **kwargs):
@@ -393,13 +456,13 @@ def swap_widget(container: QWidget, widget: QWidget,
 
 
 def _stop_handle(handle):
-    """安全停止动画句柄（无 stop 方法的句柄忽略）。"""
+    """安全停止动画句柄；异常记 DEBUG 日志（无 stop 方法的句柄忽略）。"""
     if handle is None:
         return
     try:
         handle.stop()
-    except Exception:  # noqa: BLE001
-        pass
+    except Exception as exc:  # noqa: BLE001
+        _logger.debug(get_name(), f"停止动画句柄失败（已忽略）: {exc!r}")
 
 
 class ParamCard(QFrame):
@@ -413,31 +476,49 @@ class ParamCard(QFrame):
         demo_height: 演示区最小高度。
         continuous: True 时任何参数变化都会自动重放（连续型动画）。
         on_stop: 重放前对旧句柄的自定义清理（默认调用 ``stop()``）。
+        i18n: 取词门面（「播放」按钮文案用；可为 None）。
         parent: 父控件。
     """
 
     def __init__(self, title: str, demo: QWidget = None, play=None,
                  hint: str = "", demo_height: int = 130,
-                 continuous: bool = False, on_stop=None, parent=None):
+                 continuous: bool = False, on_stop=None, parent=None,
+                 i18n: Optional[ILocalizationFacade] = None):
         super().__init__(parent)
         self.setFrameShape(QFrame.Shape.StyledPanel)  # 命中 QSS 卡片边框
-
         lay = QVBoxLayout(self)
         lay.setContentsMargins(12, 10, 12, 10)
         lay.setSpacing(6)
+        lay.addWidget(self._build_head(title))
+        self._add_hint(lay, hint)
+        self._build_demo_area(lay, demo_height, demo)
+        self._build_form(lay)
+        lay.addLayout(self._build_play_row(i18n))
+        self._play = play
+        self._on_stop = on_stop
+        self.continuous = bool(continuous)
+        self.handle = None
+        self.form.changed.connect(self._on_param_changed)
 
+    def _build_head(self, title) -> QLabel:
+        """构建卡片标题标签（加粗字重取令牌）。"""
         head = QLabel(title)
         head_font = QFont()
         head_font.setWeight(QFont.Weight(T("font.weight.semibold")))
         head.setFont(head_font)
-        lay.addWidget(head)
+        return head
 
-        if hint:
-            hint_lab = QLabel(hint)
-            hint_lab.setWordWrap(True)
-            set_property(hint_lab, "role", "tertiary")
-            lay.addWidget(hint_lab)
+    def _add_hint(self, lay, hint) -> None:
+        """有说明文案时添加多行说明标签（role=tertiary）。"""
+        if not hint:
+            return
+        hint_lab = QLabel(hint)
+        hint_lab.setWordWrap(True)
+        set_property(hint_lab, "role", "tertiary")
+        lay.addWidget(hint_lab)
 
+    def _build_demo_area(self, lay, demo_height, demo) -> None:
+        """构建演示区宿主并按需装载初始演示控件。"""
         self._demo_host = QWidget()
         demo_lay = QVBoxLayout(self._demo_host)
         demo_lay.setContentsMargins(0, 2, 0, 2)
@@ -447,23 +528,21 @@ class ParamCard(QFrame):
         if demo is not None:
             self.set_demo(demo)
 
+    def _build_form(self, lay) -> None:
+        """构建参数表单并暴露 ``controls`` / ``changed``。"""
         self.form = ParamForm(self)
         lay.addWidget(self.form)
         self.controls = self.form.controls
         self.changed = self.form.changed
 
+    def _build_play_row(self, i18n) -> QHBoxLayout:
+        """构建右对齐「播放」按钮行。"""
         btn_row = QHBoxLayout()
         btn_row.addStretch(1)
-        self.play_button = _small_button("播放")
+        self.play_button = _small_button(bind_tr(i18n, "playground")("card.play"))
         self.play_button.clicked.connect(self.replay)
         btn_row.addWidget(self.play_button)
-        lay.addLayout(btn_row)
-
-        self._play = play
-        self._on_stop = on_stop
-        self.continuous = bool(continuous)
-        self.handle = None
-        self.form.changed.connect(self._on_param_changed)
+        return btn_row
 
     # ------------------------------------------------------------------
     def set_demo(self, widget: QWidget) -> QWidget:
@@ -475,12 +554,12 @@ class ParamCard(QFrame):
         self._play = play
 
     def replay(self):
-        """停止旧句柄并按当前参数重放。"""
+        """停止旧句柄并按当前参数重放（异常记 DEBUG 日志，不中断演示）。"""
         if self._on_stop is not None:
             try:
                 self._on_stop(self.handle)
-            except Exception:  # noqa: BLE001
-                pass
+            except Exception as exc:  # noqa: BLE001
+                _logger.debug(get_name(), f"自定义停止回调异常（已忽略）: {exc!r}")
         else:
             _stop_handle(self.handle)
         self.handle = None
@@ -488,7 +567,8 @@ class ParamCard(QFrame):
             return None
         try:
             self.handle = self._play()
-        except Exception:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001
+            _logger.debug(get_name(), f"动画播放回调异常（已忽略）: {exc!r}")
             self.handle = None
         return self.handle
 

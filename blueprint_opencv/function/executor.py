@@ -35,6 +35,11 @@ from .param_schema import resolve_props
 #: 毫秒换算系数（perf_counter 秒 → 毫秒）
 _MS_PER_SECOND = 1000.0
 
+#: 三色标记 DFS 的节点标记（判环用）：灰 = 当前 DFS 路径上（重复到达即成环），
+#: 黑 = 已完成（菱形汇聚时从多条路径重复到达属正常，直接跳过）
+_MARK_GRAY = "gray"
+_MARK_BLACK = "black"
+
 
 def _noop(*args: Any, **kwargs: Any) -> None:
     """空回调（ExecutorCallbacks 缺省值）。"""
@@ -180,19 +185,32 @@ class PipelineExecutor:
     # ------------------------------------------------------------------
 
     def _exec_order(self, ctx: _RunContext) -> List[str]:
-        """从 start 沿 exec 边 DFS 得到执行序列（不含 start 本身）。"""
+        """从 start 沿 exec 边 DFS 得到执行序列（不含 start 本身）。
+
+        判环采用三色标记法：「重复到达黑节点」是菱形汇聚（如 A→C、B→C
+        的 C 从两条路径到达）属正常拓扑，只有重复到达当前路径上的
+        灰节点才是真正的环——原 visited 出栈检查会把前者误报为环。
+        """
         start_id = self._find_start(ctx)
         order: List[str] = []
-        visited = set()
-        stack = list(reversed(self._exec_successors(ctx, start_id)))
-        while stack:
-            node_id = stack.pop()
-            if node_id in visited:
-                raise NodeExecutionError("exec 链存在环路，无法运行")
-            visited.add(node_id)
-            order.append(node_id)
-            stack.extend(reversed(self._exec_successors(ctx, node_id)))
+        marks: Dict[str, str] = {}
+        for successor in self._exec_successors(ctx, start_id):
+            self._visit_exec(ctx, successor, marks, order)
         return order
+
+    def _visit_exec(self, ctx: _RunContext, node_id: str,
+                    marks: Dict[str, str], order: List[str]) -> None:
+        """三色标记 DFS：灰节点重复到达抛环，黑节点跳过，白节点前序入列。"""
+        mark = marks.get(node_id)
+        if mark == _MARK_GRAY:
+            raise NodeExecutionError("exec 链存在环路，无法运行")
+        if mark == _MARK_BLACK:
+            return  # 菱形汇聚：已完成节点从另一路径到达，非环
+        marks[node_id] = _MARK_GRAY
+        order.append(node_id)
+        for successor in self._exec_successors(ctx, node_id):
+            self._visit_exec(ctx, successor, marks, order)
+        marks[node_id] = _MARK_BLACK
 
     def _find_start(self, ctx: _RunContext) -> str:
         """定位唯一 start 节点；缺失 / 多个均拒绝运行。"""

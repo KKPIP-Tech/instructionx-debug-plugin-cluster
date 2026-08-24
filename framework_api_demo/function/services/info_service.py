@@ -1,9 +1,9 @@
 """
 Framework API Demo 框架信息服务
 
-提供框架版本与可用 API 清单信息，并演示框架 utils 工具：
-LoggerManager 五级日志、thread_utils 线程封送、
-load_image_as_base64 图片转 Base64。
+提供框架版本与可用 API 清单信息，并演示框架 utils 工具与各子系统门面：
+LoggerManager 五级日志、thread_utils 线程封送、load_image_as_base64 图片转 Base64、
+FontManager 字体子系统（只读）、ILocalizationFacade 多语言门面（只读）。
 """
 
 import base64
@@ -34,18 +34,25 @@ _THREAD_DEMO_TASK_NAME = "thread_marshal_demo"
 
 
 class FrameworkInfoService(Service):
-    """获取框架信息并演示 utils 工具的服务类"""
+    """获取框架信息并演示 utils 工具与各子系统门面的服务类"""
 
     def get_framework_info(self) -> Dict[str, Any]:
-        """获取框架信息"""
+        """获取框架信息
+
+        apis 清单按插件实际可达的入口列出；LLMProvider 为框架内部单例，
+        插件不直接调用，LLM 能力统一经 ILLMService（llm_facade）门面访问。
+        """
         return {
             "framework": "InstructionX",
             "version": get_instructionx_version_string(),
             "apis": [
                 "DataProvider",
                 "BackgroundTaskManager",
-                "LLMProvider",
+                "ILLMService（llm_facade，LLMProvider 能力的插件侧门面）",
                 "PluginManager",
+                "MCPManager / MCPClientManager",
+                "FontManager",
+                "LanguageManager（经 ILocalizationFacade 门面）",
                 "LoggerManager",
             ],
         }
@@ -68,7 +75,8 @@ class FrameworkInfoService(Service):
         return {
             "success": True,
             "levels": levels,
-            "message": "五级日志已写入，请到 logs/application.log 查看",
+            "message": self._tr("svc_info", "msg.log_levels",
+                                default="五级日志已写入，请到 logs/application.log 查看"),
         }
 
     # ------------------------------------------------------------------
@@ -78,16 +86,19 @@ class FrameworkInfoService(Service):
     def demo_thread_utils(self) -> Dict[str, Any]:
         """演示 is_ui_thread / run_in_ui_thread / run_in_ui_thread_sync
 
-        在调用线程记录 is_ui_thread()；再注册同步任务到工作线程执行
+        在调用线程记录 is_ui_thread()；再注册异步任务到任务线程池执行
         _worker_probe（其中经 run_in_ui_thread_sync 封送回 UI 线程取对照值，
         并经 run_in_ui_thread 异步封送一条回执），结果经 notifier 上抛。
+        「工作线程直判=False vs 封送后=True」的对照只有任务真实运行在
+        工作线程时才成立，因此必须使用 register_async_task（线程池），
+        而非调用线程内联执行的 register_sync_task。
 
         返回:
             包含调用方线程判定结果与任务 id 的字典
         """
         caller_is_ui = is_ui_thread()
         try:
-            task_id = self.tm.register_sync_task(
+            task_id = self.tm.register_async_task(
                 plugin_id=self.plugin_id,
                 name=_THREAD_DEMO_TASK_NAME,
                 func=self._worker_probe,
@@ -95,11 +106,16 @@ class FrameworkInfoService(Service):
             )
         except Exception as e:
             return {"success": False, "error": str(e)}
+        if task_id is None:
+            return {"success": False, "error": self._tr(
+                "svc_info", "err.manager_closed",
+                default="任务管理器已关闭，无法发起后台任务")}
         return {
             "success": True,
             "task_id": task_id,
             "caller_is_ui_thread": caller_is_ui,
-            "message": "工作线程封送对照结果将经事件通知回传（见日志面板）",
+            "message": self._tr("svc_info", "msg.thread_started",
+                                default="工作线程封送对照结果将经事件通知回传（见日志面板）"),
         }
 
     def _worker_probe(self) -> Dict[str, Any]:
@@ -108,7 +124,8 @@ class FrameworkInfoService(Service):
         marshaled_is_ui = run_in_ui_thread_sync(is_ui_thread)
         run_in_ui_thread(
             self._notify_event,
-            "run_in_ui_thread 异步封送回执：本条事件由 UI 线程上抛",
+            self._tr("svc_info", "msg.thread_receipt",
+                     default="run_in_ui_thread 异步封送回执：本条事件由 UI 线程上抛"),
         )
         return {
             "worker_is_ui_thread": worker_is_ui,
@@ -120,7 +137,10 @@ class FrameworkInfoService(Service):
 
         def on_completed(task_id: str, status, result, error) -> None:
             try:
-                self._notify_event(f"线程封送对照 [{status}]: {result} 错误={error}")
+                self._notify_event(self._tr(
+                    "svc_info", "msg.thread_compare",
+                    default="线程封送对照 [{status}]: {result} 错误={error}",
+                    status=status, result=result, error=error))
             except Exception as e:
                 self.logger.error(get_name(), f"线程演示回调处理失败: {e}")
 
@@ -154,3 +174,85 @@ class FrameworkInfoService(Service):
             "base64_length": len(encoded),
             "base64_prefix": encoded[:_BASE64_PREFIX_LENGTH],
         }
+
+    # ------------------------------------------------------------------
+    #  FontManager 字体子系统演示（只读：不安装/卸载字体文件）
+    # ------------------------------------------------------------------
+
+    def _font_manager(self):
+        """取 PluginServices 注入的 FontManager（Optional 注入，未注入时返回 None）"""
+        if self.services is None:
+            return None
+        return getattr(self.services, "font_manager", None)
+
+    def _font_unavailable(self) -> Dict[str, Any]:
+        """FontManager 未注入时的统一错误返回"""
+        return {"success": False, "error": self._tr(
+            "svc_info", "err.font_unavailable",
+            default="FontManager 未注入（框架未提供字体子系统）")}
+
+    def demo_list_fonts(self) -> Dict[str, Any]:
+        """演示 FontManager.list_fonts / installed_families（只读列出已注册字体）"""
+        manager = self._font_manager()
+        if manager is None:
+            return self._font_unavailable()
+        try:
+            records = manager.list_fonts()
+            return {
+                "success": True,
+                "count": len(records),
+                "fonts": [
+                    {"family": r.family, "style": r.style, "source": r.source}
+                    for r in records
+                ],
+                "installed_families": manager.installed_families(),
+            }
+        except Exception as e:
+            self.logger.error(get_name(), f"列出已注册字体失败: {e}")
+            return {"success": False, "error": str(e)}
+
+    def demo_resolve_family(self, family: str) -> Dict[str, Any]:
+        """演示 FontManager.is_available / resolve_family（系统字体回退解析，只读）
+
+        回退顺序：请求字体 → 系统默认字体；可用于验证不存在的家族名
+        会被解析为可用的回退家族（演示建议填入一个故意不存在的名字）。
+        """
+        manager = self._font_manager()
+        if manager is None:
+            return self._font_unavailable()
+        try:
+            return {
+                "success": True,
+                "requested": family,
+                "available": manager.is_available(family),
+                "resolved": manager.resolve_family(family),
+            }
+        except Exception as e:
+            self.logger.error(get_name(), f"字体回退解析失败({family}): {e}")
+            return {"success": False, "error": str(e)}
+
+    # ------------------------------------------------------------------
+    #  ILocalizationFacade 多语言门面演示（只读）
+    # ------------------------------------------------------------------
+
+    def demo_localization_info(self) -> Dict[str, Any]:
+        """演示 ILocalizationFacade 只读能力
+
+        即本插件自身取词所用的门面（PluginServices.localization 注入）：
+        current_language() 当前生效语言、available_languages() 插件提供的
+        语言包清单、has_catalog() 是否存在插件语言目录。
+        """
+        if self._i18n is None:
+            return {"success": False, "error": self._tr(
+                "svc_info", "err.i18n_unavailable",
+                default="多语言门面未注入（无 PluginServices.localization）")}
+        try:
+            return {
+                "success": True,
+                "current_language": self._i18n.current_language(),
+                "available_languages": self._i18n.available_languages(),
+                "has_catalog": self._i18n.has_catalog(),
+            }
+        except Exception as e:
+            self.logger.error(get_name(), f"查询多语言门面信息失败: {e}")
+            return {"success": False, "error": str(e)}

@@ -1,0 +1,278 @@
+{
+  "graph": {
+    "nodes": [
+      {
+        "id": "c74a6c0f14f5",
+        "type_name": "start",
+        "title": "开始",
+        "pos": [
+          40.0,
+          180.0
+        ],
+        "size": [
+          160.0,
+          60.0
+        ],
+        "accent": "success",
+        "inputs": [],
+        "outputs": [
+          {
+            "id": "out",
+            "name": "开始",
+            "direction": "output",
+            "data_type": "exec",
+            "multi": false
+          }
+        ],
+        "properties": {}
+      },
+      {
+        "id": "c0f13265fbca",
+        "type_name": "load_image",
+        "title": "加载图片",
+        "pos": [
+          440.0,
+          180.0
+        ],
+        "size": [
+          160.0,
+          104.0
+        ],
+        "accent": "#4CAF50",
+        "inputs": [
+          {
+            "id": "exec_in",
+            "name": "执行",
+            "direction": "input",
+            "data_type": "exec",
+            "multi": false
+          }
+        ],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "name": "执行",
+            "direction": "output",
+            "data_type": "exec",
+            "multi": false
+          },
+          {
+            "id": "image_out",
+            "name": "图像",
+            "direction": "output",
+            "data_type": "image",
+            "multi": false
+          }
+        ],
+        "properties": {
+          "file_path": "assets/sample.png"
+        }
+      },
+      {
+        "id": "5b36b3d414bc",
+        "type_name": "gaussian_blur",
+        "title": "高斯模糊",
+        "pos": [
+          1140.0,
+          180.0
+        ],
+        "size": [
+          160.0,
+          130.0
+        ],
+        "accent": "#9C27B0",
+        "inputs": [
+          {
+            "id": "exec_in",
+            "name": "执行",
+            "direction": "input",
+            "data_type": "exec",
+            "multi": false
+          },
+          {
+            "id": "image_in",
+            "name": "图像",
+            "direction": "input",
+            "data_type": "image",
+            "multi": false
+          }
+        ],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "name": "执行",
+            "direction": "output",
+            "data_type": "exec",
+            "multi": false
+          },
+          {
+            "id": "image_out",
+            "name": "图像",
+            "direction": "output",
+            "data_type": "image",
+            "multi": false
+          }
+        ],
+        "properties": {
+          "ksize": 5,
+          "sigma_x": 0.0
+        }
+      },
+      {
+        "id": "bcf324998c55",
+        "type_name": "canny",
+        "title": "Canny 边缘",
+        "pos": [
+          1540.0,
+          180.0
+        ],
+        "size": [
+          160.0,
+          130.0
+        ],
+        "accent": "#FF9800",
+        "inputs": [
+          {
+            "id": "exec_in",
+            "name": "执行",
+            "direction": "input",
+            "data_type": "exec",
+            "multi": false
+          },
+          {
+            "id": "image_in",
+            "name": "图像",
+            "direction": "input",
+            "data_type": "image",
+            "multi": false
+          }
+        ],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "name": "执行",
+            "direction": "output",
+            "data_type": "exec",
+            "multi": false
+          },
+          {
+            "id": "image_out",
+            "name": "图像",
+            "direction": "output",
+            "data_type": "image",
+            "multi": false
+          }
+        ],
+        "properties": {
+          "low": 50,
+          "high": 150
+        }
+      },
+      {
+        "id": "d7474967b2f2",
+        "type_name": "preview",
+        "title": "预览",
+        "pos": [
+          1940.0,
+          180.0
+        ],
+        "size": [
+          160.0,
+          84.0
+        ],
+        "accent": "#F44336",
+        "inputs": [
+          {
+            "id": "exec_in",
+            "name": "执行",
+            "direction": "input",
+            "data_type": "exec",
+            "multi": false
+          },
+          {
+            "id": "image_in",
+            "name": "图像",
+            "direction": "input",
+            "data_type": "image",
+            "multi": false
+          }
+        ],
+        "outputs": [
+          {
+            "id": "exec_out",
+            "name": "执行",
+            "direction": "output",
+            "data_type": "exec",
+            "multi": false
+          },
+          {
+            "id": "image_out",
+            "name": "图像",
+            "direction": "output",
+            "data_type": "image",
+            "multi": false
+          }
+        ],
+        "properties": {}
+      }
+    ],
+    "edges": [
+      {
+        "id": "68ba3c30e9ae",
+        "from_node": "c74a6c0f14f5",
+        "from_pin": "out",
+        "to_node": "c0f13265fbca",
+        "to_pin": "exec_in"
+      },
+      {
+        "id": "2091c3a7c07a",
+        "from_node": "c0f13265fbca",
+        "from_pin": "exec_out",
+        "to_node": "5b36b3d414bc",
+        "to_pin": "exec_in"
+      },
+      {
+        "id": "01b116c9d15e",
+        "from_node": "5b36b3d414bc",
+        "from_pin": "exec_out",
+        "to_node": "bcf324998c55",
+        "to_pin": "exec_in"
+      },
+      {
+        "id": "385cbebd9353",
+        "from_node": "bcf324998c55",
+        "from_pin": "exec_out",
+        "to_node": "d7474967b2f2",
+        "to_pin": "exec_in"
+      },
+      {
+        "id": "457a4361c892",
+        "from_node": "c0f13265fbca",
+        "from_pin": "image_out",
+        "to_node": "5b36b3d414bc",
+        "to_pin": "image_in"
+      },
+      {
+        "id": "81b1d594176a",
+        "from_node": "5b36b3d414bc",
+        "from_pin": "image_out",
+        "to_node": "bcf324998c55",
+        "to_pin": "image_in"
+      },
+      {
+        "id": "5256fdf27b97",
+        "from_node": "bcf324998c55",
+        "from_pin": "image_out",
+        "to_node": "d7474967b2f2",
+        "to_pin": "image_in"
+      }
+    ]
+  },
+  "view": {
+    "zoom": 1.0,
+    "offset": [
+      0.0,
+      0.0
+    ]
+  }
+}

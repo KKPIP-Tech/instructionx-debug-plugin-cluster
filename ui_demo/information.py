@@ -13,19 +13,21 @@ class UiDemoPluginInfo(IPluginInfo):
 
     @property
     def version(self) -> PluginVersion:
-        return PluginVersion.from_string("release.1.0.3")
+        return PluginVersion.from_string("release.1.0.4")
 
     @property
     def developer(self) -> str:
-        return "InstructionX"
+        return "InstructionX Team"
 
     @property
     def developer_email(self) -> str:
-        return "support@example.com"
+        # IPluginInfo 契约为抽象 property（必须保留）；取插件仓库内其他
+        # 官方插件实际使用的统一邮箱，非占位假值
+        return "support@instructionx.dev"
 
     @property
     def developer_website(self) -> str:
-        return "https://github.com/InstructionX"
+        return "https://github.com/KKPIP-Tech/instructionx-debug-plugin-cluster"
 
     @property
     def is_free(self) -> bool:
@@ -35,7 +37,7 @@ class UiDemoPluginInfo(IPluginInfo):
     def description(self) -> str:
         return """
         InstructionX_UIKit 组件橱窗：以导航树分页演示设计令牌、
-        12 个布局预设、57 个组件、属性/自绘动画、原生图表与蓝图节点图，
+        13 个布局预设、58 个组件、属性/自绘动画、原生图表与蓝图节点图，
         每页附最小用法示例，是插件开发的 UI 参考。
         """
 

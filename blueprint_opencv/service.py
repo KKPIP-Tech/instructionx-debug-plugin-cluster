@@ -8,10 +8,14 @@ stop_pipeline / save_graph / load_graph / list_graphs / delete_graph /
 rename_graph / list_node_types / get_last_result_info）注册为跨插件 API
 并同步为 MCP 工具。
 
-本类为 QObject 门面：持有 PipelineController 与当前图快照，定义 Qt 信号
-用于工作线程 → UI 线程的结果封送（emit 由 Qt 自动排队到接收方所在线程，
-本类不创建任何 QPixmap）。执行引擎、节点目录、图像编解码等业务细节全部
-委托 function/ 层，本模块不出现 cv2 / numpy。
+本类为 QObject 门面：PipelineController 与当前图快照由 function 层
+runtime_registry 按 plugin_id 提供的共享 PipelineRuntime 承载——框架
+自动注册跨插件 API 时会自行实例化第二个本类对象，共享运行实例保证
+UI / 跨插件 / MCP 路径操作同一份运行态（见 runtime_registry 模块
+docstring）。本类定义的 Qt 信号用于工作线程 → UI 线程的结果封送
+（emit 由 Qt 自动排队到接收方所在线程，本类不创建任何 QPixmap）。
+执行引擎、节点目录、图像编解码等业务细节全部委托 function/ 层，
+本模块不出现 cv2 / numpy。
 """
 
 import json
@@ -23,13 +27,15 @@ from typing import Any, Callable, Dict, Optional
 from PySide6.QtCore import QObject, Signal
 
 from core.data.data_provider import DataProvider, DataProviderError
+from core.plugin.manager import PluginManager
 from core.task.background_task import BackgroundTaskManager
 from utils.logging_tools import LoggerManager
 
 # 经包模块间接引用 function 层：本模块命名空间中只保留 BlueprintOpenCVService
 # 一个类，确保 PluginManager 按「类名以 Service 结尾」规则挑选时命中本类
 from .function import executor as executor_module
-from .function import graph_migration, node_catalog, pipeline_controller
+from .function import graph_migration, node_catalog
+from .function import runtime_registry
 from .function.constants import NodeExecutionError
 
 # 日志模块标识
@@ -48,20 +54,17 @@ GRAPH_FILE_SUFFIX = ".json"
 #: 图名非法字符（Windows 文件名禁用字符，SPEC-graph-list §1.4）
 INVALID_NAME_CHARS = '<>:"/\\|?*'
 
-# DataProvider.save_asset 返回的资源相对路径前缀（见 data_provider.py 实现）
-ASSET_PATH_PREFIX = "assets/plugins"
-
-# 预置示例图资产路径（相对插件目录，见 SPEC §8 assets.preset_graph）
+# 预置示例图资产路径（相对插件目录）：service 层常量为唯一来源
+# （跨插件路径不读 config，边界约定见 ui/plugin_config 模块 docstring）
 PRESET_GRAPH_RELATIVE_PATH = "assets/preset_graph.json"
+
+#: 插件根目录（预置图内相对路径的解析基准）
+_PLUGIN_ROOT = Path(__file__).resolve().parent
+#: 节点属性中的文件路径参数键（预置图相对路径解析对象）
+_FILE_PATH_PROPERTY = "file_path"
 
 # 管线执行后台任务名（register_async_task 的 name 参数）
 RUN_TASK_NAME = "blueprint_opencv.run_pipeline"
-
-# 空图结构（与 BlueprintCanvas.to_dict 格式一致；预置示例图缺失时的最终回退）
-EMPTY_GRAPH: Dict[str, Any] = {
-    "graph": {"nodes": [], "edges": []},
-    "view": {"zoom": 1.0, "offset": [0.0, 0.0]},
-}
 
 
 class BlueprintOpenCVService(QObject):
@@ -71,6 +74,10 @@ class BlueprintOpenCVService(QObject):
     （(plugin_id, data_provider, llm_service, task_manager) 逐级裁减）。
     llm_service 仅为兼容注入签名而接收；task_manager 用于把管线执行
     提交到框架线程池（缺省回退 BackgroundTaskManager 单例）。
+
+    运行态（PipelineController + 图快照）取自 runtime_registry 按
+    plugin_id 共享的 PipelineRuntime，因此 UI 实例与框架自动注册实例
+    操作同一份图与运行状态，跨实例并发提交由控制器的运行状态机拦截。
 
     线程模型：run_pipeline / stop_pipeline 可被任意线程（UI / MCP）调用；
     执行回调在工作线程触发，此处直接 emit Qt 信号，由 Qt 自动排队到
@@ -96,10 +103,38 @@ class BlueprintOpenCVService(QObject):
         self._plugin_id = plugin_id or DEFAULT_PLUGIN_ID
         self._data_provider = data_provider or DataProvider()
         self._task_manager = task_manager
-        self._controller = pipeline_controller.PipelineController()
-        # 当前图快照（canvas.to_dict 格式）：UI 经 update_graph 同步，
-        # 保存/运行以此为数据源
-        self._graph_snapshot: Dict[str, Any] = dict(EMPTY_GRAPH)
+        # 共享运行实例（按 plugin_id 进程内唯一）：框架自动注册跨插件 API
+        # 时自行实例化的第二个本类对象解析到同一 runtime，避免 MCP
+        # run_pipeline 跑空图、save_graph 以空图覆盖用户存档
+        self._runtime = self._resolve_runtime()
+
+    def _resolve_runtime(self) -> "runtime_registry.PipelineRuntime":
+        """解析共享运行实例。
+
+        框架以两种模块身份加载本插件（`_load_plugin_from_directory` 用
+        包名 `blueprint_opencv` 加载 entrance，`_auto_register_plugin_api`
+        用包名 `plugin.blueprint_opencv` 导入本模块），两套身份的
+        runtime_registry 各持一份独立 _RUNTIMES，模块级注册表无法跨身份
+        共享。因此优先复用「主实例」（entrance 在 on_plugin_loaded 创建、
+        挂在插件实例 `_service` 上的活动 Service，其对象引用跨模块身份
+        有效）的运行实例；取不到（独立运行/测试）才回退本身份的注册表。
+        """
+        primary = self._find_primary_service()
+        if primary is not None and primary is not self:
+            return primary._runtime
+        return runtime_registry.get_pipeline_runtime(self._plugin_id)
+
+    def _find_primary_service(self) -> Optional["BlueprintOpenCVService"]:
+        """经 PluginManager 单例查本插件实例的活动 Service（无则 None）。
+
+        插件实例在框架注册表中先于一动注册就位（manager.py 先行
+        `_plugin_registry[plugin_id] = plugin_instance`），因此自动注册
+        路径实例化本类时主实例已存在；鸭子类型访问，不要求类身份一致。
+        """
+        plugin = PluginManager().get_plugin_by_id(self._plugin_id)
+        if plugin is None:
+            return None
+        return getattr(plugin, "_service", None)
 
     # ------------------------------------------------------------------
     #  跨插件 API 实体方法（与 information.py 的 service_api 声明一致）
@@ -113,7 +148,7 @@ class BlueprintOpenCVService(QObject):
         信号封送回 UI（SPEC §1.3 / §7）。
         """
         try:
-            started = self._controller.submit_run(
+            started = self._runtime.controller.submit_run(
                 self._build_callbacks(), self._submit_background)
         except NodeExecutionError as e:
             return {"success": False, "error": str(e)}
@@ -141,15 +176,16 @@ class BlueprintOpenCVService(QObject):
 
     def stop_pipeline(self) -> Dict[str, Any]:
         """请求停止当前运行（协作式，当前节点完成后中断）"""
-        self._controller.request_stop()
+        self._runtime.controller.request_stop()
         return {"success": True, "data": {"stopping": True}}
 
     def save_graph(self, name: str = DEFAULT_GRAPH_NAME) -> Dict[str, Any]:
         """将当前图快照序列化并经 DataProvider 持久化到插件私有资产区"""
         graph_name = name or DEFAULT_GRAPH_NAME
+        snapshot = self._runtime.current_graph
         try:
             self._ensure_storage_dir()
-            content = json.dumps(self._graph_snapshot, ensure_ascii=False).encode("utf-8")
+            content = json.dumps(snapshot, ensure_ascii=False).encode("utf-8")
             self._data_provider.save_asset(
                 self._plugin_id, self._asset_filename(graph_name), content,
             )
@@ -157,7 +193,7 @@ class BlueprintOpenCVService(QObject):
             self._log_error("保存图", e)
             return {"success": False, "error": f"保存图失败: {e}"}
         return {"success": True, "data": {
-            "name": graph_name, "node_count": self._node_count(self._graph_snapshot),
+            "name": graph_name, "node_count": self._node_count(snapshot),
         }}
 
     def _ensure_storage_dir(self) -> None:
@@ -248,7 +284,7 @@ class BlueprintOpenCVService(QObject):
 
     def get_last_result_info(self) -> Dict[str, Any]:
         """最近一次运行的汇总信息与 preview 结果元数据（不含图像本体）"""
-        info = dict(self._controller.last_result_info or {})
+        info = dict(self._runtime.controller.last_result_info or {})
         return {"success": True, "data": info}
 
     # ------------------------------------------------------------------
@@ -261,17 +297,24 @@ class BlueprintOpenCVService(QObject):
         Args:
             graph_dict: canvas.to_dict 格式的图序列化字典
         """
-        self._graph_snapshot = graph_dict
-        self._controller.update_graph(graph_dict)
+        self._runtime.update_graph(graph_dict)
+
+    def set_max_nodes(self, max_nodes: int) -> None:
+        """设置单次运行节点数上限（UI 读取 graph.max_nodes 配置后透传）
+
+        非 service_api 方法：跨插件 / MCP 路径不读配置，运行层缺省保留
+        function/constants.py 的 DEFAULT_MAX_NODES。
+        """
+        self._runtime.controller.set_max_nodes(max_nodes)
 
     @property
     def current_graph(self) -> Dict[str, Any]:
         """当前图快照（load_graph 后由 UI 读取并 canvas.from_dict 恢复画布）"""
-        return self._graph_snapshot
+        return self._runtime.current_graph
 
     def shutdown(self) -> None:
         """卸载清理：请求停止运行中的管线（信号断开由 entrance 逐项容错处理）"""
-        self._controller.request_stop()
+        self._runtime.controller.request_stop()
 
     # ------------------------------------------------------------------
     #  执行回调：工作线程触发，直接 emit Qt 信号自动排队封送
@@ -302,25 +345,49 @@ class BlueprintOpenCVService(QObject):
     # ------------------------------------------------------------------
 
     def _read_saved_graph(self, name: str) -> Optional[Dict[str, Any]]:
-        """读取 DataProvider 存档图；不存在或损坏时记 WARNING 日志并返回 None"""
-        relative = f"{ASSET_PATH_PREFIX}/{self._plugin_id}/{self._asset_filename(name)}"
+        """读取 DataProvider 存档图；不存在返回 None，损坏记 WARNING 并返回 None
+
+        先校验图名合法性（拒绝路径穿越字符，替代原 get_asset_path 的
+        读侧消毒），再 is_file 预检：存档不存在属正常路径（首次启动 /
+        未保存过），静默回退预置图不记 WARNING，避免日志噪音。
+        """
+        if self._validate_graph_name(name) is not None:
+            return None  # 非法图名按不存在处理（不读盘）
+        path = self._storage_dir() / f"{name}{GRAPH_FILE_SUFFIX}"
+        if not path.is_file():
+            return None  # 存档不存在：正常回退路径，不记日志
         try:
-            path = self._data_provider.get_asset_path(relative)
             with open(path, "rb") as f:
                 return json.loads(f.read().decode("utf-8"))
-        except (DataProviderError, OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
             self._logger.warning(LOG_TAG, f"读取图存档失败（回退示例图）: {name}: {e}")
             return None
 
     def _read_preset_graph(self) -> Dict[str, Any]:
-        """读取插件资产中的预置示例图；缺失/损坏时记日志并回退空图"""
-        preset_path = Path(__file__).parent / PRESET_GRAPH_RELATIVE_PATH
+        """读取插件资产中的预置示例图；缺失/损坏时记日志并回退空图
+
+        预置图中的 file_path 属性以相对插件目录路径存放（资产可移植，
+        不绑定开发机绝对路径），读出后统一解析为绝对路径。
+        """
+        preset_path = _PLUGIN_ROOT / PRESET_GRAPH_RELATIVE_PATH
         try:
             with open(preset_path, "rb") as f:
-                return json.loads(f.read().decode("utf-8"))
+                graph_dict = json.loads(f.read().decode("utf-8"))
         except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
             self._logger.warning(LOG_TAG, f"预置示例图不可用（回退空图）: {e}")
-            return dict(EMPTY_GRAPH)
+            return dict(runtime_registry.EMPTY_GRAPH)
+        return self._resolve_preset_paths(graph_dict)
+
+    @staticmethod
+    def _resolve_preset_paths(graph_dict: Dict[str, Any]) -> Dict[str, Any]:
+        """把预置图中相对插件目录的 file_path 属性解析为绝对路径（就地修改）。"""
+        nodes = graph_dict.get("graph", graph_dict).get("nodes", [])
+        for node in nodes:
+            props = node.get("properties", {})
+            path = str(props.get(_FILE_PATH_PROPERTY, "") or "")
+            if path and not Path(path).is_absolute():
+                props[_FILE_PATH_PROPERTY] = str(_PLUGIN_ROOT / path)
+        return graph_dict
 
     @staticmethod
     def _asset_filename(name: str) -> str:
