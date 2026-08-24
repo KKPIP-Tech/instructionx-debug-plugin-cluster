@@ -434,12 +434,8 @@ def register_demo_node_types(tr=None) -> None:
 # exec 链拓扑排序
 # ---------------------------------------------------------------------------
 
-def exec_order(graph: BlueprintGraph) -> list:
-    """按 exec 引脚连线做拓扑排序，返回节点 id 执行序列。
-
-    只考虑目标引脚为 ``exec`` 类型的边；图中无 exec 边时回退为
-    全部节点的插入序（保证「运行」总有可视反馈）。
-    """
+def _collect_exec_edges(graph: BlueprintGraph) -> list:
+    """收集目标引脚为 ``exec`` 类型的边。"""
     exec_edges = []
     for edge in graph.edges():
         node = graph.node(edge.to_node)
@@ -448,8 +444,25 @@ def exec_order(graph: BlueprintGraph) -> list:
         pin = next((p for p in node.inputs if p.id == edge.to_pin), None)
         if pin is not None and pin.data_type == "exec":
             exec_edges.append(edge)
-    if not exec_edges:
-        return [n.id for n in graph.nodes()]
+    return exec_edges
+
+
+def _kahn_order(involved, indeg, adj) -> list:
+    """Kahn 算法出队序列（入度 0 先入队，保持插入序稳定）。"""
+    queue = [nid for nid in involved if indeg[nid] == 0]
+    order = []
+    while queue:
+        nid = queue.pop(0)
+        order.append(nid)
+        for nxt in adj[nid]:
+            indeg[nxt] -= 1
+            if indeg[nxt] == 0:
+                queue.append(nxt)
+    return order
+
+
+def _topo_sort(exec_edges) -> list:
+    """对 exec 边涉及的节点做拓扑排序；有环时剩余按插入序兜底。"""
     involved = []
     for edge in exec_edges:
         for nid in (edge.from_node, edge.to_node):
@@ -460,18 +473,22 @@ def exec_order(graph: BlueprintGraph) -> list:
     for edge in exec_edges:
         indeg[edge.to_node] += 1
         adj[edge.from_node].append(edge.to_node)
-    queue = [nid for nid in involved if indeg[nid] == 0]
-    order = []
-    while queue:
-        nid = queue.pop(0)
-        order.append(nid)
-        for nxt in adj[nid]:
-            indeg[nxt] -= 1
-            if indeg[nxt] == 0:
-                queue.append(nxt)
+    order = _kahn_order(involved, indeg, adj)
     if len(order) != len(involved):  # 有环：剩余按插入序兜底
         order.extend(nid for nid in involved if nid not in order)
     return order
+
+
+def exec_order(graph: BlueprintGraph) -> list:
+    """按 exec 引脚连线做拓扑排序，返回节点 id 执行序列。
+
+    只考虑目标引脚为 ``exec`` 类型的边；图中无 exec 边时回退为
+    全部节点的插入序（保证「运行」总有可视反馈）。
+    """
+    exec_edges = _collect_exec_edges(graph)
+    if not exec_edges:
+        return [n.id for n in graph.nodes()]
+    return _topo_sort(exec_edges)
 
 
 # ---------------------------------------------------------------------------
@@ -491,6 +508,15 @@ class BlueprintDemoPage(QWidget):
                  i18n: Optional[ILocalizationFacade] = None):
         super().__init__(parent)
         self._tr = bind_tr(i18n, "blueprint")
+        self._init_run_state()
+        self._init_graph_canvas()
+        self._build_root_layout()
+        self._init_timer_and_signals()
+        self._build_preset()
+        self._on_selection([])
+
+    def _init_run_state(self) -> None:
+        """初始化运行模拟状态（世代号用于 reset 后失效旧定时器回调）。"""
         self.delay_range = (200, 800)
         self._order = []
         self._idx = 0
@@ -499,39 +525,36 @@ class BlueprintDemoPage(QWidget):
         self._step_total = 0.0
         self._state = _RunState.IDLE  # 运行模拟状态机（工具条按钮随其联动）
 
+    def _init_graph_canvas(self) -> None:
+        """构建图与画布；先接默认属性槽保证 NodeWidget 构建时 properties 已就位。"""
         self.graph = BlueprintGraph()
-        # 先接默认属性槽，保证 NodeWidget 构建时 properties 已就位
         self.graph.node_added.connect(apply_defaults)
         self.canvas = BlueprintCanvas(self.graph, self, owner=REGISTRY_OWNER)
 
+    def _build_root_layout(self) -> None:
+        """构建根布局：标题 / 提示 / 代码示例 / 工具条 / 后端状态行 / 主体。"""
         root = QVBoxLayout(self)
         root.setContentsMargins(20, 18, 20, 16)
         root.setSpacing(8)
-
-        title = title_label(self._tr("title"))
-        root.addWidget(title)
+        root.addWidget(title_label(self._tr("title")))
         root.addWidget(hint_label(self._tr("hint")))
         root.addWidget(code_label(
             'canvas = BlueprintCanvas(BlueprintGraph()); '
             'canvas.add_node_at("resize", QPointF(100, 80))'))
-
         root.addLayout(self._build_toolbar())
         root.addWidget(self._build_backend_label())
-
         body = QHBoxLayout()
         body.setSpacing(12)
         body.addWidget(self.canvas, 1)
         body.addWidget(self._build_panel(), 0)
         root.addLayout(body, 1)
 
+    def _init_timer_and_signals(self) -> None:
+        """构建节点完成定时器并接线画布选中信号。"""
         self._timer = QTimer(self)
         self._timer.setSingleShot(True)
         self._timer.timeout.connect(self._complete_node)
-
         self.canvas.selection_changed.connect(self._on_selection)
-
-        self._build_preset()
-        self._on_selection([])
 
     # ------------------------------------------------------------------ 工具条
     def _build_toolbar(self) -> QHBoxLayout:
@@ -658,7 +681,13 @@ class BlueprintDemoPage(QWidget):
     # ------------------------------------------------------------------ 预置图
     def _build_preset(self) -> None:
         """开始→加载图像→预处理(归一化)→模型推理(CNN)→后处理(边缘检测)→保存。"""
-        g = self.graph
+        nodes = self._add_preset_nodes()
+        self._link_preset_exec(nodes)
+        self._link_preset_data(nodes)
+        self.preset_ids = [n.id for n in nodes]
+
+    def _add_preset_nodes(self) -> list:
+        """按预置流水线位次创建 6 个节点，返回 [start, load, pre, cnn, post, save]。"""
         n_start = self.canvas.add_node_at("start", QPointF(40, 180))
         n_load = self.canvas.add_node_at("load_image", QPointF(300, 180))
         n_pre = self.canvas.add_node_at("normalize", QPointF(560, 180))
@@ -668,19 +697,26 @@ class BlueprintDemoPage(QWidget):
         n_post = self.canvas.add_node_at("edge_detect", QPointF(1140, 180))
         n_post.title = self._tr("preset.post")
         n_save = self.canvas.add_node_at("save_result", QPointF(1440, 180))
-        # exec 链
+        return [n_start, n_load, n_pre, n_cnn, n_post, n_save]
+
+    def _link_preset_exec(self, nodes) -> None:
+        """连接 exec 链（start→load→pre→cnn→post→save）。"""
+        g = self.graph
+        n_start, n_load, n_pre, n_cnn, n_post, n_save = nodes
         g.add_edge(n_start.id, "out", n_load.id, "in")
         g.add_edge(n_load.id, "out", n_pre.id, "in")
         g.add_edge(n_pre.id, "out", n_cnn.id, "in")
         g.add_edge(n_cnn.id, "out", n_post.id, "in")
         g.add_edge(n_post.id, "out", n_save.id, "in")
-        # 数据引脚（image / tensor 混排）
+
+    def _link_preset_data(self, nodes) -> None:
+        """连接数据引脚（image / tensor 混排）。"""
+        g = self.graph
+        _start, n_load, n_pre, n_cnn, n_post, n_save = nodes
         g.add_edge(n_load.id, "img", n_pre.id, "img")
         g.add_edge(n_pre.id, "tensor", n_cnn.id, "tensor")
         g.add_edge(n_cnn.id, "tensor", n_post.id, "tensor")
         g.add_edge(n_post.id, "img", n_save.id, "img")
-        self.preset_ids = [n_start.id, n_load.id, n_pre.id,
-                           n_cnn.id, n_post.id, n_save.id]
 
     # ------------------------------------------------------------------ 运行模拟
     def _set_state(self, state: _RunState) -> None:
