@@ -23,6 +23,9 @@ class UiDemoPlugin(IPlugin):
 
     @property
     def plugin_name(self) -> str:
+        # 框架技能面板显示名取 IPlugin.plugin_name（ui/skills_panel/panel.py
+        # 直接使用该属性，而非 IXPlugin.json 的 name）；SkillButton 为双行
+        # 排版，故保留 \n 换行形式，与 blueprint_opencv 等官方插件一致
         return "UI\nDemo"
 
     def _get_services(self) -> Optional[PluginServices]:

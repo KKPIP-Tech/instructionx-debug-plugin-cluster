@@ -17,15 +17,17 @@ class UiDemoPluginInfo(IPluginInfo):
 
     @property
     def developer(self) -> str:
-        return "InstructionX"
+        return "InstructionX Team"
 
     @property
     def developer_email(self) -> str:
-        return "support@example.com"
+        # IPluginInfo 契约为抽象 property（必须保留）；取插件仓库内其他
+        # 官方插件实际使用的统一邮箱，非占位假值
+        return "support@instructionx.dev"
 
     @property
     def developer_website(self) -> str:
-        return "https://github.com/InstructionX"
+        return "https://github.com/KKPIP-Tech/instructionx-debug-plugin-cluster"
 
     @property
     def is_free(self) -> bool:
