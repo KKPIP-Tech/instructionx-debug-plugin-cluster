@@ -54,6 +54,9 @@ class ToolBar(QWidget):
         """构建工具条按钮与状态标签（文案经 i18n 取词）。"""
         super().__init__(parent)
         self._i18n = i18n
+        #: 显式运行态字段（set_running 维护）：不再用「停止按钮是否禁用」
+        #: 反推运行态，避免视图状态与业务状态耦合
+        self._running = False
         self._run_button = Button(self._tr("run"), variant="primary",
                                   size=_BUTTON_SIZE)
         self._stop_button = Button(self._tr("stop"), size=_BUTTON_SIZE)
@@ -78,7 +81,7 @@ class ToolBar(QWidget):
         self._save_current_button.setText(self._tr("save"))
         self._save_button.setText(self._tr("save_as"))
         self._fit_button.setText(self._tr("fit"))
-        if not self._stop_button.isEnabled():
+        if not self._running:
             self._status_label.setText(self._tr("status.ready"))
 
     def set_status(self, text: str) -> None:
@@ -86,7 +89,8 @@ class ToolBar(QWidget):
         self._status_label.setText(str(text))
 
     def set_running(self, running: bool) -> None:
-        """切换运行态：运行中禁用「运行」、启用「停止」，反之亦然。"""
+        """切换运行态：记录显式状态字段并同步按钮可用性。"""
+        self._running = running
         self._run_button.setEnabled(not running)
         self._stop_button.setEnabled(running)
 

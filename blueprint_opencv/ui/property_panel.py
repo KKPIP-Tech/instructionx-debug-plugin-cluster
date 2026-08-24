@@ -271,6 +271,7 @@ class PropertyPanel(QScrollArea):
         text = self._tr("header.status",
                         status=self._status_text(str(node.status)))
         if node.elapsed_ms is not None:
+            # 固定宽空格作为两段文案的版式间隔（非语言内容），不入语言包
             text += "    " + self._tr("header.elapsed",
                                       ms=f"{node.elapsed_ms:.0f}")
         self._status_info.setText(text)

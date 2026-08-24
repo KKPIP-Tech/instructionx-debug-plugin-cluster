@@ -127,6 +127,7 @@ class _NodeRow(QWidget):
         text = self._tr(_GROUP, "row.info", type_name=node.type_name,
                         status=status)
         if node.status == _STATUS_DONE and node.elapsed_ms is not None:
+            # 「·」分隔符与「ms」单位为跨语言通用符号，刻意不入语言包
             text += f" · {node.elapsed_ms:.0f} ms"
         return text
 
