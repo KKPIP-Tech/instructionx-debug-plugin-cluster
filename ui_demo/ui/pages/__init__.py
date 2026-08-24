@@ -7,6 +7,13 @@
 每个页面工厂遵循 ``create_page(i18n=None) -> QWidget`` 约定（返回一个完整演示页）。
 MainWindow 依据 ``NAV`` 构建左侧导航树并懒加载右侧页面。
 
+.. 同步义务::
+
+    ``function/component_catalog.py`` 的 ``COMPONENT_CATALOG`` 与本注册表
+    一一对应（分类 + 页面，中文标题硬编码，供服务层无 Qt 环境使用）；
+    新增 / 调整 / 删除演示页时必须同步更新该文件（决策见
+    ``docs/req/2026-08-25/SPEC-ui-demo-hardening-20260825.md``）。
+
 除布局页（页面内已含「用法」分区）外，本模块在页面工厂外包一层
 ``_with_usage``：按页面键在页面顶部注入「用法」代码标签
 （单行灰字等宽样式），展示该组件 / 动画的最小 Kit 调用示例，
