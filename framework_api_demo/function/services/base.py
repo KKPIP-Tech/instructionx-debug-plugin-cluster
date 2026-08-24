@@ -7,8 +7,9 @@ Framework API Demo 服务基类
 """
 
 import json
+import threading
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, Tuple
 
 from core.interfaces import PluginServices
 from core.data.data_provider import DataProvider
@@ -16,14 +17,38 @@ from core.task import BackgroundTaskManager
 from core.llm.plugin_service import get_llm_plugin_service
 from utils.logging_tools import LoggerManager, get_name
 
+# 插件配置文件路径（config/default.json）
+_CONFIG_PATH = Path(__file__).parent.parent.parent / "config" / "default.json"
+
+# 模块级配置缓存（mtime, 配置字典）：多个服务共用，避免每次构造都读盘解析；
+# 失效语义：文件 mtime 变化时重读（热重载场景模块本身会被重新导入，缓存随之重置）
+_config_cache: Dict[str, Any] = {}
+_config_lock = threading.Lock()
+
 
 def _load_config() -> Dict[str, Any]:
-    """从 config/default.json 加载配置"""
-    config_path = Path(__file__).parent.parent.parent / "config" / "default.json"
+    """从 config/default.json 加载配置（带 mtime 缓存，失败记 WARNING 并回退空配置）"""
     try:
-        with open(config_path, "r", encoding="utf-8") as f:
+        mtime = _CONFIG_PATH.stat().st_mtime
+    except OSError as e:
+        LoggerManager().warning(get_name(), f"配置文件不可读，回退空配置: {_CONFIG_PATH} ({e})")
+        return {}
+    with _config_lock:
+        cached: Optional[Tuple[float, Dict[str, Any]]] = _config_cache.get("entry")
+        if cached is not None and cached[0] == mtime:
+            return cached[1]
+        config = _read_config_file()
+        _config_cache["entry"] = (mtime, config)
+        return config
+
+
+def _read_config_file() -> Dict[str, Any]:
+    """读取并解析配置文件；解析失败记 WARNING 日志并回退空配置"""
+    try:
+        with open(_CONFIG_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
-    except Exception:
+    except (OSError, json.JSONDecodeError) as e:
+        LoggerManager().warning(get_name(), f"加载插件配置失败，回退空配置: {_CONFIG_PATH} ({e})")
         return {}
 
 
