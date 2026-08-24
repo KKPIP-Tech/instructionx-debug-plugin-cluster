@@ -26,12 +26,14 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from InstructionX_UIKit.theme import T, ThemeManager
+from InstructionX_UIKit.theme import T
 from InstructionX_UIKit.layouts.helpers import (
     TokenColorChip,
     apply_token_font,
     titled_card,
 )
+
+from .common import connect_theme_refresh
 
 # ---------------------------------------------------------------------------
 # 各布局的单行用法示例（演示页顶部灰字代码标签；代码即文档，不翻译）
@@ -291,7 +293,7 @@ class _DemoBarChart(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setMinimumHeight(T("space.16") * 2)
-        ThemeManager.instance().theme_changed.connect(self.update)
+        connect_theme_refresh(self)
 
     def paintEvent(self, event):  # noqa: N802
         painter = QPainter(self)

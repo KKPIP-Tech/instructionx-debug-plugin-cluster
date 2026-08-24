@@ -20,11 +20,19 @@ from PySide6.QtWidgets import (
 )
 
 from InstructionX_UIKit import tokens as tk
-from InstructionX_UIKit.theme import T, ThemeManager, apply_shadow, set_property
+from InstructionX_UIKit.theme import T, apply_shadow, set_property
 
 from core.interfaces import ILocalizationFacade
 
-from .common import Section, bind_tr, col, hint_label, make_page, row
+from .common import (
+    Section,
+    bind_tr,
+    col,
+    connect_theme_refresh,
+    hint_label,
+    make_page,
+    row,
+)
 
 __all__ = ["create_page"]
 
@@ -185,7 +193,7 @@ class _Bar(QWidget):
     def __init__(self, width: int, parent=None):
         super().__init__(parent)
         self.setFixedSize(max(width, 2), 18)
-        ThemeManager.instance().theme_changed.connect(lambda *_: self.update())
+        connect_theme_refresh(self)
 
     def paintEvent(self, event):  # noqa: N802
         p = QPainter(self)
@@ -203,7 +211,7 @@ class _RadiusBox(QWidget):
         super().__init__(parent)
         self._radius = radius
         self.setFixedSize(72, 48)
-        ThemeManager.instance().theme_changed.connect(lambda *_: self.update())
+        connect_theme_refresh(self)
 
     def paintEvent(self, event):  # noqa: N802
         p = QPainter(self)

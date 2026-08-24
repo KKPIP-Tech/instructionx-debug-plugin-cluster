@@ -6,6 +6,7 @@
 保证亮 / 暗主题切换后无需重启即可正确换肤。
 """
 
+import weakref
 from typing import Callable, Optional
 
 from PySide6.QtCore import Qt
@@ -37,7 +38,40 @@ __all__ = [
     "code_label",
     "usage_section",
     "bind_tr",
+    "connect_theme_refresh",
 ]
+
+
+def connect_theme_refresh(widget: QWidget,
+                          callback: Optional[Callable] = None) -> None:
+    """把 ``theme_changed`` 安全绑定到控件刷新，控件销毁后自动断开。
+
+    ``ThemeManager`` 为全局单例，直接向 ``theme_changed`` connect 捕获控件
+    强引用的 lambda，会在页面缓存清空（语言切换重建）或插件热重载后留下
+    悬挂回调，触发时访问已删除的 C++ 对象抛 ``RuntimeError``。本函数以
+    weakref 持有目标控件：目标被回收或 C++ 侧已销毁时主动 ``disconnect``。
+
+    参数:
+        widget: 目标控件（weakref 持有，不被本连接延长生命周期）。
+        callback: 主题切换回调，签名 ``callback(widget)``；
+            缺省为 ``QWidget.update``（整控件重绘）。
+    """
+    manager = ThemeManager.instance()
+    target_ref = weakref.ref(widget)
+    slot = callback or QWidget.update
+
+    def _on_theme(*_args) -> None:
+        target = target_ref()
+        if target is None:
+            manager.theme_changed.disconnect(_on_theme)
+            return
+        try:
+            slot(target)
+        except RuntimeError:
+            # 目标 C++ 侧已销毁（页面重建竞态），断开避免悬挂回调
+            manager.theme_changed.disconnect(_on_theme)
+
+    manager.theme_changed.connect(_on_theme)
 
 
 def bind_tr(i18n: Optional[ILocalizationFacade], group: str) -> Callable[..., str]:
@@ -203,7 +237,7 @@ class ColorBlock(QWidget):
         self._key = color_key
         self._on = text_on
         self.setMinimumSize(*size)
-        ThemeManager.instance().theme_changed.connect(lambda *_: self.update())
+        connect_theme_refresh(self)
 
     def paintEvent(self, event):  # noqa: N802
         painter = QPainter(self)

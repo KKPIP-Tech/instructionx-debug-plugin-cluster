@@ -17,11 +17,11 @@ from PySide6.QtWidgets import QFrame, QGridLayout, QLabel, QStackedWidget, QWidg
 from InstructionX_UIKit.anim import property as A
 from InstructionX_UIKit.components.button import Button
 from InstructionX_UIKit.components.switch import Switch
-from InstructionX_UIKit.theme import T, ThemeManager
+from InstructionX_UIKit.theme import T
 
 from core.interfaces import ILocalizationFacade
 
-from .common import ColorBlock, Section, bind_tr, make_page
+from .common import ColorBlock, Section, bind_tr, connect_theme_refresh, make_page
 from .playground import ParamCard, add_specs
 
 __all__ = ["create_page"]
@@ -363,7 +363,7 @@ def _gflow_card(i18n, tr):
     st.place(gf, 150, 66)
     gf.setAttribute(Qt.WA_StyledBackground, True)
     _gflow_static(gf)
-    ThemeManager.instance().theme_changed.connect(lambda *_: _gflow_static(gf))
+    connect_theme_refresh(gf, _gflow_static)
 
     def _play(o, gf=gf):
         opts = dict(o)
@@ -406,6 +406,12 @@ def _slide_trans_card(i18n, tr):
                          _SPECS_SLIDE_TRANS, ("success", "danger"))
 
 
+def _morph_style(widget, radius=0) -> None:
+    """容器变形目标方块的静态底色（主题令牌）；变形中由动画逐帧重写。"""
+    widget.setStyleSheet(
+        f"background:{T('color.primary')};border-radius:{radius}px;")
+
+
 def _morph_stage():
     """创建容器变形演示的舞台与目标方块，返回 (stage, box, state)。
 
@@ -414,14 +420,10 @@ def _morph_stage():
     st = _Stage()
     box = QFrame(st)
     state = {"on": False}
-
-    def _style(radius=0):
-        box.setStyleSheet(
-            f"background:{T('color.primary')};border-radius:{radius}px;")
-    _style()
+    _morph_style(box)
     st.place(box, 120, 66)
-    ThemeManager.instance().theme_changed.connect(
-        lambda *_: None if state["on"] else _style())
+    connect_theme_refresh(
+        box, lambda w: None if state["on"] else _morph_style(w))
     return st, box, state
 
 
