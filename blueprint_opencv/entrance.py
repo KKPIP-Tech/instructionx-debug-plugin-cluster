@@ -17,6 +17,7 @@ from core.plugin.plugin_interface import IPlugin
 from utils.logging_tools import LoggerManager
 
 from .service import BlueprintOpenCVService
+from .function import runtime_registry
 from .ui.main_widget import MainWidget
 from .ui.node_bootstrap import ensure_node_types_registered
 
@@ -51,9 +52,10 @@ class BlueprintOpenCVPlugin(IPlugin):
         )
 
     def on_plugin_unloaded(self):
-        """插件卸载清理：停止管线、断开信号、释放引用，逐项容错记日志"""
+        """插件卸载清理：停止管线、断开信号、释放共享运行实例与引用，逐项容错记日志"""
         self._safe_execute("停止管线", self._stop_pipeline)
         self._safe_execute("断开服务信号", self._disconnect_signals)
+        self._safe_execute("清理共享运行实例", self._drop_runtime)
         self._main_widget = None
         self._service = None
 
@@ -133,6 +135,10 @@ class BlueprintOpenCVPlugin(IPlugin):
         """请求停止运行中的管线（服务未初始化时跳过）"""
         if self._service is not None:
             self._service.shutdown()
+
+    def _drop_runtime(self):
+        """释放本插件的共享运行实例（runtime_registry），热重载后可干净重建"""
+        runtime_registry.drop_pipeline_runtime(self.plugin_id)
 
     def _disconnect_signals(self):
         """断开服务全部 Qt 信号连接（无连接时 disconnect 抛 TypeError，逐项容错）"""
