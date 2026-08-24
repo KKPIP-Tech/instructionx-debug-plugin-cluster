@@ -13,7 +13,7 @@ class UiDemoPluginInfo(IPluginInfo):
 
     @property
     def version(self) -> PluginVersion:
-        return PluginVersion.from_string("release.1.0.3")
+        return PluginVersion.from_string("release.1.0.4")
 
     @property
     def developer(self) -> str:

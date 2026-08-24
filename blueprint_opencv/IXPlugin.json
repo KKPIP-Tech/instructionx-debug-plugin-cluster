@@ -1,7 +1,7 @@
 {
     "id": "blueprint-opencv",
     "name": {"zh": "Blueprint OpenCV", "en": "Blueprint OpenCV"},
-    "version": "release.1.0.3",
+    "version": "release.1.0.4",
     "main": "entrance.py",
     "description": {
         "zh": "基于 InstructionX_UIKit Blueprint 的 OpenCV 节点化图像处理蓝图编辑器：20 个节点、exec/data 双链执行引擎、工作线程处理与跨线程预览封送。",
