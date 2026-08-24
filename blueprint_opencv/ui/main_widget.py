@@ -40,6 +40,7 @@ from core.i18n import get_language_manager
 from core.interfaces import ILocalizationFacade
 from utils.logging_tools import LoggerManager, get_name
 
+from . import plugin_config
 from .graph_list_panel import GraphListPanel
 from .node_bootstrap import (
     REGISTRY_OWNER,
@@ -53,11 +54,6 @@ from .toolbar import ToolBar
 
 __all__ = ["MainWidget"]
 
-#: 右侧固定面板宽兜底值（SPEC §8 panel.right_panel_width = 320；
-#: 实际取值优先读 config/default.json，配置缺失 / 损坏时回退本常量）
-_FALLBACK_RIGHT_PANEL_WIDTH = 320
-#: 插件默认配置文件路径（panel.right_panel_width 等，SPEC §8）
-_CONFIG_PATH = Path(__file__).resolve().parents[1] / "config" / "default.json"
 #: 左侧节点列表面板固定宽（SPEC-node-list-panel §3.3；与右侧 320px 面板对称）
 _LEFT_PANEL_WIDTH = 200
 #: 预置示例图节点（type_name, 场景坐标）：start→加载→高斯→Canny→预览
@@ -76,8 +72,6 @@ _EXEC_IN_PIN = "exec_in"
 _EXEC_OUT_PIN = "exec_out"
 _IMAGE_IN_PIN = "image_in"
 _IMAGE_OUT_PIN = "image_out"
-#: 预置示例输入图（load_image 节点默认 file_path；资产由 B6 批次提供）
-_SAMPLE_IMAGE_PATH = Path(__file__).resolve().parents[1] / "assets" / "sample.png"
 #: 预置图中 load_image 节点的文件路径参数键
 _FILE_PATH_KEY = "file_path"
 #: 启动自动加载的默认存档名（与 service.load_graph 的缺省 name 一致）
@@ -90,24 +84,6 @@ _GROUP_TOOLBAR = "toolbar"
 _logger = LoggerManager()
 _MODULE = get_name()
 
-
-def _load_right_panel_width() -> int:
-    """读取 config/default.json 的 panel.right_panel_width（SPEC §8 配置为准）。
-
-    配置缺失 / 损坏 / 键不存在时记 WARNING 并回退 320（SPEC 约定值）。
-    """
-    try:
-        with open(_CONFIG_PATH, "r", encoding="utf-8") as f:
-            return int(json.load(f)["panel"]["right_panel_width"])
-    except (OSError, ValueError, KeyError, TypeError) as e:
-        _logger.warning(
-            _MODULE,
-            f"读取面板宽度配置失败（回退 {_FALLBACK_RIGHT_PANEL_WIDTH}px）: {e}")
-        return _FALLBACK_RIGHT_PANEL_WIDTH
-
-
-#: 右侧固定面板宽（配置层接管，见 _load_right_panel_width）
-_RIGHT_PANEL_WIDTH = _load_right_panel_width()
 
 # 模块级幂等注册：把 function.node_catalog 的节点定义注册进 UIKit
 # （先查后注册，热重载重复 import 不产生重复项，SPEC §1.5）
@@ -144,6 +120,8 @@ class MainWidget(QWidget):
         self._service = service
         self._i18n = i18n
         self._plugin_id = plugin_id
+        # 配置透传：graph.max_nodes → 共享运行实例（service 内部方法）
+        self._service.set_max_nodes(plugin_config.graph_max_nodes())
         self._run_order: List[str] = []
         #: 面板分区小标题（panel 组键 → 标签，语言切换时统一重设）
         self._section_labels: Dict[str, QLabel] = {}
@@ -221,7 +199,8 @@ class MainWidget(QWidget):
         for upstream, downstream in zip(nodes[1:], nodes[2:]):
             self.graph.add_edge(upstream.id, _IMAGE_OUT_PIN,
                                 downstream.id, _IMAGE_IN_PIN)
-        nodes[1].properties[_FILE_PATH_KEY] = str(_SAMPLE_IMAGE_PATH)
+        nodes[1].properties[_FILE_PATH_KEY] = str(
+            plugin_config.sample_image_path())
         nodes[1].changed.emit()
 
     # ------------------------------------------------------------------ 组装
@@ -234,6 +213,8 @@ class MainWidget(QWidget):
         body = QHBoxLayout()
         body.setSpacing(8)
         body.addWidget(self._build_left_panel())
+        # 画布最小宽（panel.min_canvas_width 配置，防压缩至不可操作）
+        self.canvas.setMinimumWidth(plugin_config.min_canvas_width())
         body.addWidget(self.canvas, 1)
         body.addWidget(self._build_right_panel())
         root.addLayout(body, 1)
@@ -256,7 +237,7 @@ class MainWidget(QWidget):
         """右侧固定宽面板：上参数面板、下预览区（含小标题）。"""
         panel = QFrame()
         panel.setFrameShape(QFrame.Shape.StyledPanel)
-        panel.setFixedWidth(_RIGHT_PANEL_WIDTH)
+        panel.setFixedWidth(plugin_config.right_panel_width())
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(10, 8, 10, 8)
         layout.setSpacing(6)

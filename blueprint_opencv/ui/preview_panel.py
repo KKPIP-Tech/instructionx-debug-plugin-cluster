@@ -20,12 +20,10 @@ from InstructionX_UIKit.theme import set_property
 from core.interfaces import ILocalizationFacade
 from utils.logging_tools import LoggerManager, get_name
 
+from . import plugin_config
+
 __all__ = ["PreviewPanel"]
 
-#: 预览显示等比缩放上限（SPEC §8 preview.max_width / max_height；
-#: 配置接管前由本常量承载，缩放仅影响显示不影响数据）
-_PREVIEW_MAX_WIDTH = 960
-_PREVIEW_MAX_HEIGHT = 720
 #: 空态占位透明像素尺寸（ImageView 对 null pixmap 会显示「加载失败」
 #: 占位插画，空态改用 1×1 透明像素保持干净的空白区域）
 _EMPTY_PIXMAP_SIZE = 1
@@ -169,11 +167,12 @@ class PreviewPanel(QWidget):
         layout.addWidget(self._info_label)
 
     def _scaled(self, pixmap: QPixmap) -> QPixmap:
-        """超出预览上限时等比缩小（仅显示层缩放）。"""
-        if pixmap.width() <= _PREVIEW_MAX_WIDTH and pixmap.height() <= _PREVIEW_MAX_HEIGHT:
+        """超出预览上限时等比缩小（上限取 preview.* 配置，仅显示层缩放）。"""
+        max_width, max_height = plugin_config.preview_max_size()
+        if pixmap.width() <= max_width and pixmap.height() <= max_height:
             return pixmap
         return pixmap.scaled(
-            _PREVIEW_MAX_WIDTH, _PREVIEW_MAX_HEIGHT,
+            max_width, max_height,
             Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
     def _format_info(self, info: Dict[str, Any]) -> str:

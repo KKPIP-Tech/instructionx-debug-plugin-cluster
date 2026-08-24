@@ -53,7 +53,8 @@ GRAPH_FILE_SUFFIX = ".json"
 #: 图名非法字符（Windows 文件名禁用字符，SPEC-graph-list §1.4）
 INVALID_NAME_CHARS = '<>:"/\\|?*'
 
-# 预置示例图资产路径（相对插件目录，见 SPEC §8 assets.preset_graph）
+# 预置示例图资产路径（相对插件目录）：service 层常量为唯一来源
+# （跨插件路径不读 config，边界约定见 ui/plugin_config 模块 docstring）
 PRESET_GRAPH_RELATIVE_PATH = "assets/preset_graph.json"
 
 #: 插件根目录（预置图内相对路径的解析基准）
@@ -268,6 +269,14 @@ class BlueprintOpenCVService(QObject):
             graph_dict: canvas.to_dict 格式的图序列化字典
         """
         self._runtime.update_graph(graph_dict)
+
+    def set_max_nodes(self, max_nodes: int) -> None:
+        """设置单次运行节点数上限（UI 读取 graph.max_nodes 配置后透传）
+
+        非 service_api 方法：跨插件 / MCP 路径不读配置，运行层缺省保留
+        function/constants.py 的 DEFAULT_MAX_NODES。
+        """
+        self._runtime.controller.set_max_nodes(max_nodes)
 
     @property
     def current_graph(self) -> Dict[str, Any]:
