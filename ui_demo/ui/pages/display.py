@@ -182,6 +182,12 @@ class TimelineEx(Timeline):
     线条样式 / 粗细、节点半径、行距、字号、轴侧等绘制参数没有 setter；
     这里以子类属性 + 重写 ``paintEvent`` / ``_row_height`` 的方式暴露，
     数据层面仍完全复用基类 API。
+
+    .. 漂移风险提示::
+
+        ``paintEvent`` 复制了 UIKit 基类 ``Timeline`` 的整段绘制逻辑以暴露
+        绘制参数；UIKit 升级修改基类绘制实现时此处会漂移，需人工同步
+        （上游提供 setter 前应持续保留本说明）。
     """
 
     def __init__(self, pending: str = None, parent=None):
@@ -201,68 +207,88 @@ class TimelineEx(Timeline):
     def paintEvent(self, event) -> None:  # noqa: N802
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        line_color = QColor(T("color.border"))
-        text_primary = QColor(T("color.text.primary"))
-        text_tertiary = QColor(T("color.text.tertiary"))
+        ctx = _TimelinePaintContext(self, painter)
+        prev_dot_y, y = self._paint_items(painter, ctx)
+        if self._pending:
+            self._paint_pending(painter, ctx, y, prev_dot_y)
+        painter.end()
 
-        font_text = painter.font()
-        font_text.setPixelSize(int(self.title_font_size))
-        font_time = painter.font()
-        font_time.setPixelSize(int(self.time_font_size))
-
-        right = self.axis_side == "right"
-        w = self.width()
-        dot_x = w - 16 if right else 16
-        r = int(self.dot_radius)
-        align = (Qt.AlignVCenter | Qt.AlignRight) if right \
-            else (Qt.AlignVCenter | Qt.AlignLeft)
-
-        def text_rect(y, h):
-            if right:
-                return QRect(8, y, dot_x - 20, h)
-            return QRect(36, y, w - 44, h)
-
+    def _paint_items(self, painter, ctx):
+        """逐项绘制连接线 / 节点 / 文本，返回 (末节点 y 坐标, 下一行起始 y)。"""
         y = 10
         prev_dot_y = None
         for item in self._items:
             row_h = self._row_height(item)
             dot_y = y + 11
             if prev_dot_y is not None:
-                painter.setPen(QPen(line_color, self.line_width, self.line_style))
-                painter.drawLine(dot_x, prev_dot_y, dot_x, dot_y)
-            icon = item["icon"]
-            if isinstance(icon, QIcon) and not icon.isNull():
-                painter.fillRect(QRect(dot_x - 7, dot_y - 7, 14, 14),
-                                 QColor(T("color.bg.base")))
-                icon.paint(painter, QRect(dot_x - 7, dot_y - 7, 14, 14))
-            else:
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(self._color_of(item))
-                painter.drawEllipse(dot_x - r, dot_y - r, r * 2, r * 2)
-            painter.setFont(font_text)
-            painter.setPen(text_primary)
-            painter.drawText(text_rect(y, 22), align, item["text"])
-            if item["time"]:
-                painter.setFont(font_time)
-                painter.setPen(text_tertiary)
-                painter.drawText(text_rect(y + 22, 16), align, item["time"])
+                painter.setPen(QPen(ctx.line_color, self.line_width, self.line_style))
+                painter.drawLine(ctx.dot_x, prev_dot_y, ctx.dot_x, dot_y)
+            self._paint_dot(painter, ctx, item, dot_y)
+            self._paint_item_text(painter, ctx, item, y)
             prev_dot_y = dot_y
             y += row_h
+        return prev_dot_y, y
 
-        # 尾部 pending：虚线 + 空心节点
-        if self._pending:
-            dot_y = y + 30
-            painter.setPen(QPen(line_color, self.line_width, Qt.DashLine))
-            start_y = prev_dot_y if prev_dot_y is not None else y
-            painter.drawLine(dot_x, start_y, dot_x, dot_y)
-            painter.setPen(QPen(QColor(T("color.primary")), 1.5))
-            painter.setBrush(QColor(T("color.bg.base")))
-            painter.drawEllipse(dot_x - r, dot_y - r, r * 2, r * 2)
-            painter.setFont(font_text)
-            painter.setPen(text_tertiary)
-            painter.drawText(text_rect(dot_y - 11, 22), align,
-                             str(self._pending))
-        painter.end()
+    def _paint_dot(self, painter, ctx, item, dot_y) -> None:
+        """绘制节点：带图标时绘制图标，否则绘制实心圆点。"""
+        icon = item["icon"]
+        if isinstance(icon, QIcon) and not icon.isNull():
+            painter.fillRect(QRect(ctx.dot_x - 7, dot_y - 7, 14, 14),
+                             QColor(T("color.bg.base")))
+            icon.paint(painter, QRect(ctx.dot_x - 7, dot_y - 7, 14, 14))
+            return
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(self._color_of(item))
+        painter.drawEllipse(ctx.dot_x - ctx.r, dot_y - ctx.r, ctx.r * 2, ctx.r * 2)
+
+    def _paint_item_text(self, painter, ctx, item, y) -> None:
+        """绘制条目标题文本与（可选）时间文本。"""
+        painter.setFont(ctx.font_text)
+        painter.setPen(ctx.text_primary)
+        painter.drawText(ctx.text_rect(y, 22), ctx.align, item["text"])
+        if item["time"]:
+            painter.setFont(ctx.font_time)
+            painter.setPen(ctx.text_tertiary)
+            painter.drawText(ctx.text_rect(y + 22, 16), ctx.align, item["time"])
+
+    def _paint_pending(self, painter, ctx, y, prev_dot_y) -> None:
+        """绘制尾部 pending：虚线 + 空心节点 + 计数文本。"""
+        dot_y = y + 30
+        painter.setPen(QPen(ctx.line_color, self.line_width, Qt.DashLine))
+        start_y = prev_dot_y if prev_dot_y is not None else y
+        painter.drawLine(ctx.dot_x, start_y, ctx.dot_x, dot_y)
+        painter.setPen(QPen(QColor(T("color.primary")), 1.5))
+        painter.setBrush(QColor(T("color.bg.base")))
+        painter.drawEllipse(ctx.dot_x - ctx.r, dot_y - ctx.r, ctx.r * 2, ctx.r * 2)
+        painter.setFont(ctx.font_text)
+        painter.setPen(ctx.text_tertiary)
+        painter.drawText(ctx.text_rect(dot_y - 11, 22), ctx.align,
+                         str(self._pending))
+
+
+class _TimelinePaintContext:
+    """``TimelineEx`` 单次 paintEvent 的共享上下文（颜色 / 字体 / 几何量）。"""
+
+    def __init__(self, tl, painter):
+        self.line_color = QColor(T("color.border"))
+        self.text_primary = QColor(T("color.text.primary"))
+        self.text_tertiary = QColor(T("color.text.tertiary"))
+        self.font_text = painter.font()
+        self.font_text.setPixelSize(int(tl.title_font_size))
+        self.font_time = painter.font()
+        self.font_time.setPixelSize(int(tl.time_font_size))
+        self.right = tl.axis_side == "right"
+        self.w = tl.width()
+        self.dot_x = self.w - 16 if self.right else 16
+        self.r = int(tl.dot_radius)
+        self.align = (Qt.AlignVCenter | Qt.AlignRight) if self.right \
+            else (Qt.AlignVCenter | Qt.AlignLeft)
+
+    def text_rect(self, y, h) -> QRect:
+        """按轴侧计算文本绘制矩形。"""
+        if self.right:
+            return QRect(8, y, self.dot_x - 20, h)
+        return QRect(36, y, self.w - 44, h)
 
 
 _TL_ICONS = [
@@ -272,82 +298,128 @@ _TL_ICONS = [
 ]
 
 
+class _TimelineDemo:
+    """时间轴演示页的状态与构建逻辑（游乐场回调拆为方法以满足行数限制）。
+
+    持有演示状态、``TimelineEx`` 实例与条目模板；面板回调经属性读写当前实例。
+    """
+
+    def __init__(self, tr):
+        self._tr = tr
+        self.state = {
+            "colors": [None, "success", None],  # None = 主题 primary
+            "icon_mode": False,
+            "pending_on": True,
+            "pending_text": tr("timeline.pending_default"),
+        }
+        self.tl = TimelineEx(pending=self.state["pending_text"])
+        self.tl.setMinimumHeight(260)
+        self.items = [(tr(f"timeline.item.{i}"), t) for i, t in
+                      ((1, "2026-07-21 09:30"), (2, "2026-07-21 09:32"),
+                       (3, "2026-07-21 09:35"))]
+
+    def rebuild_items(self) -> None:
+        """按当前状态重建时间轴条目（颜色 / 图标模式变化时调用）。"""
+        self.tl.clear()
+        for i, (text, time) in enumerate(self.items):
+            icon = self.tl.style().standardIcon(_TL_ICONS[i]) \
+                if self.state["icon_mode"] else None
+            self.tl.add_item(text, time=time, color=self.state["colors"][i],
+                             icon=icon)
+
+    def apply_pending(self, *_):
+        """按开关状态应用 pending 文本。"""
+        self.tl.set_pending(
+            self.state["pending_text"] if self.state["pending_on"] else None)
+
+    def build_panel(self) -> PlaygroundPanel:
+        """构建参数游乐场面板（注册顺序即面板展示顺序）。"""
+        panel = PlaygroundPanel(self._tr("timeline.panel_title"))
+        self._register_color_params(panel)
+        self._register_pending_params(panel)
+        self._register_line_params(panel)
+        self._register_layout_params(panel)
+        self._register_font_params(panel)
+        return panel
+
+    def _register_color_params(self, panel) -> None:
+        """注册三个节点的颜色选择参数。"""
+        tr, state = self._tr, self.state
+        color_opts = [(tr("timeline.opt.theme"), None),
+                      (tr("timeline.opt.success"), "success"),
+                      (tr("timeline.opt.warning"), "warning"),
+                      (tr("timeline.opt.danger"), "danger")]
+        for i in range(3):
+            panel.add_choice(
+                tr("timeline.p.node_color", n=i + 1), color_opts, state["colors"][i],
+                lambda v, i=i: (state["colors"].__setitem__(i, v),
+                                self.rebuild_items()),
+                key=f"color{i}")
+
+    def _register_pending_params(self, panel) -> None:
+        """注册 pending 开关 / 文本与节点图标模式参数。"""
+        tr, state = self._tr, self.state
+        panel.add_bool(tr("timeline.p.pending_on"), True,
+                       lambda v: (state.__setitem__("pending_on", v),
+                                  self.apply_pending()), key="pending_on")
+        panel.add_text(tr("timeline.p.pending_text"), state["pending_text"],
+                       lambda v: (state.__setitem__("pending_text", v),
+                                  self.apply_pending()), key="pending_text")
+        panel.add_choice(tr("timeline.p.icon_mode"),
+                         [(tr("timeline.opt.dot"), False),
+                          (tr("timeline.opt.icon"), True)],
+                         False,
+                         lambda v: (state.__setitem__("icon_mode", v),
+                                    self.rebuild_items()), key="icon_mode")
+
+    def _register_line_params(self, panel) -> None:
+        """注册连接线样式 / 线宽与节点半径参数。"""
+        tr, tl = self._tr, self.tl
+        panel.add_choice(tr("timeline.p.line_style"),
+                         [(tr("timeline.opt.solid"), Qt.SolidLine),
+                          (tr("timeline.opt.dashed"), Qt.DashLine),
+                          (tr("timeline.opt.dotted"), Qt.DotLine)], Qt.SolidLine,
+                         lambda v: (setattr(tl, "line_style", v), tl.update()),
+                         key="line_style")
+        panel.add_int(tr("timeline.p.line_width"), 1, 1, 4,
+                      lambda v: (setattr(tl, "line_width", float(v)), tl.update()),
+                      key="line_width")
+        panel.add_int(tr("timeline.p.dot_radius"), 5, 3, 9,
+                      lambda v: (setattr(tl, "dot_radius", v), tl.update()),
+                      key="dot_radius")
+
+    def _register_layout_params(self, panel) -> None:
+        """注册行距与轴线位置参数。"""
+        tr, tl = self._tr, self.tl
+        panel.add_int(tr("timeline.p.spacing"), 0, 0, 24,
+                      lambda v: (setattr(tl, "extra_spacing", v),
+                                 tl.updateGeometry(), tl.update()),
+                      key="spacing")
+        panel.add_choice(tr("timeline.p.axis_side"),
+                         [(tr("timeline.opt.left"), "left"),
+                          (tr("timeline.opt.right"), "right")], "left",
+                         lambda v: (setattr(tl, "axis_side", v), tl.update()),
+                         key="axis_side")
+
+    def _register_font_params(self, panel) -> None:
+        """注册标题 / 时间字号参数。"""
+        tr, tl = self._tr, self.tl
+        panel.add_int(tr("timeline.p.font_size"), 13, 10, 18,
+                      lambda v: (setattr(tl, "title_font_size", v), tl.update()),
+                      key="font_size")
+        panel.add_int(tr("timeline.p.time_font_size"), 11, 8, 14,
+                      lambda v: (setattr(tl, "time_font_size", v), tl.update()),
+                      key="time_font_size")
+
+
 def create_timeline_page(i18n: Optional[ILocalizationFacade] = None) -> QWidget:
+    """时间轴演示页：参数游乐场（状态与构建逻辑见 ``_TimelineDemo``）。"""
     tr = _tr_of(i18n)
     s = Section(tr("timeline.sec"))
-    state = {
-        "colors": [None, "success", None],  # None = 主题 primary
-        "icon_mode": False,
-        "pending_on": True,
-        "pending_text": tr("timeline.pending_default"),
-    }
-    tl = TimelineEx(pending=state["pending_text"])
-    tl.setMinimumHeight(260)
-    items = [(tr(f"timeline.item.{i}"), t) for i, t in
-             ((1, "2026-07-21 09:30"), (2, "2026-07-21 09:32"),
-              (3, "2026-07-21 09:35"))]
-
-    def rebuild_items():
-        tl.clear()
-        for i, (text, time) in enumerate(items):
-            icon = tl.style().standardIcon(_TL_ICONS[i]) \
-                if state["icon_mode"] else None
-            tl.add_item(text, time=time, color=state["colors"][i], icon=icon)
-
-    def apply_pending(*_):
-        tl.set_pending(state["pending_text"] if state["pending_on"] else None)
-
-    rebuild_items()
-
-    panel = PlaygroundPanel(tr("timeline.panel_title"))
-    color_opts = [(tr("timeline.opt.theme"), None), (tr("timeline.opt.success"), "success"),
-                  (tr("timeline.opt.warning"), "warning"),
-                  (tr("timeline.opt.danger"), "danger")]
-    for i in range(3):
-        panel.add_choice(
-            tr("timeline.p.node_color", n=i + 1), color_opts, state["colors"][i],
-            lambda v, i=i: (state["colors"].__setitem__(i, v), rebuild_items()),
-            key=f"color{i}")
-    panel.add_bool(tr("timeline.p.pending_on"), True,
-                   lambda v: (state.__setitem__("pending_on", v),
-                              apply_pending()), key="pending_on")
-    panel.add_text(tr("timeline.p.pending_text"), state["pending_text"],
-                   lambda v: (state.__setitem__("pending_text", v),
-                              apply_pending()), key="pending_text")
-    panel.add_choice(tr("timeline.p.icon_mode"),
-                     [(tr("timeline.opt.dot"), False), (tr("timeline.opt.icon"), True)],
-                     False,
-                     lambda v: (state.__setitem__("icon_mode", v),
-                                rebuild_items()), key="icon_mode")
-    panel.add_choice(tr("timeline.p.line_style"),
-                     [(tr("timeline.opt.solid"), Qt.SolidLine),
-                      (tr("timeline.opt.dashed"), Qt.DashLine),
-                      (tr("timeline.opt.dotted"), Qt.DotLine)], Qt.SolidLine,
-                     lambda v: (setattr(tl, "line_style", v), tl.update()),
-                     key="line_style")
-    panel.add_int(tr("timeline.p.line_width"), 1, 1, 4,
-                  lambda v: (setattr(tl, "line_width", float(v)), tl.update()),
-                  key="line_width")
-    panel.add_int(tr("timeline.p.dot_radius"), 5, 3, 9,
-                  lambda v: (setattr(tl, "dot_radius", v), tl.update()),
-                  key="dot_radius")
-    panel.add_int(tr("timeline.p.spacing"), 0, 0, 24,
-                  lambda v: (setattr(tl, "extra_spacing", v),
-                             tl.updateGeometry(), tl.update()),
-                  key="spacing")
-    panel.add_choice(tr("timeline.p.axis_side"),
-                     [(tr("timeline.opt.left"), "left"),
-                      (tr("timeline.opt.right"), "right")], "left",
-                     lambda v: (setattr(tl, "axis_side", v), tl.update()),
-                     key="axis_side")
-    panel.add_int(tr("timeline.p.font_size"), 13, 10, 18,
-                  lambda v: (setattr(tl, "title_font_size", v), tl.update()),
-                  key="font_size")
-    panel.add_int(tr("timeline.p.time_font_size"), 11, 8, 14,
-                  lambda v: (setattr(tl, "time_font_size", v), tl.update()),
-                  key="time_font_size")
-
-    s.layout().addWidget(with_playground(tl, panel))
+    demo = _TimelineDemo(tr)
+    demo.rebuild_items()
+    panel = demo.build_panel()
+    s.layout().addWidget(with_playground(demo.tl, panel))
     return make_page(tr("timeline.title"), tr("timeline.desc"), [s])
 
 
