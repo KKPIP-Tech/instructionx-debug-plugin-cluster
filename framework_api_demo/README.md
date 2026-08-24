@@ -126,6 +126,7 @@ framework_api_demo/
 │   └── tools/
 │       └── demo_tools.py   #   演示用 LLM 工具定义与 handler（get_current_time / calculate）
 ├── ui/
+│   ├── metrics.py          # 布局度量常量（间距/边距/限高，单位像素）
 │   ├── main_widget.py      # 主控件（布局壳：公共结果/日志面板 + Tab 容器）
 │   └── tabs/               # 各功能标签页（base/data/task/llm/api/info/mcp；
 │                           #   llm_tab_groups.py 为 LLM 页多模态/统计分组 mixin）
