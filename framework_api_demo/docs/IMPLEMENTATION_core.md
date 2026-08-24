@@ -49,8 +49,8 @@ demo_plugin_id 由 plugin_id 经确定性哈希生成（配置 `demo.plugin_id_p
 会话管理、共享 ToolRegistry 注册与 chat_with_tools 多轮工具调用、
 generate_image / text_to_speech（结果经 save_asset 落盘）、
 get_usage_stats / validate_provider。
-阻塞型调用（流式、会话发送、工具对话、多模态）一律经 register_sync_task
-放入工作线程执行。
+阻塞型调用（聊天/嵌入、流式、会话发送、工具对话、多模态）一律经 register_async_task
+提交到任务线程池执行（register_sync_task 为调用线程内联执行，仅用于同步任务演示）。
 
 ### `APIDemoService`
 封装 PluginManager 的插件查询、API 发现、Function Tools 导出与跨插件调用。

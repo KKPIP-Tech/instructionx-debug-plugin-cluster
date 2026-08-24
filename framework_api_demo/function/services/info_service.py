@@ -79,16 +79,19 @@ class FrameworkInfoService(Service):
     def demo_thread_utils(self) -> Dict[str, Any]:
         """演示 is_ui_thread / run_in_ui_thread / run_in_ui_thread_sync
 
-        在调用线程记录 is_ui_thread()；再注册同步任务到工作线程执行
+        在调用线程记录 is_ui_thread()；再注册异步任务到任务线程池执行
         _worker_probe（其中经 run_in_ui_thread_sync 封送回 UI 线程取对照值，
         并经 run_in_ui_thread 异步封送一条回执），结果经 notifier 上抛。
+        「工作线程直判=False vs 封送后=True」的对照只有任务真实运行在
+        工作线程时才成立，因此必须使用 register_async_task（线程池），
+        而非调用线程内联执行的 register_sync_task。
 
         返回:
             包含调用方线程判定结果与任务 id 的字典
         """
         caller_is_ui = is_ui_thread()
         try:
-            task_id = self.tm.register_sync_task(
+            task_id = self.tm.register_async_task(
                 plugin_id=self.plugin_id,
                 name=_THREAD_DEMO_TASK_NAME,
                 func=self._worker_probe,
@@ -96,6 +99,10 @@ class FrameworkInfoService(Service):
             )
         except Exception as e:
             return {"success": False, "error": str(e)}
+        if task_id is None:
+            return {"success": False, "error": self._tr(
+                "svc_info", "err.manager_closed",
+                default="任务管理器已关闭，无法发起后台任务")}
         return {
             "success": True,
             "task_id": task_id,

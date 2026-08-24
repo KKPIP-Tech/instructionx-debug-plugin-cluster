@@ -444,6 +444,7 @@ Provider: {provider}</text>
     <text key="msg.tts_started">Speech synthesis started (runs as background task)</text>
     <text key="err.no_default_provider">No provider specified and no default instance available</text>
     <text key="err.base64_decode">base64 decode failed: {error}</text>
+    <text key="err.manager_closed">Task manager is shut down; cannot start background task</text>
   </group>
 
   <!-- Framework info service: user-facing message templates -->
@@ -452,6 +453,7 @@ Provider: {provider}</text>
     <text key="msg.thread_started">Worker-thread marshaling comparison will be reported via event notification (see log panel)</text>
     <text key="msg.thread_receipt">run_in_ui_thread async marshaling receipt: this event was raised on the UI thread</text>
     <text key="msg.thread_compare">Thread marshaling comparison [{status}]: {result} error={error}</text>
+    <text key="err.manager_closed">Task manager is shut down; cannot start background task</text>
   </group>
 
   <!-- MCP demo service: user-facing message templates -->
@@ -461,6 +463,7 @@ Provider: {provider}</text>
     <text key="err.not_bridged">This plugin's API is not yet registered with PluginManager</text>
     <text key="err.config_format">Invalid config format (server_id/name required): {error}</text>
     <text key="err.server_id_required">server_id is required</text>
+    <text key="err.manager_closed">Task manager is shut down; cannot start background task</text>
     <text key="msg.connected">Connected to {id}, {count} tools registered</text>
     <text key="msg.disconnected">Disconnected from {id}</text>
     <text key="msg.submitted">{operation} submitted for background execution; see execution log for results</text>

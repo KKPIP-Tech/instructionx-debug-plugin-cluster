@@ -445,6 +445,7 @@ Provider: {provider}</text>
     <text key="msg.tts_started">语音合成已发起（后台任务执行）</text>
     <text key="err.no_default_provider">未指定 Provider 且无可用默认实例</text>
     <text key="err.base64_decode">base64 解码失败: {error}</text>
+    <text key="err.manager_closed">任务管理器已关闭，无法发起后台任务</text>
   </group>
 
   <!-- 框架信息服务：面向用户的消息模板 -->
@@ -453,6 +454,7 @@ Provider: {provider}</text>
     <text key="msg.thread_started">工作线程封送对照结果将经事件通知回传（见日志面板）</text>
     <text key="msg.thread_receipt">run_in_ui_thread 异步封送回执：本条事件由 UI 线程上抛</text>
     <text key="msg.thread_compare">线程封送对照 [{status}]: {result} 错误={error}</text>
+    <text key="err.manager_closed">任务管理器已关闭，无法发起后台任务</text>
   </group>
 
   <!-- MCP 演示服务：面向用户的消息模板 -->
@@ -462,6 +464,7 @@ Provider: {provider}</text>
     <text key="err.not_bridged">本插件 API 尚未注册到 PluginManager</text>
     <text key="err.config_format">配置格式错误（需含 server_id/name）: {error}</text>
     <text key="err.server_id_required">需要指定 server_id</text>
+    <text key="err.manager_closed">任务管理器已关闭，无法发起后台任务</text>
     <text key="msg.connected">已连接 {id}，注册工具 {count} 个</text>
     <text key="msg.disconnected">已断开 {id}</text>
     <text key="msg.submitted">{operation}已提交后台执行，结果见执行日志</text>

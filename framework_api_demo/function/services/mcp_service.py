@@ -150,8 +150,8 @@ class MCPDemoService(Service):
         """演示连接远程 MCP Server（后台任务执行，避免阻塞 UI 线程）
 
         mcp_client.connect 为同步方法，内部经事件循环等待连接完成，
-        失败时最长阻塞至超时（默认 60 秒），故经 register_sync_task
-        放入后台线程执行，结果经事件通知器上抛 UI。
+        失败时最长阻塞至超时（默认 60 秒），故经 register_async_task
+        提交到任务线程池执行，结果经事件通知器上抛 UI。
 
         参数:
             config: 符合 MCPRemoteServerConfig 字段的 dict
@@ -199,13 +199,17 @@ class MCPDemoService(Service):
                         default="已断开 {id}", id=server_id)
 
     def _submit_mcp_task(self, operation: str, func: Callable, arg: Any) -> Dict[str, Any]:
-        """把阻塞型 MCP 操作提交为后台同步任务"""
+        """把阻塞型 MCP 操作提交为异步后台任务（线程池执行，避免阻塞 UI 线程）"""
         try:
-            task_id = self.tm.register_sync_task(
+            task_id = self.tm.register_async_task(
                 plugin_id=self.plugin_id, name=f"mcp_{operation}",
                 func=func, args=(arg,),
                 callback=self._make_mcp_callback(operation),
             )
+            if task_id is None:
+                return {"success": False, "error": self._tr(
+                    "svc_mcp", "err.manager_closed",
+                    default="任务管理器已关闭，无法发起后台任务")}
             return {"success": True, "task_id": task_id,
                     "message": self._tr(
                         "svc_mcp", "msg.submitted",

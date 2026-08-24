@@ -30,14 +30,14 @@ from .base import Service
 # 默认实例引用（语义等同 core.llm.types.DEFAULT_PROVIDER，字面量演示 ILLMService 约定）
 DEFAULT_PROVIDER_REF = "default"
 
-# 流式聊天后台任务名（register_sync_task 的 name 参数）
+# 流式聊天后台任务名（register_async_task 的 name 参数）
 STREAM_TASK_NAME = "llm_stream_chat"
 # notifier 事件前缀：UI 依此区分片段增量刷新 / 完成 / 失败三类事件
 STREAM_CHUNK_PREFIX = "[流式片段] "
 STREAM_DONE_EVENT = "[流式完成]"
 STREAM_ERROR_PREFIX = "[流式失败] "
 
-# 会话消息后台任务名（register_sync_task 的 name 参数）
+# 会话消息后台任务名（register_async_task 的 name 参数）
 CONV_SEND_TASK_NAME = "llm_conversation_send"
 CONV_STREAM_TASK_NAME = "llm_conversation_stream"
 # 会话演示 notifier 事件前缀（沿用流式聊天的片段/完成/失败协议风格，
@@ -48,7 +48,7 @@ CONV_STREAM_CHUNK_PREFIX = "[会话流式片段] "
 CONV_STREAM_DONE_EVENT = "[会话流式完成]"
 CONV_STREAM_ERROR_PREFIX = "[会话流式失败] "
 
-# 工具调用后台任务名（register_sync_task 的 name 参数）
+# 工具调用后台任务名（register_async_task 的 name 参数）
 TOOL_CHAT_TASK_NAME = "llm_tool_chat"
 # 工具调用演示的最大工具调用轮数（防无限循环，与框架默认一致）
 TOOL_CHAT_MAX_TURNS = 5
@@ -56,7 +56,7 @@ TOOL_CHAT_MAX_TURNS = 5
 TOOL_DONE_EVENT = "[工具对话完成]"
 TOOL_ERROR_PREFIX = "[工具对话失败] "
 
-# 多模态后台任务名（register_sync_task 的 name 参数）
+# 多模态后台任务名（register_async_task 的 name 参数）
 IMAGE_TASK_NAME = "llm_generate_image"
 TTS_TASK_NAME = "llm_text_to_speech"
 # 多模态演示 notifier 事件前缀（前缀独立，避免与聊天/会话/工具事件串台）
@@ -163,21 +163,33 @@ class LLMDemoService(Service):
         """演示 ILLMService.stream_chat 与 last_stream_response
 
         stream_chat 是阻塞调用（callback 在调用线程同步逐块触发），
-        直接在 UI 线程调用会卡界面，因此经 register_sync_task 放到
-        工作线程执行；本方法立即返回任务已发起，最终结果经完成回调
+        直接在 UI 线程调用会卡界面，因此经 register_async_task 提交到
+        任务线程池执行；本方法立即返回任务已发起，最终结果经完成回调
         + notifier 上抛（UI 再经 get_last_stream_result 拉取展示）。
         """
         try:
-            task_id = self.tm.register_sync_task(
-                plugin_id=self.plugin_id, name=STREAM_TASK_NAME,
-                func=self._run_stream_chat, args=(message, provider),
-                callback=self._on_stream_task_done,
-            )
-            return {"success": True, "task_id": task_id, "message": self._tr(
-                "svc_llm", "msg.stream_started", default="流式聊天已发起（后台任务执行）")}
+            return self._submit_async_task(
+                STREAM_TASK_NAME, self._run_stream_chat, (message, provider),
+                self._on_stream_task_done,
+                "msg.stream_started", "流式聊天已发起（后台任务执行）")
         except Exception as e:
             self.logger.error(get_name(), f"[{self.plugin_id}] 发起流式聊天失败(provider={provider}): {e}")
             return {"success": False, "error": str(e)}
+
+    def _submit_async_task(self, name: str, func: Callable, args: tuple,
+                           callback: Callable, started_key: str,
+                           started_default: str) -> Dict[str, Any]:
+        """统一注册异步后台任务（线程池执行）；管理器已关闭（task_id 为 None）时返回错误"""
+        task_id = self.tm.register_async_task(
+            plugin_id=self.plugin_id, name=name,
+            func=func, args=args, callback=callback,
+        )
+        if task_id is None:
+            return {"success": False, "error": self._tr(
+                "svc_llm", "err.manager_closed",
+                default="任务管理器已关闭，无法发起后台任务")}
+        return {"success": True, "task_id": task_id, "message": self._tr(
+            "svc_llm", started_key, default=started_default)}
 
     def get_last_stream_result(self) -> Dict[str, Any]:
         """返回最近一次流式聊天的聚合结果（供 UI 在完成事件后拉取展示）"""
@@ -257,17 +269,14 @@ class LLMDemoService(Service):
         """演示 ILLMService.send_message（阻塞调用，经后台任务执行）
 
         send_message 内部同步等待 LLM 响应，直接在 UI 线程调用会卡界面，
-        因此经 register_sync_task 放到工作线程执行；本方法立即返回任务已发起，
+        因此经 register_async_task 提交到任务线程池执行；本方法立即返回任务已发起，
         最终回复文本经完成回调 + notifier 上抛（CONV_REPLY_PREFIX 事件）。
         """
         try:
-            task_id = self.tm.register_sync_task(
-                plugin_id=self.plugin_id, name=CONV_SEND_TASK_NAME,
-                func=self._run_conv_send, args=(conversation_id, content),
-                callback=self._on_conv_send_done,
-            )
-            return {"success": True, "task_id": task_id, "message": self._tr(
-                "svc_llm", "msg.conv_started", default="会话消息已发起（后台任务执行）")}
+            return self._submit_async_task(
+                CONV_SEND_TASK_NAME, self._run_conv_send, (conversation_id, content),
+                self._on_conv_send_done,
+                "msg.conv_started", "会话消息已发起（后台任务执行）")
         except Exception as e:
             self.logger.error(get_name(), f"[{self.plugin_id}] 发起会话消息失败({conversation_id}): {e}")
             return {"success": False, "error": str(e)}
@@ -279,13 +288,10 @@ class LLMDemoService(Service):
         完整文本在完成事件后由 UI 经 get_last_conversation_stream_result 拉取。
         """
         try:
-            task_id = self.tm.register_sync_task(
-                plugin_id=self.plugin_id, name=CONV_STREAM_TASK_NAME,
-                func=self._run_conv_stream, args=(conversation_id, content),
-                callback=self._on_conv_stream_done,
-            )
-            return {"success": True, "task_id": task_id, "message": self._tr(
-                "svc_llm", "msg.conv_stream_started", default="会话流式消息已发起（后台任务执行）")}
+            return self._submit_async_task(
+                CONV_STREAM_TASK_NAME, self._run_conv_stream, (conversation_id, content),
+                self._on_conv_stream_done,
+                "msg.conv_stream_started", "会话流式消息已发起（后台任务执行）")
         except Exception as e:
             self.logger.error(get_name(), f"[{self.plugin_id}] 发起会话流式消息失败({conversation_id}): {e}")
             return {"success": False, "error": str(e)}
@@ -474,19 +480,16 @@ class LLMDemoService(Service):
         """演示 ILLMService.chat_with_tools（阻塞多轮调用，经后台任务执行）
 
         调用前确保演示工具已注册（幂等）；chat_with_tools 内部为
-        LLM → 工具调用 → 结果回传 的多轮阻塞循环，经 register_sync_task
-        放到工作线程执行，聚合结果经完成回调 + notifier 上抛。
+        LLM → 工具调用 → 结果回传 的多轮阻塞循环，经 register_async_task
+        提交到任务线程池执行，聚合结果经完成回调 + notifier 上抛。
         """
         try:
             registry = self.llm.get_shared_tool_registry()
             self._register_all_demo_tools(registry)
-            task_id = self.tm.register_sync_task(
-                plugin_id=self.plugin_id, name=TOOL_CHAT_TASK_NAME,
-                func=self._run_tool_chat, args=(message,),
-                callback=self._on_tool_chat_done,
-            )
-            return {"success": True, "task_id": task_id, "message": self._tr(
-                "svc_llm", "msg.tool_chat_started", default="工具对话已发起（后台任务执行）")}
+            return self._submit_async_task(
+                TOOL_CHAT_TASK_NAME, self._run_tool_chat, (message,),
+                self._on_tool_chat_done,
+                "msg.tool_chat_started", "工具对话已发起（后台任务执行）")
         except Exception as e:
             self.logger.error(get_name(), f"[{self.plugin_id}] 发起工具对话失败: {e}")
             return {"success": False, "error": str(e)}
@@ -547,17 +550,14 @@ class LLMDemoService(Service):
     def generate_image_demo(self, prompt: str, provider: str = DEFAULT_PROVIDER_REF) -> Dict[str, Any]:
         """演示 ILLMService.generate_image（阻塞调用，经后台任务执行）
 
-        generate_image 为同步 HTTP 请求，经 register_sync_task 放到工作线程；
+        generate_image 为同步 HTTP 请求，经 register_async_task 提交到任务线程池；
         聚合结果在完成事件后由 UI 经 get_last_image_result 拉取展示。
         """
         try:
-            task_id = self.tm.register_sync_task(
-                plugin_id=self.plugin_id, name=IMAGE_TASK_NAME,
-                func=self._run_generate_image, args=(prompt, provider),
-                callback=self._on_image_task_done,
-            )
-            return {"success": True, "task_id": task_id, "message": self._tr(
-                "svc_llm", "msg.image_started", default="图片生成已发起（后台任务执行）")}
+            return self._submit_async_task(
+                IMAGE_TASK_NAME, self._run_generate_image, (prompt, provider),
+                self._on_image_task_done,
+                "msg.image_started", "图片生成已发起（后台任务执行）")
         except Exception as e:
             self.logger.error(get_name(), f"[{self.plugin_id}] 发起图片生成失败(provider={provider}): {e}")
             return {"success": False, "error": str(e)}
@@ -613,13 +613,10 @@ class LLMDemoService(Service):
         get_last_audio_result 拉取聚合结果（音频字节经 save_asset 落盘）。
         """
         try:
-            task_id = self.tm.register_sync_task(
-                plugin_id=self.plugin_id, name=TTS_TASK_NAME,
-                func=self._run_text_to_speech, args=(text, provider),
-                callback=self._on_tts_task_done,
-            )
-            return {"success": True, "task_id": task_id, "message": self._tr(
-                "svc_llm", "msg.tts_started", default="语音合成已发起（后台任务执行）")}
+            return self._submit_async_task(
+                TTS_TASK_NAME, self._run_text_to_speech, (text, provider),
+                self._on_tts_task_done,
+                "msg.tts_started", "语音合成已发起（后台任务执行）")
         except Exception as e:
             self.logger.error(get_name(), f"[{self.plugin_id}] 发起语音合成失败(provider={provider}): {e}")
             return {"success": False, "error": str(e)}
