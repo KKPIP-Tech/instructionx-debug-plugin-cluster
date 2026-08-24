@@ -448,12 +448,22 @@ class MainWidget(QWidget):
                 ms=f"{total_ms:.0f}"))
             return
         errors = summary.get("errors") or []
-        reason = errors[0] if errors else self._tr(_GROUP_MAIN,
-                                                   "error.unknown")
+        reason = self._first_error_reason(errors) or self._tr(_GROUP_MAIN,
+                                                              "error.unknown")
         _logger.error(_MODULE, f"管线运行失败：{reason}")
         self._toolbar.set_status(self._tr(_GROUP_MAIN,
                                           "status.run_interrupted",
                                           reason=reason))
+
+    @staticmethod
+    def _first_error_reason(errors: List[Any]) -> Optional[str]:
+        """取首个错误的用户可读信息；errors 元素为 {"node_id","message"} 字典"""
+        if not errors:
+            return None
+        first = errors[0]
+        if isinstance(first, dict):
+            return str(first.get("message") or first)
+        return str(first)
 
     def _on_selection_changed(self, node_ids: List[str]) -> None:
         """选中变化 → 参数面板：单选绑定节点，否则回提示态。"""
