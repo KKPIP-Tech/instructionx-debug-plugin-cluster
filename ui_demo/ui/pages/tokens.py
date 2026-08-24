@@ -223,16 +223,17 @@ class _RadiusBox(QWidget):
         p.end()
 
 
-def _spacing_radius_section(tr) -> QFrame:
-    box = Section(tr("section.spacing"))
-    box.layout().addWidget(hint_label(tr("spacing.hint"), role="secondary"))
+def _spacing_rows(box) -> None:
+    """填充 spacing 令牌行（键名 + 数值标签 + 比例条）。"""
     for key in ["space.0", "space.05", "space.1", "space.2", "space.3",
                 "space.4", "space.5", "space.6", "space.8", "space.10",
                 "space.12", "space.16"]:
         v = T(key)
         box.layout().addWidget(row(QLabel(f"{key} = {v}px"), _Bar(v)))
-    box.layout().addSpacing(6)
-    box.layout().addWidget(hint_label(tr("radius.hint"), role="secondary"))
+
+
+def _radius_row() -> QWidget:
+    """构建 radius 令牌行（圆角示例块 + 数值标签，顶对齐排布）。"""
     rad_row = QWidget()
     rad_lay = QHBoxLayout(rad_row)
     rad_lay.setContentsMargins(0, 0, 0, 0)
@@ -243,7 +244,16 @@ def _spacing_radius_section(tr) -> QFrame:
         item.layout().setSpacing(4)
         rad_lay.addWidget(item, 0, Qt.AlignTop)
     rad_lay.addStretch(1)
-    box.layout().addWidget(rad_row)
+    return rad_row
+
+
+def _spacing_radius_section(tr) -> QFrame:
+    box = Section(tr("section.spacing"))
+    box.layout().addWidget(hint_label(tr("spacing.hint"), role="secondary"))
+    _spacing_rows(box)
+    box.layout().addSpacing(6)
+    box.layout().addWidget(hint_label(tr("radius.hint"), role="secondary"))
+    box.layout().addWidget(_radius_row())
     return box
 
 

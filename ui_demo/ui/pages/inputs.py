@@ -54,12 +54,17 @@ def _tr_of(i18n):
 # 各组件页面
 # ---------------------------------------------------------------------------
 
-def create_button_page(i18n: Optional[ILocalizationFacade] = None) -> QWidget:
-    tr = _tr_of(i18n)
+def _button_variants_section(tr) -> Section:
+    """按钮变体分区（primary / default / dashed / text / link / danger）。"""
     variants = Section(tr("button.sec.variant"))
     variants.layout().addWidget(row(*[
         Button(tr(f"button.variant.{v}"), variant=v) for v in
         ("primary", "default", "dashed", "text", "link", "danger")]))
+    return variants
+
+
+def _button_sizes_section(tr) -> Section:
+    """按钮尺寸分区（sm / md / lg + 加载 / 禁用 / 通栏）。"""
     sizes = Section(tr("button.sec.size"))
     sizes.layout().addWidget(row(
         Button(tr("button.size.sm"), size="sm"),
@@ -67,7 +72,13 @@ def create_button_page(i18n: Optional[ILocalizationFacade] = None) -> QWidget:
         Button(tr("button.size.lg"), size="lg"),
         Button(tr("button.size.loading"), variant="primary", loading=True),
         _disabled(Button(tr("button.size.disabled"), variant="primary"))))
-    sizes.layout().addWidget(Button(tr("button.size.block"), variant="primary", block=True))
+    sizes.layout().addWidget(Button(tr("button.size.block"),
+                                    variant="primary", block=True))
+    return sizes
+
+
+def _button_shapes_section(tr) -> Section:
+    """按钮形状分区（round / 圆形三档 / pill）。"""
     shapes = Section(tr("button.sec.shape"))
     # 圆形按钮：QSS 约定「配合组件固定宽=高」，此处按 sm/md/lg 边长
     # 24/32/40 固定为正方形，否则 "+" 单字按钮宽度由字宽决定，会渲染成
@@ -81,8 +92,14 @@ def create_button_page(i18n: Optional[ILocalizationFacade] = None) -> QWidget:
     shapes.layout().addWidget(row(
         Button(tr("button.shape.round"), shape="round"), *circles,
         Button(tr("button.shape.pill"), shape="round", variant="primary")))
+    return shapes
+
+
+def create_button_page(i18n: Optional[ILocalizationFacade] = None) -> QWidget:
+    tr = _tr_of(i18n)
     return make_page(tr("button.title"), tr("button.desc"),
-                     [variants, sizes, shapes])
+                     [_button_variants_section(tr), _button_sizes_section(tr),
+                      _button_shapes_section(tr)])
 
 
 def create_icon_button_page(i18n: Optional[ILocalizationFacade] = None) -> QWidget:

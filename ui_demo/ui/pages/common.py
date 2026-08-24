@@ -277,37 +277,42 @@ class DemoCard(QFrame):
                  i18n: Optional[ILocalizationFacade] = None):
         super().__init__(parent)
         self.setFrameShape(QFrame.Shape.StyledPanel)  # 命中 QSS 卡片边框
-
         lay = QVBoxLayout(self)
         lay.setContentsMargins(12, 10, 12, 10)
         lay.setSpacing(6)
+        lay.addWidget(self._build_head(title))
+        if hint:
+            lay.addWidget(hint_label(hint, role="tertiary"))
+        lay.addWidget(self._build_demo_wrap(demo, demo_height), 1)
+        lay.addLayout(self._build_play_row(i18n))
+        self._play = play
 
+    def _build_head(self, title) -> QLabel:
+        """构建卡片标题标签（加粗字重取令牌）。"""
         head = QLabel(title)
         head_font = QFont()
         head_font.setWeight(QFont.Weight(T("font.weight.semibold")))
         head.setFont(head_font)
-        lay.addWidget(head)
+        return head
 
-        if hint:
-            lay.addWidget(hint_label(hint, role="tertiary"))
-
+    def _build_demo_wrap(self, demo, demo_height) -> QWidget:
+        """构建演示区容器（居中承载演示元件，最小高度可配）。"""
         demo_wrap = QWidget()
         demo_lay = QVBoxLayout(demo_wrap)
         demo_lay.setContentsMargins(0, 2, 0, 2)
         demo_lay.addWidget(demo, 0, Qt.AlignCenter)
         demo_wrap.setMinimumHeight(demo_height)
-        lay.addWidget(demo_wrap, 1)
+        return demo_wrap
 
+    def _build_play_row(self, i18n) -> QHBoxLayout:
+        """构建右对齐「播放」按钮行（点击走异常安全播放）。"""
         btn_row = QHBoxLayout()
         btn_row.addStretch(1)
-        play_btn = QPushButton(bind_tr(i18n, "common")("demo_card.play"))
-        set_property(play_btn, "size", "sm")
-        play_btn.clicked.connect(self._safe_play)
-        btn_row.addWidget(play_btn)
-        lay.addLayout(btn_row)
-
-        self._play = play
-        self.play_button = play_btn
+        self.play_button = QPushButton(bind_tr(i18n, "common")("demo_card.play"))
+        set_property(self.play_button, "size", "sm")
+        self.play_button.clicked.connect(self._safe_play)
+        btn_row.addWidget(self.play_button)
+        return btn_row
 
     def _safe_play(self):
         """执行播放回调；异常记 DEBUG 日志，不打断 Demo 交互。"""

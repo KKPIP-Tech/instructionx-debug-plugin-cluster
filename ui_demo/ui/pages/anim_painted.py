@@ -108,6 +108,29 @@ def _S(tr, rows) -> list:
             for kind, name, label_key, *rest in rows]
 
 
+def _make_play_fn(card, opts, play):
+    """生成播放回调：优先自定义 ``play``，否则调用演示控件的 ``start()``。"""
+    def _do_play():
+        w = card.demo
+        if w is None:
+            return None
+        if play is not None:
+            return play(w, opts)
+        if hasattr(w, "start"):
+            w.start()
+        return None
+    return _do_play
+
+
+def _make_rebuild_fn(card, opts, build, auto, do_play):
+    """生成重建回调：按当前参数重建演示控件，连续型立即重放。"""
+    def rebuild(*_):
+        card.set_demo(build(opts))
+        if auto:
+            do_play()
+    return rebuild
+
+
 def _rcard(i18n, title, hint, build, specs, play=None, demo_height=130,
            auto=False):
     """构建一张参数化自绘动画卡片（重建式应用参数）。
@@ -122,23 +145,9 @@ def _rcard(i18n, title, hint, build, specs, play=None, demo_height=130,
     opts = {}
     add_specs(card.form, opts, specs)
     card.opts = opts  # 暴露参数快照，便于审计 / 测试断言接线
-
-    def _do_play():
-        w = card.demo
-        if w is None:
-            return None
-        if play is not None:
-            return play(w, opts)
-        if hasattr(w, "start"):
-            w.start()
-        return None
-
-    def rebuild(*_):
-        card.set_demo(build(opts))
-        if auto:
-            _do_play()
-
-    card.set_play(_do_play)
+    do_play = _make_play_fn(card, opts, play)
+    rebuild = _make_rebuild_fn(card, opts, build, auto, do_play)
+    card.set_play(do_play)
     card.form.changed.connect(rebuild)
     card._rebuild = rebuild  # 供主题切换时整页重建（刷新令牌色）
     rebuild()

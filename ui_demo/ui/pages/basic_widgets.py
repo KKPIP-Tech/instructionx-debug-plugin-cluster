@@ -193,21 +193,31 @@ def _views_section(tr):
     return box
 
 
-def _window_parts_section(tr):
-    box = Section(tr("sec.window_parts"))
-    win = QMainWindow()
+def _window_menus(win, tr) -> None:
+    """填充演示主窗口的菜单栏（文件 / 编辑）。"""
     mb = win.menuBar()
     m_file = mb.addMenu(tr("menu.file"))
     m_file.addAction(tr("menu.file.new"))
     m_file.addAction(tr("menu.file.open"))
     m_edit = mb.addMenu(tr("menu.edit"))
     m_edit.addAction(tr("menu.edit.undo"))
+
+
+def _window_toolbar(win, tr) -> None:
+    """填充演示主窗口的工具栏（新建 / 保存 / 帮助）。"""
     tb = QToolBar(tr("toolbar.title"))
     tb.addAction(QAction(tr("toolbar.new"), win))
     tb.addAction(QAction(tr("toolbar.save"), win))
     tb.addSeparator()
     tb.addAction(QAction(tr("toolbar.help"), win))
     win.addToolBar(tb)
+
+
+def _window_parts_section(tr):
+    box = Section(tr("sec.window_parts"))
+    win = QMainWindow()
+    _window_menus(win, tr)
+    _window_toolbar(win, tr)
     win.setCentralWidget(QLabel(tr("central"), alignment=Qt.AlignCenter))
     sb = QStatusBar()
     sb.showMessage(tr("status.ready"))
@@ -217,28 +227,26 @@ def _window_parts_section(tr):
     return box
 
 
+def _dialog_handlers(page, tr) -> list:
+    """系统对话框演示的 (按钮文案, 触发函数) 表。"""
+    return [
+        ("QMessageBox", lambda: QMessageBox.information(
+            page, "QMessageBox", tr("dlg.msg.text"))),
+        ("QFileDialog", lambda: QFileDialog.getOpenFileName(
+            page, tr("dlg.file.title"))),
+        ("QColorDialog", lambda: QColorDialog.getColor(
+            QColor("#3F5E8C"), page, tr("dlg.color.title"))),
+        ("QFontDialog", lambda: QFontDialog.getFont(
+            page, tr("dlg.font.title"))),
+        ("QInputDialog", lambda: QInputDialog.getText(
+            page, "QInputDialog", tr("dlg.input.label"))),
+    ]
+
+
 def _dialogs_section(page, tr):
     box = Section(tr("sec.dialogs"))
-
-    def _msg():
-        QMessageBox.information(page, "QMessageBox", tr("dlg.msg.text"))
-
-    def _file():
-        QFileDialog.getOpenFileName(page, tr("dlg.file.title"))
-
-    def _color():
-        QColorDialog.getColor(QColor("#3F5E8C"), page, tr("dlg.color.title"))
-
-    def _font():
-        QFontDialog.getFont(page, tr("dlg.font.title"))
-
-    def _input():
-        QInputDialog.getText(page, "QInputDialog", tr("dlg.input.label"))
-
     btns = []
-    for text, fn in (("QMessageBox", _msg), ("QFileDialog", _file),
-                     ("QColorDialog", _color), ("QFontDialog", _font),
-                     ("QInputDialog", _input)):
+    for text, fn in _dialog_handlers(page, tr):
         b = QPushButton(text)
         b.clicked.connect(fn)
         btns.append(b)
