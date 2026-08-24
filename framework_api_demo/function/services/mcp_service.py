@@ -240,3 +240,27 @@ class MCPDemoService(Service):
             return {"success": True, "count": len(tools), "tools": tools}
         except Exception as e:
             return {"success": False, "error": str(e)}
+
+    # ------------------------------------------------------------------
+    #  卸载清理
+    # ------------------------------------------------------------------
+
+    def cleanup(self) -> None:
+        """卸载清理：逐个断开仍连接的远程 MCP Server（逐项容错记日志）"""
+        if self.mcp_client is None:
+            return
+        try:
+            servers = self.mcp_client.list_connected_servers()
+        except Exception as e:
+            self.logger.error(get_name(), f"卸载清理：获取远程 Server 清单失败: {e}")
+            return
+        for server_id in servers:
+            self._disconnect_one_server(server_id)
+
+    def _disconnect_one_server(self, server_id: str) -> None:
+        """断开单个远程连接，失败仅记日志不中断其余清理"""
+        try:
+            self.mcp_client.disconnect(server_id)
+            self.logger.info(get_name(), f"卸载清理：已断开远程 Server {server_id}")
+        except Exception as e:
+            self.logger.error(get_name(), f"卸载清理：断开远程 Server 失败 {server_id}: {e}")

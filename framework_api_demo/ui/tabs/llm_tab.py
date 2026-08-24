@@ -19,6 +19,10 @@ from InstructionX_UIKit.components import Button, LineEdit, ListWidget, Message,
 from core.interfaces import ILocalizationFacade
 from utils.thread_utils import run_in_ui_thread
 
+from ..metrics import (
+    CHAT_RESULT_MAX_HEIGHT, CONV_LIST_MAX_HEIGHT, CONV_RESULT_MAX_HEIGHT,
+    FORM_SPACING, GROUP_SPACING, LIST_BOX_MAX_HEIGHT, ROW_SPACING,
+)
 from .base_tab import BaseTab
 from .llm_tab_groups import LLMMediaStatsGroupsMixin
 from ...function.services.llm_service import (
@@ -76,6 +80,18 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
         run_in_ui_thread(self._dispatch_stream_event, message)
 
     # ------------------------------------------------------------------
+    #  请求防重入（发起期间禁用触发按钮，结果/错误事件到达后恢复）
+    # ------------------------------------------------------------------
+
+    def _begin_llm_request(self, button: Button) -> None:
+        """请求发起前置：禁用触发按钮，防止后台请求进行中重复提交"""
+        button.setEnabled(False)
+
+    def _end_llm_request(self, button: Button) -> None:
+        """请求结束（完成/失败事件到达，或发起即失败）：恢复触发按钮可用"""
+        button.setEnabled(True)
+
+    # ------------------------------------------------------------------
     #  notifier 事件分发
     # ------------------------------------------------------------------
 
@@ -94,15 +110,19 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
     def _dispatch_chat_result_event(self, message: str) -> bool:
         """UI 线程分发聊天/嵌入完成事件；命中对应协议返回 True，否则返回 False"""
         if message == CHAT_DONE_EVENT:
+            self._end_llm_request(self.chat_btn)
             self._show_chat_result()
             return True
         if message.startswith(CHAT_ERROR_PREFIX):
+            self._end_llm_request(self.chat_btn)
             self._show_chat_error(message[len(CHAT_ERROR_PREFIX):])
             return True
         if message == EMBED_DONE_EVENT:
+            self._end_llm_request(self.embed_btn)
             self._show_embed_result()
             return True
         if message.startswith(EMBED_ERROR_PREFIX):
+            self._end_llm_request(self.embed_btn)
             self._display_result(self._tr("tab_llm", "title.embed_fail"),
                                  message[len(EMBED_ERROR_PREFIX):], is_error=True)
             return True
@@ -133,9 +153,11 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
         if self._dispatch_tool_stream_event(message):
             return True
         if message == TOOL_DONE_EVENT:
+            self._end_llm_request(self.tool_chat_btn)
             self._show_tool_chat_result()
             return True
         if message.startswith(TOOL_ERROR_PREFIX):
+            self._end_llm_request(self.tool_chat_btn)
             error = message[len(TOOL_ERROR_PREFIX):]
             self._display_result(self._tr("tab_llm", "title.tool_chat_fail"),
                                  error, is_error=True)
@@ -148,9 +170,11 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
             self.tool_result_text.insertPlainText(message[len(TOOL_STREAM_CHUNK_PREFIX):])
             return True
         if message == TOOL_STREAM_DONE_EVENT:
+            self._end_llm_request(self.tool_stream_btn)
             self._show_tool_stream_result()
             return True
         if message.startswith(TOOL_STREAM_ERROR_PREFIX):
+            self._end_llm_request(self.tool_stream_btn)
             error = message[len(TOOL_STREAM_ERROR_PREFIX):]
             self._display_result(self._tr("tab_llm", "title.tool_stream_fail"),
                                  error, is_error=True)
@@ -174,9 +198,11 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
             self.chat_result_text.insertPlainText(message[len(STREAM_CHUNK_PREFIX):])
             return
         if message == STREAM_DONE_EVENT:
+            self._end_llm_request(self.chat_stream_btn)
             self._show_stream_result()
             return
         if message.startswith(STREAM_ERROR_PREFIX):
+            self._end_llm_request(self.chat_stream_btn)
             error = message[len(STREAM_ERROR_PREFIX):]
             self._display_result(self._tr("tab_llm", "title.stream_fail"),
                                  error, is_error=True)
@@ -191,16 +217,23 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
             self.conv_result_text.insertPlainText(message[len(CONV_STREAM_CHUNK_PREFIX):])
             return True
         if message == CONV_STREAM_DONE_EVENT:
+            # 流式发送的两个入口按钮（普通/带图）都在此处恢复，幂等无害
+            self._end_llm_request(self.conv_stream_btn)
+            self._end_llm_request(self.conv_stream_img_btn)
             self._show_conversation_stream_result()
             return True
         if message.startswith(CONV_STREAM_ERROR_PREFIX):
+            self._end_llm_request(self.conv_stream_btn)
+            self._end_llm_request(self.conv_stream_img_btn)
             self._show_conversation_error("title.conv_stream_fail",
                                           message[len(CONV_STREAM_ERROR_PREFIX):])
             return True
         if message.startswith(CONV_REPLY_PREFIX):
+            self._end_llm_request(self.conv_send_btn)
             self._show_conversation_reply(message[len(CONV_REPLY_PREFIX):])
             return True
         if message.startswith(CONV_ERROR_PREFIX):
+            self._end_llm_request(self.conv_send_btn)
             self._show_conversation_error("title.conv_msg_fail",
                                           message[len(CONV_ERROR_PREFIX):])
             return True
@@ -296,7 +329,7 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
     def _build_llm_provider_group(self) -> QGroupBox:
         group = self._make_group("group.provider")
         layout = QVBoxLayout()
-        layout.setSpacing(8)
+        layout.setSpacing(GROUP_SPACING)
         self.get_providers_btn = self._make_button(
             "btn.get_providers", self._on_get_providers, variant="primary")
         layout.addWidget(self.get_providers_btn)
@@ -312,14 +345,14 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
     def _make_list_box(layout: QVBoxLayout) -> ListWidget:
         """创建限高列表框并加入布局（Provider/模型列表共用）"""
         list_widget = ListWidget()
-        list_widget.setMaximumHeight(80)
+        list_widget.setMaximumHeight(LIST_BOX_MAX_HEIGHT)
         layout.addWidget(list_widget)
         return list_widget
 
     def _build_llm_chat_group(self) -> QGroupBox:
         group = self._make_group("group.chat")
         form = QFormLayout()
-        form.setSpacing(6)
+        form.setSpacing(FORM_SPACING)
         self.chat_message_input = LineEdit(
             text=self._tr("tab_llm", "default.chat_message"))
         form.addRow(self._make_tab_label("label.message"), self.chat_message_input)
@@ -329,7 +362,7 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
         self.chat_stream_btn = self._make_button("btn.stream", self._on_send_chat_stream,
                                                  variant="primary")
         form.addRow("", self.chat_stream_btn)
-        self.chat_result_text = self._make_result_area(80)
+        self.chat_result_text = self._make_result_area(CHAT_RESULT_MAX_HEIGHT)
         form.addRow(self._make_label("common", "label.result"), self.chat_result_text)
         group.setLayout(form)
         return group
@@ -346,7 +379,7 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
         """构建「会话管理」分组（创建/列表/发送/详情/删除）"""
         group = self._make_group("group.conversation")
         layout = QVBoxLayout()
-        layout.setSpacing(6)
+        layout.setSpacing(FORM_SPACING)
         layout.addLayout(self._build_conv_create_form())
         layout.addLayout(self._build_conv_list_row())
         layout.addLayout(self._build_conv_send_form())
@@ -356,7 +389,7 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
     def _build_conv_create_form(self) -> QFormLayout:
         """构建会话创建子块：系统提示词输入 + 创建按钮"""
         form = QFormLayout()
-        form.setSpacing(6)
+        form.setSpacing(FORM_SPACING)
         self.conv_system_prompt_input = self._make_placeholder_input(
             "placeholder.system_prompt")
         form.addRow(self._make_tab_label("label.system_prompt"),
@@ -375,9 +408,9 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
     def _build_conv_list_row(self) -> QHBoxLayout:
         """构建会话列表子块：列表（conversation_id 存 UserRole）+ 操作按钮列"""
         row = QHBoxLayout()
-        row.setSpacing(8)
+        row.setSpacing(ROW_SPACING)
         self.conv_list = ListWidget()
-        self.conv_list.setMaximumHeight(100)
+        self.conv_list.setMaximumHeight(CONV_LIST_MAX_HEIGHT)
         row.addWidget(self.conv_list, stretch=1)
         row.addLayout(self._build_conv_buttons_column())
         return row
@@ -385,7 +418,7 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
     def _build_conv_buttons_column(self) -> QVBoxLayout:
         """构建会话操作按钮列：刷新 / 查看详情 / 删除"""
         column = QVBoxLayout()
-        column.setSpacing(6)
+        column.setSpacing(FORM_SPACING)
         self.conv_refresh_btn = self._make_button("btn.refresh_conv",
                                                   self._on_refresh_conversations)
         column.addWidget(self.conv_refresh_btn)
@@ -402,18 +435,18 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
     def _build_conv_send_form(self) -> QFormLayout:
         """构建会话消息发送子块：消息输入 + 发送/流式发送 + 回复区"""
         form = QFormLayout()
-        form.setSpacing(6)
+        form.setSpacing(FORM_SPACING)
         self.conv_message_input = self._make_placeholder_input("placeholder.conv_message")
         form.addRow(self._make_tab_label("label.message"), self.conv_message_input)
         form.addRow("", self._build_conv_send_buttons())
-        self.conv_result_text = self._make_result_area(100)
+        self.conv_result_text = self._make_result_area(CONV_RESULT_MAX_HEIGHT)
         form.addRow(self._make_tab_label("label.reply"), self.conv_result_text)
         return form
 
     def _build_conv_send_buttons(self) -> QHBoxLayout:
         """构建会话发送按钮行：发送 / 流式发送 / 流式发送（带图，images 多模态演示）"""
         send_row = QHBoxLayout()
-        send_row.setSpacing(8)
+        send_row.setSpacing(ROW_SPACING)
         self.conv_send_btn = self._make_button("btn.send_msg", self._on_send_conversation,
                                                variant="primary")
         send_row.addWidget(self.conv_send_btn)
@@ -429,7 +462,7 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
         """构建「工具调用」分组（注册/注销/查看工具 + 工具对话/工具流式对话）"""
         group = self._make_group("group.tool")
         form = QFormLayout()
-        form.setSpacing(6)
+        form.setSpacing(FORM_SPACING)
         for row in self._build_tool_buttons_rows():
             form.addRow("", row)
         self.tool_message_input = LineEdit(
@@ -441,7 +474,7 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
         self.tool_stream_btn = self._make_button(
             "btn.tool_chat_stream", self._on_tool_chat_stream, variant="primary")
         form.addRow("", self.tool_stream_btn)
-        self.tool_result_text = self._make_result_area(80)
+        self.tool_result_text = self._make_result_area(CHAT_RESULT_MAX_HEIGHT)
         form.addRow(self._make_label("common", "label.result"), self.tool_result_text)
         group.setLayout(form)
         return group
@@ -449,7 +482,7 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
     def _build_tool_buttons_rows(self) -> list:
         """构建工具注册表操作按钮行（拆为两行，适配收窄后的面板宽度）"""
         manage_row = QHBoxLayout()
-        manage_row.setSpacing(8)
+        manage_row.setSpacing(ROW_SPACING)
         self.tool_register_btn = self._make_button("btn.register_tools",
                                                    self._on_register_tools)
         manage_row.addWidget(self.tool_register_btn)
@@ -466,7 +499,7 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
     def _build_llm_embed_group(self) -> QGroupBox:
         group = self._make_group("group.embed")
         row = QHBoxLayout()
-        row.setSpacing(8)
+        row.setSpacing(ROW_SPACING)
         self.embed_text_input = LineEdit(text=self._tr("tab_llm", "default.embed_text"))
         row.addWidget(self.embed_text_input)
         self.embed_btn = self._make_button("btn.embed", self._on_send_embed,
@@ -525,11 +558,13 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
                         capabilities="/".join(str(c) for c in capabilities))
 
     def _on_send_chat(self):
-        """发起聊天（后台任务执行，完成/失败经 notifier 事件上抛）"""
+        """发起聊天（后台任务执行，完成/失败经 notifier 事件上抛；进行中禁用按钮防重入）"""
         message = self.chat_message_input.text()
+        self._begin_llm_request(self.chat_btn)
         result = self.llm_service.send_chat(message)
         self._log(self._tr("tab_llm", "log.chat", result=result))
         if not result.get("success"):
+            self._end_llm_request(self.chat_btn)
             self._show_chat_error(result.get("error", ""))
 
     def _show_chat_success(self, result: dict):
@@ -544,9 +579,11 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
     def _on_send_chat_stream(self):
         message = self.chat_message_input.text()
         self.chat_result_text.clear()
+        self._begin_llm_request(self.chat_stream_btn)
         result = self.llm_service.send_chat_stream(message)
         self._log(self._tr("tab_llm", "log.stream", result=result))
         if not result.get("success"):
+            self._end_llm_request(self.chat_stream_btn)
             self._display_result(self._tr("tab_llm", "title.stream_start_fail"),
                                  result.get("error", ""), is_error=True)
 
@@ -570,14 +607,14 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
         if conversation_id is None:
             return
         self.conv_result_text.clear()
-        self._request_conversation_send(conversation_id, stream=False)
+        self._request_conversation_send(conversation_id, self.conv_send_btn, stream=False)
 
     def _on_stream_conversation(self):
         conversation_id = self._selected_conversation_id()
         if conversation_id is None:
             return
         self.conv_result_text.clear()
-        self._request_conversation_send(conversation_id, stream=True)
+        self._request_conversation_send(conversation_id, self.conv_stream_btn, stream=True)
 
     def _on_stream_conversation_with_image(self):
         """流式发送并附带演示图片（stream_send_message 的 images 多模态参数演示）"""
@@ -585,7 +622,8 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
         if conversation_id is None:
             return
         self.conv_result_text.clear()
-        self._request_conversation_send(conversation_id, stream=True, with_image=True)
+        self._request_conversation_send(conversation_id, self.conv_stream_img_btn,
+                                        stream=True, with_image=True)
 
     def _on_show_conversation_detail(self):
         conversation_id = self._selected_conversation_id()
@@ -602,10 +640,15 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
         self._show_conv_op_result("op.delete_conv", result)
         self._on_refresh_conversations()
 
-    def _request_conversation_send(self, conversation_id: str, stream: bool,
-                                   with_image: bool = False):
-        """按模式调用服务发起会话消息（均为后台任务，结果经 notifier 上抛）"""
+    def _request_conversation_send(self, conversation_id: str, button: Button,
+                                   stream: bool, with_image: bool = False):
+        """按模式调用服务发起会话消息（均为后台任务，结果经 notifier 上抛）
+
+        参数:
+            button: 触发按钮，请求进行中禁用防重入，结果/错误事件到达后恢复
+        """
         content = self.conv_message_input.text()
+        self._begin_llm_request(button)
         if stream:
             result = self.llm_service.stream_conversation_message(
                 conversation_id, content, with_image=with_image)
@@ -613,6 +656,7 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
             result = self.llm_service.send_conversation_message(conversation_id, content)
         self._log(self._tr("tab_llm", "log.conv_send", result=result))
         if not result.get("success"):
+            self._end_llm_request(button)
             self._show_conversation_error("title.conv_start_fail",
                                           result.get("error", ""))
 
@@ -703,9 +747,11 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
 
     def _on_tool_chat(self):
         message = self.tool_message_input.text()
+        self._begin_llm_request(self.tool_chat_btn)
         result = self.llm_service.chat_with_tools_demo(message)
         self._log(self._tr("tab_llm", "log.tool_chat", result=result))
         if not result.get("success"):
+            self._end_llm_request(self.tool_chat_btn)
             self._display_result(self._tr("tab_llm", "title.tool_chat_start_fail"),
                                  result.get("error", ""), is_error=True)
 
@@ -713,9 +759,11 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
         """发起工具流式对话（后台任务，StreamChunk 片段经 notifier 上抛）"""
         message = self.tool_message_input.text()
         self.tool_result_text.clear()
+        self._begin_llm_request(self.tool_stream_btn)
         result = self.llm_service.chat_with_tools_stream_demo(message)
         self._log(self._tr("tab_llm", "log.tool_stream", result=result))
         if not result.get("success"):
+            self._end_llm_request(self.tool_stream_btn)
             self._display_result(self._tr("tab_llm", "title.tool_stream_start_fail"),
                                  result.get("error", ""), is_error=True)
 
@@ -729,10 +777,12 @@ class LLMTab(LLMMediaStatsGroupsMixin, BaseTab):
                              result.get("error", ""), is_error=True)
 
     def _on_send_embed(self):
-        """发起嵌入（后台任务执行，完成/失败经 notifier 事件上抛）"""
+        """发起嵌入（后台任务执行，完成/失败经 notifier 事件上抛；进行中禁用按钮防重入）"""
         text = self.embed_text_input.text()
+        self._begin_llm_request(self.embed_btn)
         result = self.llm_service.send_embedding(text)
         self._log(self._tr("tab_llm", "log.embed", result=result))
         if not result.get("success"):
+            self._end_llm_request(self.embed_btn)
             self._display_result(self._tr("tab_llm", "title.embed_fail"),
                                  result.get("error", ""), is_error=True)

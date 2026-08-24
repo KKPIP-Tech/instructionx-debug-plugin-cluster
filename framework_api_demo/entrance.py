@@ -93,6 +93,11 @@ class FrameworkAPIDemoPlugin(IPlugin):
             dp.register_plugin(plugin_id, "FrameworkAPIDemo")
         except DataProviderError as e:
             err = str(e)
+            # 耦合风险说明：DataProvider 未提供「插件已注册」的独立查询方法或
+            # 专用异常类型，这里只能按错误文案匹配（中英文双写兜底）。若框架未来
+            # 调整 register_plugin 的报错文案，此判定会失效并退化为记日志后跳过
+            # set_active_instance——语义上重复注册本就该忽略，仍然安全，但框架
+            # 改动注册报错文案时需同步检查此处。
             if "已存在" not in err and "exists" not in err.lower():
                 self._log(f"注册插件失败: {err}")
                 return
@@ -115,7 +120,8 @@ class FrameworkAPIDemoPlugin(IPlugin):
     def _iter_cleanup_services(self):
         """返回需要执行卸载清理的服务实例（跳过未初始化的）"""
         return [
-            s for s in (self.data_service, self.task_service, self.llm_service)
+            s for s in (self.data_service, self.task_service, self.llm_service,
+                        self.mcp_service)
             if s is not None
         ]
 

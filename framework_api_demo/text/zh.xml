@@ -296,6 +296,7 @@ Provider: {provider}</text>
     <text key="title.apis_fail">获取 API 失败</text>
     <text key="title.tools">Function Tools</text>
     <text key="title.tools_fail">获取 Function Tools 失败</text>
+    <text key="title.tools_json">Function Tools 原始 JSON</text>
     <text key="empty.tools">暂无工具</text>
     <text key="title.input_error">输入错误</text>
     <text key="title.call_ok">跨插件调用成功</text>

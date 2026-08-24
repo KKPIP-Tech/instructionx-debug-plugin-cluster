@@ -19,6 +19,7 @@ from ...function.services.llm_service import (
     TTS_DONE_EVENT,
     TTS_ERROR_PREFIX,
 )
+from ..metrics import FORM_SPACING
 
 
 class LLMMediaStatsGroupsMixin:
@@ -33,7 +34,7 @@ class LLMMediaStatsGroupsMixin:
         """构建「多模态」分组（图片生成 + 文本转语音）"""
         group = self._make_group("group.multimodal")
         form = QFormLayout()
-        form.setSpacing(6)
+        form.setSpacing(FORM_SPACING)
         self.image_prompt_input = self._make_default_input("default.image_prompt")
         form.addRow(self._make_label("tab_llm", "label.prompt"), self.image_prompt_input)
         self.image_gen_btn = self._make_button(
@@ -51,7 +52,7 @@ class LLMMediaStatsGroupsMixin:
         """构建「统计与校验」分组（用量统计 + Provider 校验）"""
         group = self._make_group("group.stats")
         form = QFormLayout()
-        form.setSpacing(6)
+        form.setSpacing(FORM_SPACING)
         self.usage_conv_id_input = self._make_placeholder_input("placeholder.usage_conv_id")
         form.addRow(self._make_label("tab_llm", "label.conv_id"), self.usage_conv_id_input)
         self.usage_stats_btn = self._make_button(
@@ -81,18 +82,22 @@ class LLMMediaStatsGroupsMixin:
     # ------------------------------------------------------------------
 
     def _on_generate_image(self):
-        """发起图片生成（后台任务，结果经 notifier 事件上抛）"""
+        """发起图片生成（后台任务，结果经 notifier 事件上抛；进行中禁用按钮防重入）"""
+        self._begin_llm_request(self.image_gen_btn)
         result = self.llm_service.generate_image_demo(self.image_prompt_input.text())
         self._log(self._tr("tab_llm", "log.image_start", result=result))
         if not result.get("success"):
+            self._end_llm_request(self.image_gen_btn)
             self._display_result(self._tr("tab_llm", "title.image_start_fail"),
                                  result.get("error", ""), is_error=True)
 
     def _on_text_to_speech(self):
-        """发起语音合成（后台任务，结果经 notifier 事件上抛）"""
+        """发起语音合成（后台任务，结果经 notifier 事件上抛；进行中禁用按钮防重入）"""
+        self._begin_llm_request(self.tts_btn)
         result = self.llm_service.text_to_speech_demo(self.tts_text_input.text())
         self._log(self._tr("tab_llm", "log.tts_start", result=result))
         if not result.get("success"):
+            self._end_llm_request(self.tts_btn)
             self._display_result(self._tr("tab_llm", "title.tts_start_fail"),
                                  result.get("error", ""), is_error=True)
 
@@ -141,17 +146,21 @@ class LLMMediaStatsGroupsMixin:
     def _dispatch_multimodal_event(self, message: str) -> bool:
         """UI 线程分发多模态事件；命中多模态协议返回 True，否则返回 False"""
         if message == IMAGE_DONE_EVENT:
+            self._end_llm_request(self.image_gen_btn)
             self._show_media_result(self._tr("tab_llm", "title.image_result"),
                                     self.llm_service.get_last_image_result())
             return True
         if message.startswith(IMAGE_ERROR_PREFIX):
+            self._end_llm_request(self.image_gen_btn)
             self._show_media_error("title.image_fail", message, IMAGE_ERROR_PREFIX)
             return True
         if message == TTS_DONE_EVENT:
+            self._end_llm_request(self.tts_btn)
             self._show_media_result(self._tr("tab_llm", "title.tts_result"),
                                     self.llm_service.get_last_audio_result())
             return True
         if message.startswith(TTS_ERROR_PREFIX):
+            self._end_llm_request(self.tts_btn)
             self._show_media_error("title.tts_fail", message, TTS_ERROR_PREFIX)
             return True
         return False

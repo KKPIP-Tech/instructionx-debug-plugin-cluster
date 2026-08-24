@@ -11,11 +11,12 @@ from typing import Callable, Optional
 
 from PySide6.QtWidgets import QFormLayout, QGroupBox, QHBoxLayout, QVBoxLayout, QScrollArea
 
-from InstructionX_UIKit.components import Button, LineEdit, Message
+from InstructionX_UIKit.components import Button, LineEdit
 
 from core.interfaces import ILocalizationFacade
 from utils.thread_utils import run_in_ui_thread
 
+from ..metrics import FORM_SPACING, ROW_SPACING
 from .base_tab import BaseTab
 
 
@@ -73,7 +74,7 @@ class DataTab(BaseTab):
     def _build_data_register_controls(self) -> QGroupBox:
         group = self._make_group("group.register")
         row = QHBoxLayout()
-        row.setSpacing(8)
+        row.setSpacing(ROW_SPACING)
         self.register_plugin_btn = self._make_button(
             "btn.register", self._on_register_plugin, variant="primary")
         row.addWidget(self.register_plugin_btn)
@@ -87,7 +88,7 @@ class DataTab(BaseTab):
     def _build_data_private_group(self) -> QGroupBox:
         group = self._make_group("group.private")
         form = QFormLayout()
-        form.setSpacing(6)
+        form.setSpacing(FORM_SPACING)
         self.private_key_input = LineEdit(text="test_key", placeholder="key")
         form.addRow(self._make_label("common", "label.key"), self.private_key_input)
         self.private_value_input = LineEdit(text="test_value", placeholder="value")
@@ -100,7 +101,7 @@ class DataTab(BaseTab):
     def _build_data_public_group(self) -> QGroupBox:
         group = self._make_group("group.public")
         form = QFormLayout()
-        form.setSpacing(6)
+        form.setSpacing(FORM_SPACING)
         self.public_key_input = LineEdit(text="shared_key", placeholder="key")
         form.addRow(self._make_label("common", "label.key"), self.public_key_input)
         self.public_value_input = LineEdit(text="shared_value", placeholder="value")
@@ -129,7 +130,7 @@ class DataTab(BaseTab):
     def _build_data_assets_section(self) -> QGroupBox:
         group = self._make_group("group.assets")
         row = QHBoxLayout()
-        row.setSpacing(8)
+        row.setSpacing(ROW_SPACING)
         self.save_asset_btn = self._make_button(
             "btn.save_asset", self._on_save_asset, variant="primary")
         row.addWidget(self.save_asset_btn)
@@ -143,7 +144,7 @@ class DataTab(BaseTab):
         """构建发布订阅演示分组（按钮拆为两行，适配收窄后的面板宽度）"""
         group = self._make_group("group.pubsub")
         form = QFormLayout()
-        form.setSpacing(6)
+        form.setSpacing(FORM_SPACING)
         self.pubsub_key_input = LineEdit(text="demo_event", placeholder="key")
         form.addRow(self._make_label("common", "label.key"), self.pubsub_key_input)
         self.pubsub_value_input = LineEdit(text="hello", placeholder="value")
@@ -192,13 +193,11 @@ class DataTab(BaseTab):
         result = self.data_service.register_demo_plugin()
         self._log(self._tr("tab_data", "log.register", result=result))
         self._show_result("title.register", result)
-        Message.info(self._message_parent, str(result))
 
     def _on_unregister_plugin(self):
         result = self.data_service.unregister_demo_plugin()
         self._log(self._tr("tab_data", "log.unregister", result=result))
         self._show_result("title.unregister", result)
-        Message.info(self._message_parent, str(result))
 
     def _on_write_private(self):
         key = self.private_key_input.text()

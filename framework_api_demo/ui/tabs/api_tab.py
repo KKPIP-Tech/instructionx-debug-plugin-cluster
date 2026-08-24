@@ -15,6 +15,9 @@ from InstructionX_UIKit.components import Button, LineEdit, ListWidget, Message,
 
 from core.interfaces import ILocalizationFacade
 
+from ..metrics import (
+    CALL_RESULT_MAX_HEIGHT, FORM_SPACING, GROUP_SPACING, LIST_BOX_MAX_HEIGHT,
+)
 from .base_tab import BaseTab
 
 # 结果面板展示 JSON 的缩进宽度
@@ -22,9 +25,6 @@ _JSON_INDENT = 2
 
 # Function Tools 列表项描述的最大展示长度
 _TOOL_DESC_DISPLAY_LEN = 50
-
-# 结果面板原始 JSON 弹窗的最大展示长度
-_TOOL_JSON_DISPLAY_LEN = 2000
 
 
 class APITab(BaseTab):
@@ -73,12 +73,12 @@ class APITab(BaseTab):
     def _build_api_plugin_group(self) -> QGroupBox:
         group = self._make_group("group.plugins")
         layout = QVBoxLayout()
-        layout.setSpacing(8)
+        layout.setSpacing(GROUP_SPACING)
         self.get_all_plugins_btn = self._make_button(
             "btn.get_plugins", self._on_get_all_plugins, variant="primary")
         layout.addWidget(self.get_all_plugins_btn)
         self.plugins_list = ListWidget()
-        self.plugins_list.setMaximumHeight(80)
+        self.plugins_list.setMaximumHeight(LIST_BOX_MAX_HEIGHT)
         layout.addWidget(self.plugins_list)
         group.setLayout(layout)
         return group
@@ -86,12 +86,12 @@ class APITab(BaseTab):
     def _build_api_query_group(self) -> QGroupBox:
         group = self._make_group("group.apis")
         layout = QVBoxLayout()
-        layout.setSpacing(8)
+        layout.setSpacing(GROUP_SPACING)
         self.get_all_apis_btn = self._make_button(
             "btn.get_apis", self._on_get_all_apis, variant="primary")
         layout.addWidget(self.get_all_apis_btn)
         self.apis_list = ListWidget()
-        self.apis_list.setMaximumHeight(80)
+        self.apis_list.setMaximumHeight(LIST_BOX_MAX_HEIGHT)
         layout.addWidget(self.apis_list)
         group.setLayout(layout)
         return group
@@ -99,12 +99,12 @@ class APITab(BaseTab):
     def _build_api_function_group(self) -> QGroupBox:
         group = self._make_group("group.functions")
         layout = QVBoxLayout()
-        layout.setSpacing(8)
+        layout.setSpacing(GROUP_SPACING)
         self.get_function_tools_btn = self._make_button(
             "btn.get_tools", self._on_get_function_tools, variant="primary")
         layout.addWidget(self.get_function_tools_btn)
         self.function_tools_list = ListWidget()
-        self.function_tools_list.setMaximumHeight(80)
+        self.function_tools_list.setMaximumHeight(LIST_BOX_MAX_HEIGHT)
         layout.addWidget(self.function_tools_list)
         group.setLayout(layout)
         return group
@@ -112,7 +112,7 @@ class APITab(BaseTab):
     def _build_api_call_group(self) -> QGroupBox:
         group = self._make_group("group.call")
         form = QFormLayout()
-        form.setSpacing(6)
+        form.setSpacing(FORM_SPACING)
         self.call_plugin_input = LineEdit(
             placeholder=self._tr("tab_api", "placeholder.call"))
         self._bind(self.call_plugin_input, "tab_api", "placeholder.call",
@@ -123,7 +123,7 @@ class APITab(BaseTab):
         form.addRow("", self.call_method_btn)
         self.call_result_text = TextArea()
         self.call_result_text.setReadOnly(True)
-        self.call_result_text.setMaximumHeight(60)
+        self.call_result_text.setMaximumHeight(CALL_RESULT_MAX_HEIGHT)
         form.addRow(self._make_label("common", "label.result"), self.call_result_text)
         group.setLayout(form)
         return group
@@ -165,8 +165,8 @@ class APITab(BaseTab):
         self._log(self._tr("tab_api", "log.tools", result=result))
         self.function_tools_list.clear()
         self._populate_function_tools_list(result.get("tools", []))
-        self._show_function_tools_json(result.get("tools", []))
         if result.get("success"):
+            self._show_function_tools_json(result.get("tools", []))
             names = [f"• {tool.get('function', {}).get('name', 'unknown')}"
                      for tool in result.get("tools", [])]
             content = "\n".join(names) if names else self._tr("tab_api", "empty.tools")
@@ -185,9 +185,9 @@ class APITab(BaseTab):
                 "tab_api", "msg.tool_line", name=name, desc=desc))
 
     def _show_function_tools_json(self, tools: list):
-        """显示 Function Tools JSON 信息"""
+        """把 Function Tools 原始 JSON 写入结果面板（替代原先截断 2000 字符的弹窗）"""
         raw_json = json.dumps(tools, indent=_JSON_INDENT, ensure_ascii=False)
-        Message.info(self._message_parent, raw_json[:_TOOL_JSON_DISPLAY_LEN])
+        self._display_result(self._tr("tab_api", "title.tools_json"), raw_json)
 
     def _on_call_plugin_method(self):
         input_text = self.call_plugin_input.text()

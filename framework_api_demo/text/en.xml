@@ -295,6 +295,7 @@ Provider: {provider}</text>
     <text key="title.apis_fail">Failed to Get APIs</text>
     <text key="title.tools">Function Tools</text>
     <text key="title.tools_fail">Failed to Get Function Tools</text>
+    <text key="title.tools_json">Function Tools Raw JSON</text>
     <text key="empty.tools">No tools</text>
     <text key="title.input_error">Input Error</text>
     <text key="title.call_ok">Cross-Plugin Call Succeeded</text>
