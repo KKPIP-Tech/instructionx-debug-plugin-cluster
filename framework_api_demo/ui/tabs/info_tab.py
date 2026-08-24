@@ -9,9 +9,11 @@ UIKit 主题跟随，并展示可用接口文档文本。
 """
 
 import json
+import weakref
 from typing import Any, Callable, Dict, Optional
 
-from PySide6.QtWidgets import QFormLayout, QGroupBox, QLabel, QVBoxLayout, QScrollArea
+from PySide6.QtCore import QObject
+from PySide6.QtWidgets import QFormLayout, QGroupBox, QLabel, QVBoxLayout, QScrollArea, QWidget
 
 from InstructionX_UIKit import ThemeManager
 from InstructionX_UIKit.components import Button, LineEdit, TextArea
@@ -25,6 +27,28 @@ _JSON_INDENT = 2
 
 # 分组内布局默认间距（像素）
 _GROUP_SPACING = 8
+
+
+class _ThemeConnectionGuard(QObject):
+    """主题信号连接守卫（QObject 接收者）
+
+    ThemeManager 是长生命周期单例，而 BaseTab 不是 QObject，把
+    theme_changed 直接 connect 到 Tab 绑定方法时，Qt 无法在 Tab 控件
+    销毁后自动断开；热重载会销毁旧控件树但保留单例，残留连接将触碰
+    已销毁控件。守卫作为滚动容器的 QObject 子对象充当接收者：控件
+    销毁时 Qt 自动断开其全部接收方连接；转发经弱引用访问 Tab 回调，
+    Tab 已被回收时跳过（热重载预期路径）。
+    """
+
+    def __init__(self, parent: QWidget, slot: Callable[[str], None]):
+        super().__init__(parent)
+        self._slot_ref = weakref.WeakMethod(slot)
+
+    def forward(self, mode: str) -> None:
+        """转发主题变化给 Tab 回调；Tab 已回收时跳过"""
+        slot = self._slot_ref()
+        if slot is not None:
+            slot(mode)
 
 
 class InfoTab(BaseTab):
@@ -64,6 +88,10 @@ class InfoTab(BaseTab):
         layout.addWidget(self._build_theme_group())
         layout.addWidget(self._build_info_doc_group())
         layout.addStretch()
+        # 主题信号经 QObject 守卫连接（守卫作为滚动容器子对象，控件销毁时
+        # Qt 自动断开接收方连接），避免热重载后残留连接触碰已销毁控件
+        self._theme_guard = _ThemeConnectionGuard(scroll, self._on_theme_changed)
+        ThemeManager.instance().theme_changed.connect(self._theme_guard.forward)
         return scroll
 
     def _make_group(self, key: str) -> QGroupBox:
@@ -149,6 +177,7 @@ class InfoTab(BaseTab):
 
         UIKit 组件本身随全局 QSS 自动跟随主题，无需监听信号；
         只有插件自建样式（自定义 QSS/绘制）才需要监听 theme_changed 做适配。
+        信号连接在 create_tab 中经 _ThemeConnectionGuard 建立（自动断开）。
         """
         group = self._make_group("group.theme")
         layout = QVBoxLayout()
@@ -157,7 +186,6 @@ class InfoTab(BaseTab):
         self.theme_status_label = QLabel()
         self._update_theme_label(theme_manager.mode)
         layout.addWidget(self.theme_status_label)
-        theme_manager.theme_changed.connect(self._on_theme_changed)
         group.setLayout(layout)
         return group
 
