@@ -1,23 +1,21 @@
 # -*- coding: utf-8 -*-
-"""节点类型注册目录：NODE_DEFINITIONS 注册表与注册载荷（纯数据，无 Qt）。
+"""节点类型注册目录：NODE_DEFINITIONS 注册表与查询入口（纯数据，无 Qt）。
 
 本模块只做「定义」，不写 cv2 逻辑（op 引用自 ``ops/``），也不 import
-InstructionX_UIKit —— function 层禁止依赖 Qt / UIKit。UI 层（或
-entrance）注册节点类型时::
+InstructionX_UIKit —— function 层禁止依赖 Qt / UIKit。注册动作在
+ui 层 ``ui/node_bootstrap.ensure_node_types_registered()``（幂等 +
+同名异定义纠正，热重载安全）；执行引擎经 ``defs_by_type()`` 查表。
 
-    from InstructionX_UIKit.blueprint import NodeRegistry, register_node_type
+主路径::
 
-    for payload in registration_payloads():
-        if NodeRegistry.instance().spec(payload["type_name"]) is None:
-            register_node_type(**payload)
+    ui/node_bootstrap.py
+        → ensure_node_types_registered()  读 NODE_DEFINITIONS 注册进 UIKit
+    function/executor.py / pipeline_controller.py
+        → defs_by_type()                  查 op / param_schema
 
-以「先查后注册」保证幂等（SPEC §1.5）：热重载重复调用不产生重复
-注册或异常。payload 的键与 ``register_node_type`` 形参一一对应
-（type_name/title/category/inputs/outputs/accent/description）。
-
-注意：SPEC §1.5 曾约定本模块提供 ``register_all_node_types()``；
-因 function 层不得 import UIKit，注册动作上移到 ui/entrance 层，
-本模块以 ``registration_payloads()`` 提供纯 dict 注册数据。
+注意：SPEC §1.5 曾约定本模块提供 ``register_all_node_types()`` /
+``registration_payloads()``；因 function 层不得 import UIKit，注册动作
+上移到 ui 层后注册载荷由 node_bootstrap 直接组装，两者均已移除。
 """
 
 from dataclasses import dataclass
@@ -26,7 +24,7 @@ from typing import Any, Callable, Dict, List
 from . import ops
 from .constants import (CATEGORY_ADJUST, CATEGORY_BASIC, CATEGORY_FILTER,
                         CATEGORY_INPUT, CATEGORY_MORPHOLOGY, CATEGORY_OUTPUT,
-                        CATEGORY_THRESHOLD, CATEGORY_ACCENTS, PIN_DATA_TYPE_EXEC,
+                        CATEGORY_THRESHOLD, PIN_DATA_TYPE_EXEC,
                         PIN_DATA_TYPE_IMAGE, PIN_EXEC_IN, PIN_EXEC_OUT,
                         PIN_IMAGE_IN, PIN_IMAGE_OUT)
 from .param_schema import (choice_param, color_param, file_path_param,
@@ -347,31 +345,9 @@ NODE_DEFINITIONS: List[NodeDefinition] = [
 
 
 # ---------------------------------------------------------------------------
-# 查询与注册载荷
+# 查询入口
 # ---------------------------------------------------------------------------
 
 def defs_by_type() -> Dict[str, NodeDefinition]:
     """返回 ``type_name -> NodeDefinition`` 映射（执行引擎查表用）。"""
     return {definition.type_name: definition for definition in NODE_DEFINITIONS}
-
-
-def registration_payloads() -> List[Dict[str, Any]]:
-    """生成 ``register_node_type(**payload)`` 可直接使用的纯 dict 载荷。
-
-    引脚列表逐份拷贝，accent 按分类常量取色（SPEC §3.0）。
-    幂等的「先查后注册」由调用方（ui/entrance 层）执行。
-    """
-    return [_to_payload(definition) for definition in NODE_DEFINITIONS]
-
-
-def _to_payload(definition: NodeDefinition) -> Dict[str, Any]:
-    """把单个 NodeDefinition 转为注册载荷 dict。"""
-    return {
-        "type_name": definition.type_name,
-        "title": definition.title,
-        "category": definition.category,
-        "inputs": [dict(pin) for pin in definition.inputs],
-        "outputs": [dict(pin) for pin in definition.outputs],
-        "accent": CATEGORY_ACCENTS[definition.category],
-        "description": definition.description,
-    }
