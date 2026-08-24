@@ -287,11 +287,14 @@ class MainWidget(QWidget):
         self._retranslate_ui()
 
     def _retranslate_ui(self, *_args) -> None:
-        """语言切换后集中重翻译：分区标题、各子面板、节点类型注册。
+        """语言切换后集中重翻译：分区标题、各子面板、节点类型注册与体区。
 
         节点类型按新语言重注册（同名异定义纠正机制，新建节点与创建
-        菜单立即生效）；画布既有节点标题属实例数据（用户可重命名），
-        不回溯改写；状态栏等动态文案在下次事件生成时自然更新。
+        菜单立即生效）；``_refresh_node_bodies`` 借 node.changed 触发
+        既有节点体区标签（如「图片路径：」）按新语言重取词（体区构建
+        时捕获的 i18n 门面在调用时解析当前语言）；画布节点标题属实例
+        数据（用户可重命名），不回溯改写；状态栏等动态文案在下次事件
+        生成时自然更新。
         """
         for key, label in self._section_labels.items():
             label.setText(self._tr(_GROUP_PANEL, key))
@@ -301,6 +304,7 @@ class MainWidget(QWidget):
         self._property_panel.retranslate_ui()
         self._preview_panel.retranslate_ui()
         ensure_node_types_registered(self._i18n)
+        self._refresh_node_bodies()
 
     # ------------------------------------------------------------------ 工具条动作（委托 service）
     def _run_pipeline(self) -> None:
