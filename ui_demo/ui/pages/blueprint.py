@@ -27,6 +27,7 @@ import json
 import os
 import random
 import time
+from enum import Enum
 from pathlib import Path
 from typing import Optional
 
@@ -62,6 +63,17 @@ __all__ = ["create_page", "register_demo_node_types", "PROPERTY_SCHEMAS",
 
 #: offscreen 下降级读写当前工作目录的该文件（不弹文件对话框）
 FALLBACK_JSON = "blueprint_demo.json"
+
+
+class _RunState(Enum):
+    """运行模拟状态机：空闲 / 连续运行中（QTimer 推进）/ 单步推进中。
+
+    「单步」在 RUNNING 期间被忽略，防止与 QTimer 回调交错推进 ``_idx``
+    导致节点状态 / 耗时徽标错乱；「运行」随时可重新开始。
+    """
+    IDLE = "idle"
+    RUNNING = "running"
+    STEPPING = "stepping"
 
 # ---------------------------------------------------------------------------
 # 节点属性 schema（右侧属性面板用；第 3 元素为取词键，渲染时翻译）
@@ -481,7 +493,7 @@ class BlueprintDemoPage(QWidget):
         self._t0 = 0.0
         self._gen = 0          # 运行世代：reset 后使旧定时器回调失效
         self._step_total = 0.0
-        self._mode = "run"     # "run"（QTimer 连续）/ "step"（逐节点）
+        self._state = _RunState.IDLE  # 运行模拟状态机（工具条按钮随其联动）
 
         self.graph = BlueprintGraph()
         # 先接默认属性槽，保证 NodeWidget 构建时 properties 已就位
@@ -671,16 +683,27 @@ class BlueprintDemoPage(QWidget):
                            n_cnn.id, n_post.id, n_save.id]
 
     # ------------------------------------------------------------------ 运行模拟
+    def _set_state(self, state: _RunState) -> None:
+        """切换运行状态并联动工具条：连续运行进行中禁用「单步」。"""
+        self._state = state
+        self.step_button.setEnabled(state is not _RunState.RUNNING)
+
     def run_all(self) -> None:
         """「运行」：按 exec 链拓扑序，QTimer 逐节点模拟 200–800ms 随机耗时。"""
-        self._mode = "run"
+        self._set_state(_RunState.RUNNING)
         self._prepare_run()
         self._begin_node()
 
     def step_once(self) -> None:
-        """「单步」：每次点击推进一个节点（立即完成，耗时取随机模拟值）。"""
+        """「单步」：每次点击推进一个节点（立即完成，耗时取随机模拟值）。
+
+        连续运行进行中忽略本次点击（按钮同步置灰），防止与 QTimer 回调
+        交错推进 ``_idx`` 导致节点状态 / 耗时徽标错乱。
+        """
+        if self._state is _RunState.RUNNING:
+            return
         if not self._order or self._idx >= len(self._order):
-            self._mode = "step"
+            self._set_state(_RunState.STEPPING)
             self._prepare_run()
             self._step_total = 0.0
         ex = self.canvas.execution()
@@ -691,9 +714,12 @@ class BlueprintDemoPage(QWidget):
         self._step_total += ms
         self._idx += 1
         self._after_node(ms)
+        if self._idx >= len(self._order):
+            self._set_state(_RunState.IDLE)
 
     def reset_run(self) -> None:
         """「重置」：中断进行中的模拟，全部节点回 idle。"""
+        self._set_state(_RunState.IDLE)
         self._gen += 1
         self._timer.stop()
         self._order = []
@@ -732,10 +758,12 @@ class BlueprintDemoPage(QWidget):
         self._after_node(node.elapsed_ms if node is not None else 0.0)
         if self._idx < len(self._order):
             self._begin_node()
+        else:
+            self._set_state(_RunState.IDLE)
 
     def _after_node(self, _ms: float) -> None:
         if self._idx >= len(self._order) and self._order:
-            if self._mode == "step":
+            if self._state is _RunState.STEPPING:
                 total = self._step_total  # 单步：累计模拟耗时
             else:
                 total = (time.perf_counter() - self._t0) * 1000.0
