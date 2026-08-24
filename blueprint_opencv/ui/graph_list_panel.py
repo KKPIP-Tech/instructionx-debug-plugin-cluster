@@ -128,17 +128,24 @@ class GraphListPanel(QWidget):
 
     信号:
         load_requested(str): 请求加载指定存档（双击或「加载」按钮）；
-        save_as_requested(): 请求把当前画布另存为命名存档。
+        save_as_requested(): 请求把当前画布另存为命名存档；
+        graph_renamed(str, str): 存档重命名成功（旧名, 新名）；
+        graph_deleted(str): 存档删除成功（存档名）。
+        后两个信号供 MainWidget 同步 ``_current_graph_name``（重命名 /
+        删除当前已加载存档后，避免后续「保存」以旧名重建存档）。
 
     公开方法:
         ``refresh()``：重新枚举存档并重建列表（保留同名选中态）；
         ``retranslate_ui()``：语言切换后重设静态文案并重建列表行；
         ``current_graph_name()``：选中行的存档名（无选中为 None）；
+        ``existing_names()``：当前列表中的存档名集合；
         ``row_count()``：当前行数（测试断言用）。
     """
 
     load_requested = Signal(str)
     save_as_requested = Signal()
+    graph_renamed = Signal(str, str)
+    graph_deleted = Signal(str)
 
     def __init__(self, service, parent: QWidget = None,
                  i18n: Optional[ILocalizationFacade] = None) -> None:
@@ -277,28 +284,36 @@ class GraphListPanel(QWidget):
 
     # ------------------------------------------------------------------ 内部
     def _prompt_rename(self, name: str) -> None:
-        """重命名流程：输入新名 → service.rename_graph → 刷新 / 报错。"""
+        """重命名流程：输入新名（取消 / 空名 / 未改名直接返回）。"""
         new_name = dialogs.prompt_text(
             self, self._tr("dialog.rename_title"),
             self._tr("dialog.rename_label"), initial=name)
-        if new_name is None or new_name == name:
-            return
+        if new_name is not None and new_name != name:
+            self._rename(name, new_name)
+
+    def _rename(self, name: str, new_name: str) -> None:
+        """委托 service 重命名存档；成功刷新并广播 graph_renamed。"""
         result = self._service.rename_graph(name, new_name)
         if not result.get("success"):
             self._report_error(self._tr("fail.rename"), result.get("error"))
             return
         self.refresh()
+        self.graph_renamed.emit(name, new_name)
 
     def _confirm_delete(self, name: str) -> None:
-        """删除流程：确认 → service.delete_graph → 刷新 / 报错。"""
-        if not dialogs.confirm(self, self._tr("dialog.delete_title"),
-                               self._tr("dialog.delete_text", name=name)):
-            return
+        """删除流程：确认对话框（取消直接返回）。"""
+        if dialogs.confirm(self, self._tr("dialog.delete_title"),
+                           self._tr("dialog.delete_text", name=name)):
+            self._delete(name)
+
+    def _delete(self, name: str) -> None:
+        """委托 service 删除存档；成功刷新并广播 graph_deleted。"""
         result = self._service.delete_graph(name)
         if not result.get("success"):
             self._report_error(self._tr("fail.delete"), result.get("error"))
             return
         self.refresh()
+        self.graph_deleted.emit(name)
 
     def _report_error(self, title: str, message: Any) -> None:
         """操作失败：中文弹窗告知 + ERROR 日志（两者都要）。"""

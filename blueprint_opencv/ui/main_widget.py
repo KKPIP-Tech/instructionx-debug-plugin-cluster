@@ -263,6 +263,8 @@ class MainWidget(QWidget):
         self._toolbar.fit_requested.connect(self.canvas.fit_view)
         self.graph_list_panel.save_as_requested.connect(self._save_graph_as)
         self.graph_list_panel.load_requested.connect(self._load_graph_by_name)
+        self.graph_list_panel.graph_renamed.connect(self._on_graph_renamed)
+        self.graph_list_panel.graph_deleted.connect(self._on_graph_deleted)
         self.canvas.selection_changed.connect(self._on_selection_changed)
         self._service.preview_ready.connect(self._on_preview_ready)
         self._service.node_status_changed.connect(self._on_node_status)
@@ -445,6 +447,16 @@ class MainWidget(QWidget):
         """选中变化 → 参数面板：单选绑定节点，否则回提示态。"""
         node = self.graph.node(node_ids[0]) if len(node_ids) == 1 else None
         self._property_panel.bind_node(node)
+
+    def _on_graph_renamed(self, old_name: str, new_name: str) -> None:
+        """当前已加载存档被重命名：跟随新名（避免「保存」以旧名重建）。"""
+        if self._current_graph_name == old_name:
+            self._current_graph_name = new_name
+
+    def _on_graph_deleted(self, name: str) -> None:
+        """当前已加载存档被删除：置空存档名（「保存」退化为另存为）。"""
+        if self._current_graph_name == name:
+            self._current_graph_name = None
 
     # ------------------------------------------------------------------ 内部
     def _push_graph_snapshot(self) -> None:
