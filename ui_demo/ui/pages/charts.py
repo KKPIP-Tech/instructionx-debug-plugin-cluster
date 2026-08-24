@@ -101,11 +101,18 @@ class ChartDemoCard(QFrame):
         # 卡片水平随网格伸缩（同排等宽、整排撑满）
         self.setSizePolicy(QSizePolicy.Policy.Expanding,
                            QSizePolicy.Policy.Preferred)
-
         lay = QVBoxLayout(self)
         lay.setContentsMargins(10, 8, 10, 10)
         lay.setSpacing(6)
+        self._build_head(lay, hint)
+        self._build_chart(lay, size)
+        self._build_form(lay, specs)
+        self.form.changed.connect(lambda *_: self.apply())
+        if auto_apply:
+            self.apply()
 
+    def _build_head(self, lay, hint) -> None:
+        """构建标题行与（可选）提示行。"""
         head = QLabel(self.title_text)
         font = QFont()
         font.setWeight(QFont.Weight(T("font.weight.semibold")))
@@ -114,6 +121,8 @@ class ChartDemoCard(QFrame):
         if hint:
             lay.addWidget(hint_label(hint, role="tertiary"))
 
+    def _build_chart(self, lay, size) -> None:
+        """构建 ChartWidget（宽度随卡片伸缩，高度固定）。"""
         self.chart = ChartWidget(self)
         # size 为最小尺寸：宽度随卡片伸缩（resize 自动重排），高度固定
         self.chart.setMinimumWidth(int(size[0]))
@@ -122,15 +131,13 @@ class ChartDemoCard(QFrame):
                                  QSizePolicy.Policy.Fixed)
         lay.addWidget(self.chart)
 
+    def _build_form(self, lay, specs) -> None:
+        """构建参数表单（add_specs 初始化 opts 并登记控件）。"""
         self.form = ParamForm(self)
         add_specs(self.form, self.opts, specs)
         lay.addWidget(self.form)
         self.controls = self.form.controls
         lay.addStretch(1)  # 行高不一致时内容顶对齐
-
-        self.form.changed.connect(lambda *_: self.apply())
-        if auto_apply:
-            self.apply()
 
     def apply(self):
         """按当前参数重建 option 并 set_option（播放入场动画）。"""
@@ -198,9 +205,8 @@ class ResponsiveCardGrid(QWidget):
 # 直角坐标系列构建函数
 # ---------------------------------------------------------------------------
 
-def _build_bar(o, tr):
-    cat = {"type": "category", "data": _months(tr)[:6]}
-    val = {"type": "value", "name": tr("data.unit.piece")}
+def _bar_series(o, tr) -> list:
+    """柱图两系列（线下 / 线上），应用柱宽 / 圆角 / 堆叠参数。"""
     s1 = {"type": "bar", "name": tr("data.series.offline"),
           "data": [120, 132, 101, 134, 156, 230]}
     s2 = {"type": "bar", "name": tr("data.series.online"),
@@ -210,6 +216,12 @@ def _build_bar(o, tr):
         s["barBorderRadius"] = o["radius"]
         if o["stack"]:
             s["stack"] = tr("data.series.total")
+    return [s1, s2]
+
+
+def _build_bar(o, tr):
+    cat = {"type": "category", "data": _months(tr)[:6]}
+    val = {"type": "value", "name": tr("data.unit.piece")}
     if o["horizontal"]:
         x_axis, y_axis = val, cat
     else:
@@ -219,7 +231,7 @@ def _build_bar(o, tr):
         "legend": {"show": True},
         "grid": {"left": 48, "right": 16, "top": 30, "bottom": 46},
         "xAxis": x_axis, "yAxis": y_axis,
-        "series": [s1, s2],
+        "series": _bar_series(o, tr),
     }
 
 
@@ -238,7 +250,8 @@ def _build_pictorial(o, tr):
     }
 
 
-def _build_line(o, tr):
+def _line_series(o, tr) -> list:
+    """折线两城系列，应用平滑 / 阶梯 / 面积 / 符号参数。"""
     beijing = [2, 5, 11, 19, 25, 29, 31, 30, 26, 19, 10, 4]
     shanghai = [5, 8, 12, 18, 23, 27, 31, 31, 27, 22, 15, 8]
     series = []
@@ -254,13 +267,17 @@ def _build_line(o, tr):
         if o["area"]:
             s["areaStyle"] = {"opacity": 0.18}
         series.append(s)
+    return series
+
+
+def _build_line(o, tr):
     return {
         "tooltip": {"trigger": "axis"},
         "legend": {"show": True},
         "grid": {"left": 44, "right": 16, "top": 30, "bottom": 46},
         "xAxis": {"type": "category", "data": _months(tr)},
         "yAxis": {"type": "value", "name": "℃"},
-        "series": series,
+        "series": _line_series(o, tr),
     }
 
 
@@ -303,10 +320,11 @@ def _build_effect_scatter(o, tr):
     }
 
 
-def _build_candlestick(o, tr):
+def _candlestick_data(n) -> list:
+    """生成 n 根确定性 K 线数据（[开, 收, 低, 高]）。"""
     rnd = random.Random(955)
     price, data = 12.0, []
-    for _ in range(o["n"]):
+    for _ in range(n):
         open_ = price
         close = max(2.0, open_ + rnd.uniform(-1.6, 1.6))
         high = max(open_, close) + rnd.uniform(0.1, 1.0)
@@ -314,8 +332,12 @@ def _build_candlestick(o, tr):
         data.append([round(open_, 2), round(close, 2),
                      round(low, 2), round(high, 2)])
         price = close
+    return data
+
+
+def _build_candlestick(o, tr):
     series = {"type": "candlestick", "name": tr("data.series.stock"),
-              "data": data}
+              "data": _candlestick_data(o["n"])}
     if o["width"] > 0:
         series["barWidth"] = o["width"]
     return {
@@ -354,8 +376,8 @@ _HEAT_RAMP = {
 }
 
 
-def _build_heatmap_grid(o, tr):
-    hours = [tr("data.hour", h=h) for h in range(8, 20, 2)]
+def _heatmap_data(hours, tr) -> list:
+    """生成 小时×星期 热力数据（工作日基线高，午间两小时峰值）。"""
     rnd = random.Random(77)
     data = []
     for xi in range(len(hours)):
@@ -363,13 +385,18 @@ def _build_heatmap_grid(o, tr):
             base = 30 if yi < 5 else 8
             peak = 70 if xi in (2, 3) else 0
             data.append([xi, yi, rnd.randint(0, 20) + base + peak])
+    return data
+
+
+def _build_heatmap_grid(o, tr):
+    hours = [tr("data.hour", h=h) for h in range(8, 20, 2)]
     opt = {
         "tooltip": {"trigger": "item"},
         "grid": {"left": 52, "right": 16, "top": 30, "bottom": 30},
         "xAxis": {"type": "category", "data": hours},
         "yAxis": {"type": "category", "data": _weekdays(tr)},
         "series": [{"type": "heatmap", "name": tr("data.series.traffic"),
-                    "data": data}],
+                    "data": _heatmap_data(hours, tr)}],
     }
     if o["visualMap"]:
         opt["visualMap"] = {"min": 0, "max": 120,
@@ -709,8 +736,8 @@ def _build_lines(o, tr):
 # 坐标系与地图构建函数
 # ---------------------------------------------------------------------------
 
-def _build_grid_mix(o, tr):
-    months = _months(tr)[:8]
+def _grid_mix_series(o, tr) -> list:
+    """柱 + 线 混合系列，按参数追加面积 / 散点。"""
     series = [
         {"type": "bar", "name": tr("data.series.sales"),
          "data": [120, 200, 150, 260, 220, 300, 280, 340],
@@ -725,13 +752,17 @@ def _build_grid_mix(o, tr):
         series.append({"type": "scatter", "name": tr("data.series.promo"),
                        "symbolSize": 14,
                        "data": [[1, 200], [3, 260], [5, 300], [7, 340]]})
+    return series
+
+
+def _build_grid_mix(o, tr):
     return {
         "tooltip": {"trigger": "axis"},
         "legend": {"show": True},
         "grid": {"left": 48, "right": 16, "top": 30, "bottom": 46},
-        "xAxis": {"type": "category", "data": months},
+        "xAxis": {"type": "category", "data": _months(tr)[:8]},
         "yAxis": {"type": "value", "name": tr("data.unit.amount")},
-        "series": series,
+        "series": _grid_mix_series(o, tr),
     }
 
 
@@ -842,9 +873,9 @@ def _comp_series(o, year, tr):
     return [bar, line]
 
 
-def _build_comprehensive(o, tr):
-    """组件综合：bar+line + mark* + visualMap + dataZoom + brush + toolbox + timeline。"""
-    opt = {
+def _comp_base_option(o, tr) -> dict:
+    """综合演示基础 option（标题 / 坐标轴 / 交互组件 / timeline 帧）。"""
+    return {
         "title": {"text": tr("comp.chart_title"),
                   "subtext": tr("comp.chart_sub")},
         "tooltip": {"trigger": "axis"},
@@ -862,6 +893,11 @@ def _build_comprehensive(o, tr):
         "options": [{"series": _comp_series(o, year, tr)}
                     for year in _COMP_YEARS],
     }
+
+
+def _build_comprehensive(o, tr):
+    """组件综合：bar+line + mark* + visualMap + dataZoom + brush + toolbox + timeline。"""
+    opt = _comp_base_option(o, tr)
     if o["visualMap"]:
         opt["visualMap"] = {"min": 60, "max": 460,
                             "inRange": {"colors": _HEAT_RAMP["warm"]},
@@ -1076,6 +1112,30 @@ def _make_cards(specs, tr) -> list:
             for key, build, spec, hint_key in specs]
 
 
+def _comp_card(tr) -> ChartDemoCard:
+    """综合演示大图卡（参数由外侧面板驱动，自带空表单不自动应用）。"""
+    return ChartDemoCard(tr("comp.card_title"),
+                         lambda o: _build_comprehensive(o, tr),
+                         [], hint="", size=(560, 420), auto_apply=False)
+
+
+def _comp_side(tr, i18n, card) -> QWidget:
+    """综合演示右侧栏：参数面板（驱动卡片重建）+ option 键说明。"""
+    panel = PlaygroundPanel(tr("comp.panel_title"), width=252, i18n=i18n)
+    add_specs(panel.form, card.opts, _translate_specs(_COMP_SPECS, tr))
+    panel.form.changed.connect(lambda *_: card.apply())
+    card.apply()
+    card.panel = panel  # 便于测试访问
+    side = QWidget()
+    side_lay = QVBoxLayout(side)
+    side_lay.setContentsMargins(0, 0, 0, 0)
+    side_lay.setSpacing(8)
+    side_lay.addWidget(panel)
+    side_lay.addWidget(hint_label(tr("comp.keys_note"), role="tertiary"))
+    side_lay.addStretch(1)
+    return side
+
+
 def _comprehensive_section(i18n) -> Section:
     """组件综合演示：大图 + 右侧参数面板 + option 键说明。"""
     tr = bind_tr(i18n, "charts")
@@ -1084,29 +1144,10 @@ def _comprehensive_section(i18n) -> Section:
     lay = QGridLayout(host)
     lay.setContentsMargins(0, 0, 0, 0)
     lay.setSpacing(10)
-
-    card = ChartDemoCard(tr("comp.card_title"),
-                         lambda o: _build_comprehensive(o, tr),
-                         [], hint="", size=(560, 420), auto_apply=False)
+    card = _comp_card(tr)
     lay.addWidget(card, 0, 0)
-
-    panel = PlaygroundPanel(tr("comp.panel_title"), width=252, i18n=i18n)
-    opts = card.opts
-    add_specs(panel.form, opts, _translate_specs(_COMP_SPECS, tr))
-    panel.form.changed.connect(lambda *_: card.apply())
-    card.apply()
-    card.panel = panel  # 便于测试访问
-
-    side = QWidget()
-    side_lay = QVBoxLayout(side)
-    side_lay.setContentsMargins(0, 0, 0, 0)
-    side_lay.setSpacing(8)
-    side_lay.addWidget(panel)
-    side_lay.addWidget(hint_label(tr("comp.keys_note"), role="tertiary"))
-    side_lay.addStretch(1)
-    lay.addWidget(side, 0, 1)
+    lay.addWidget(_comp_side(tr, i18n, card), 0, 1)
     lay.setColumnStretch(0, 1)
-
     box.layout().addWidget(host)
     box.card = card  # 便于测试访问
     return box
