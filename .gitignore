@@ -209,3 +209,9 @@ __marimo__/
 .plugin_info.json
 
 .claude/
+
+# 测试代码仅存在于 test 分支，dev 分支下若因分支切换残留 test/ 目录不得提交
+test/
+
+# 插件运行日志
+logs/
