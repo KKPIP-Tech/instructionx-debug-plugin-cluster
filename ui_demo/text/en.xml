@@ -69,7 +69,7 @@
     <text key="page.empty">Empty</text>
     <text key="page.tooltip">Tooltip</text>
     <text key="page.popover">Popover</text>
-    <text key="page.markdown_view">MarkdownView Markdown</text>
+    <text key="page.markdown_view">MarkdownView Markdown Renderer</text>
     <text key="page.tabs">Tabs</text>
     <text key="page.anchor">Anchor</text>
     <text key="page.breadcrumb">Breadcrumb</text>

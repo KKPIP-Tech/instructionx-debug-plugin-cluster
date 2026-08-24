@@ -69,7 +69,7 @@
     <text key="page.empty">Empty 空状态</text>
     <text key="page.tooltip">Tooltip 工具提示</text>
     <text key="page.popover">Popover 气泡卡片</text>
-    <text key="page.markdown_view">MarkdownView Markdown</text>
+    <text key="page.markdown_view">MarkdownView Markdown 渲染</text>
     <text key="page.tabs">Tabs 标签页</text>
     <text key="page.anchor">Anchor 锚点</text>
     <text key="page.breadcrumb">Breadcrumb 面包屑</text>
