@@ -3,6 +3,7 @@
         "nav_min_width": 200,
         "nav_max_width": 320,
         "nav_default_width": 240,
-        "nav_indent": 16
+        "nav_indent": 16,
+        "content_default_width": 1040
     }
 }

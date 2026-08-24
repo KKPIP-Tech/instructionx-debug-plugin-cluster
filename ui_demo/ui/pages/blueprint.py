@@ -55,7 +55,7 @@ from InstructionX_UIKit.theme import set_property
 
 from core.interfaces import ILocalizationFacade
 
-from .common import bind_tr, code_label, hint_label
+from .common import bind_tr, code_label, hint_label, title_label
 from .playground import ParamForm
 
 __all__ = ["create_page", "register_demo_node_types", "PROPERTY_SCHEMAS",
@@ -504,11 +504,7 @@ class BlueprintDemoPage(QWidget):
         root.setContentsMargins(20, 18, 20, 16)
         root.setSpacing(8)
 
-        title = QLabel(self._tr("title"))
-        font = title.font()
-        font.setPixelSize(18)
-        font.setBold(True)
-        title.setFont(font)
+        title = title_label(self._tr("title"))
         root.addWidget(title)
         root.addWidget(hint_label(self._tr("hint")))
         root.addWidget(code_label(

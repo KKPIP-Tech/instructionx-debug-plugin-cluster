@@ -39,6 +39,7 @@ __all__ = [
     "DemoCard",
     "hint_label",
     "code_label",
+    "title_label",
     "usage_section",
     "bind_tr",
     "connect_theme_refresh",
@@ -93,8 +94,12 @@ def bind_tr(i18n: Optional[ILocalizationFacade], group: str) -> Callable[..., st
     return tr
 
 
-def _title_label(text: str) -> QLabel:
-    """页面主标题：大字号 + 加粗，颜色随主题（QLabel 默认 text.primary）。"""
+def title_label(text: str) -> QLabel:
+    """页面主标题：大字号 + 加粗，颜色随主题（QLabel 默认 text.primary）。
+
+    字号取 ``font.title.lg`` 令牌，供非 ``make_page`` 结构的页面
+    （如蓝图页）复用同一标题规格。
+    """
     lab = QLabel(text)
     font = QFont()
     font.setPixelSize(T("font.title.lg"))
@@ -204,7 +209,7 @@ def make_page(title: str, description: str, sections) -> QScrollArea:
     lay.setContentsMargins(20, 18, 20, 24)
     lay.setSpacing(8)
 
-    lay.addWidget(_title_label(title))
+    lay.addWidget(title_label(title))
     if description:
         lay.addWidget(hint_label(description))
         lay.addSpacing(6)

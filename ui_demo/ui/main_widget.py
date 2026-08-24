@@ -40,6 +40,7 @@ _DEFAULT_UI_CONFIG = {
     "nav_max_width": 320,
     "nav_default_width": 240,
     "nav_indent": 16,
+    "content_default_width": 1040,
 }
 
 #: 树节点数据角色：UserRole 存 (页面键, 工厂)；UserRole+1 存取词键后缀
@@ -112,7 +113,8 @@ class MainWidget(QWidget):
         splitter.setStretchFactor(0, 0)
         splitter.setStretchFactor(1, 1)
         default_width = self._ui_config["nav_default_width"]
-        splitter.setSizes([default_width, 1040 - default_width])
+        content_width = self._ui_config["content_default_width"]
+        splitter.setSizes([default_width, content_width - default_width])
         splitter.setCollapsible(1, False)
         root.addWidget(splitter, 1)
 

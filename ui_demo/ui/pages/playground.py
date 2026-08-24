@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from InstructionX_UIKit import tokens as tk
 from InstructionX_UIKit.components.checkbox import CheckBox
 from InstructionX_UIKit.components.color_picker import ColorPicker
 from InstructionX_UIKit.components.combo_box import ComboBox
@@ -41,6 +42,10 @@ from utils.logging_tools import LoggerManager, get_name
 from .common import bind_tr
 
 _logger = LoggerManager()
+
+#: PlaygroundPanel 默认固定宽度（px）；配置装载在 main_widget（避免循环
+#: 依赖），此处按命名常量兜底，调用方如需定制可显式传 ``width``
+DEFAULT_PANEL_WIDTH = 280
 
 __all__ = [
     "ParamForm",
@@ -70,7 +75,8 @@ def add_specs(form: "ParamForm", opts: dict, specs) -> None:
         ("bool",   key, 标签, 默认)
         ("text",   key, 标签, 默认)
     """
-    easings = ["standard", "entrance", "spring", "emphasis", "linear"]
+    # 缓动选项与 InstructionX_UIKit 令牌同源（tk.EASING 键名），避免硬编码漂移
+    easings = list(tk.EASING)
     for spec in specs:
         kind = spec[0]
         if kind == "int":
@@ -312,12 +318,12 @@ class PlaygroundPanel(QFrame):
 
     参数:
         title: 面板标题（None 时取语言文件 ``playground:panel.default_title``）。
-        width: 固定宽度，默认 280。
+        width: 固定宽度，默认 ``DEFAULT_PANEL_WIDTH``。
         i18n: 取词门面（默认标题与「重置」按钮文案用；可为 None）。
         parent: 父控件。
     """
 
-    def __init__(self, title: Optional[str] = None, width: int = 280,
+    def __init__(self, title: Optional[str] = None, width: int = DEFAULT_PANEL_WIDTH,
                  i18n: Optional[ILocalizationFacade] = None, parent=None):
         super().__init__(parent)
         self.setFrameShape(QFrame.Shape.StyledPanel)  # 命中 QSS 卡片边框
