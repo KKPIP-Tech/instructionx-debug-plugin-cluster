@@ -11,5 +11,7 @@
 - ``graph_migration``：存档图引脚自动迁移（污染期旧存档 in/out/img 引脚
   按同方向索引映射纠正为目录标准定义，幂等）；
 - ``pipeline_controller``：PipelineController（运行会话状态、停止标志、最近结果）；
+- ``runtime_registry``：按 plugin_id 共享的 PipelineRuntime（PipelineController +
+  图快照），消除框架自动注册第二 Service 实例导致的运行态脱节；
 - ``ops/``：20 个节点 op 实现（op(inputs, props) -> outputs）。
 """

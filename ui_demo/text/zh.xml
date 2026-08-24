@@ -1,0 +1,1926 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  UI Demo 插件默认语言文件（zh，简体中文，回退终点）
+  规则：本文件必须完整覆盖插件全部 tr 键；en.xml 的 group 名与键名必须与本文件一致。
+  校验：.venv\Scripts\python.exe scripts/check_i18n_completeness.py
+-->
+<texts language="zh">
+  <!-- 导航树：分类与页面标题（键由 NAV 注册表键派生） -->
+  <group name="nav">
+    <text key="cat.tokens">设计令牌</text>
+    <text key="cat.layouts">布局预设</text>
+    <text key="cat.inputs">组件 · 输入</text>
+    <text key="cat.display">组件 · 展示</text>
+    <text key="cat.feedback">组件 · 反馈</text>
+    <text key="cat.anim_property">动画 · 属性</text>
+    <text key="cat.anim_painted">动画 · 自绘</text>
+    <text key="cat.basic_widgets">基础控件</text>
+    <text key="cat.charts">图表</text>
+    <text key="cat.blueprint">蓝图</text>
+    <text key="page.tokens">设计令牌总览</text>
+    <text key="page.top_nav_bar">顶部导航栏</text>
+    <text key="page.holy_grail">圣杯布局</text>
+    <text key="page.card_grid">卡片网格</text>
+    <text key="page.single_column">单列堆叠</text>
+    <text key="page.sidebar_layout">侧边栏布局</text>
+    <text key="page.master_detail">列表-详情</text>
+    <text key="page.split_panel">分栏面板</text>
+    <text key="page.dashboard_grid">仪表盘网格</text>
+    <text key="page.hero_section">英雄区</text>
+    <text key="page.centered_container">居中容器</text>
+    <text key="page.waterfall">瀑布流</text>
+    <text key="page.media_left_right">图文左右</text>
+    <text key="page.chat_conversation">流式对话</text>
+    <text key="page.button">Button 按钮</text>
+    <text key="page.icon_button">IconButton 图标按钮</text>
+    <text key="page.checkbox">CheckBox 复选框</text>
+    <text key="page.radio">RadioButton 单选框</text>
+    <text key="page.switch">Switch 开关</text>
+    <text key="page.line_edit">LineEdit 输入框</text>
+    <text key="page.text_area">TextArea 文本域</text>
+    <text key="page.spin_box">SpinBox 数字框</text>
+    <text key="page.combo_box">ComboBox 下拉框</text>
+    <text key="page.slider">Slider 滑块</text>
+    <text key="page.date_picker">DatePicker 日期</text>
+    <text key="page.time_picker">TimePicker 时间</text>
+    <text key="page.rating">Rating 评分</text>
+    <text key="page.color_picker">ColorPicker 颜色</text>
+    <text key="page.auto_complete">AutoComplete 自动完成</text>
+    <text key="page.cascader">Cascader 级联选择</text>
+    <text key="page.transfer">Transfer 穿梭框</text>
+    <text key="page.upload">UploadWidget 上传</text>
+    <text key="page.segmented">SegmentedControl 分段</text>
+    <text key="page.form">FormLayout 表单</text>
+    <text key="page.avatar">Avatar 头像</text>
+    <text key="page.badge">Badge 徽标</text>
+    <text key="page.card">Card 卡片</text>
+    <text key="page.descriptions">Descriptions 描述列表</text>
+    <text key="page.list_view">ListWidget 列表</text>
+    <text key="page.table">Table 表格</text>
+    <text key="page.tree">Tree 树</text>
+    <text key="page.timeline">Timeline 时间轴</text>
+    <text key="page.statistic">Statistic 统计数值</text>
+    <text key="page.calendar">Calendar 日历</text>
+    <text key="page.carousel">Carousel 走马灯</text>
+    <text key="page.image_view">ImageView 图片</text>
+    <text key="page.qrcode_view">QRCodeView 二维码</text>
+    <text key="page.comment">CommentView 评论</text>
+    <text key="page.collapse">Collapse 折叠面板</text>
+    <text key="page.empty">Empty 空状态</text>
+    <text key="page.tooltip">Tooltip 工具提示</text>
+    <text key="page.popover">Popover 气泡卡片</text>
+    <text key="page.markdown_view">MarkdownView Markdown</text>
+    <text key="page.tabs">Tabs 标签页</text>
+    <text key="page.anchor">Anchor 锚点</text>
+    <text key="page.breadcrumb">Breadcrumb 面包屑</text>
+    <text key="page.dropdown">DropdownButton 下拉菜单</text>
+    <text key="page.nav_menu">NavMenu 侧边导航</text>
+    <text key="page.page_header">PageHeader 页头</text>
+    <text key="page.pagination">Pagination 分页</text>
+    <text key="page.steps">Steps 步骤条</text>
+    <text key="page.alert">Alert 警告提示</text>
+    <text key="page.dialog">Dialog 对话框</text>
+    <text key="page.drawer">Drawer 抽屉</text>
+    <text key="page.notification">Notification 通知提醒</text>
+    <text key="page.message">Message 全局提示</text>
+    <text key="page.popconfirm">Popconfirm 气泡确认</text>
+    <text key="page.result">ResultView 结果页</text>
+    <text key="page.skeleton">Skeleton 骨架屏</text>
+    <text key="page.spinner">Spinner 加载中</text>
+    <text key="page.progress_bar">ProgressBar 进度条</text>
+    <text key="page.tour">Tour 漫游引导</text>
+    <text key="page.anim_property">属性动画（28）</text>
+    <text key="page.anim_painted">自绘动画（24）</text>
+    <text key="page.basic_widgets">基础控件全家福</text>
+    <text key="page.charts">图表（原生引擎）</text>
+    <text key="page.blueprint">蓝图（节点图）</text>
+  </group>
+  <!-- 公共脚手架 -->
+  <group name="common">
+    <text key="usage.title">用法</text>
+    <text key="demo_card.play">播放</text>
+  </group>
+  <!-- 交互参数面板基础设施 -->
+  <group name="playground">
+    <text key="panel.default_title">参数调节</text>
+    <text key="panel.reset">重置</text>
+    <text key="card.play">播放</text>
+  </group>
+  <!-- 设计令牌演示页 -->
+  <group name="tokens">
+    <text key="title">设计令牌</text>
+    <text key="desc">整套 UI Kit 的唯一数值事实来源：色彩、字体排版、间距、圆角、阴影、断点与动效。色板以亮 / 暗对照展示所有语义色；其余可视化实时读取当前主题令牌。</text>
+    <text key="section.colors">色板（语义色 · 亮 / 暗对照）</text>
+    <text key="color_group.bg">背景</text>
+    <text key="color_group.border">边框</text>
+    <text key="color_group.text">文本</text>
+    <text key="color_group.primary">主色</text>
+    <text key="color_group.success">成功</text>
+    <text key="color_group.warning">警告</text>
+    <text key="color_group.danger">危险</text>
+    <text key="color_group.overlay">遮罩</text>
+    <text key="card.hex">亮 {light}
+暗 {dark}</text>
+    <text key="section.type">字体排版（字阶 / 字重）</text>
+    <text key="type.scale_hint">字阶（各级以真实像素大小渲染）</text>
+    <text key="type.weight_hint">字重（真实 QFont weight 渲染）</text>
+    <text key="type.scale_sample">{label} 设计令牌 Typography {px}px</text>
+    <text key="type.weight_sample">{label} 设计系统让界面更一致 Typography 0123456789</text>
+    <text key="scale.xs">超小 xs</text>
+    <text key="scale.sm">小号 sm</text>
+    <text key="scale.md">正文 md</text>
+    <text key="scale.lg">大号 lg</text>
+    <text key="scale.title_sm">标题 sm</text>
+    <text key="scale.title_md">标题 md</text>
+    <text key="scale.title_lg">标题 lg</text>
+    <text key="scale.display">展示 display</text>
+    <text key="scale.hero">英雄 hero</text>
+    <text key="weight.regular">常规 Regular</text>
+    <text key="weight.medium">中等 Medium</text>
+    <text key="weight.semibold">半粗 Semibold</text>
+    <text key="weight.bold">加粗 Bold</text>
+    <text key="section.spacing">间距 / 圆角</text>
+    <text key="spacing.hint">间距（4pt 基线，px）</text>
+    <text key="radius.hint">圆角（px）</text>
+    <text key="section.shadow">阴影（shadow.sm / md / lg）</text>
+    <text key="shadow.sm">sm 小</text>
+    <text key="shadow.md">md 中</text>
+    <text key="shadow.lg">lg 大</text>
+    <text key="section.breakpoint">断点（窗口宽度 px）</text>
+    <text key="breakpoint.line">{name}：{range}（起始阈值 {threshold}px）</text>
+    <text key="breakpoint.current">当前窗口宽度 {width}px → 断点 {bp}</text>
+    <text key="section.motion">动效（时长 / 缓动）</text>
+    <text key="motion.duration_hint">时长（ms）</text>
+    <text key="motion.easing_hint">缓动曲线</text>
+    <text key="motion.easing_item">{name}（QEasingCurve 预设）</text>
+  </group>
+  <!-- 布局预设演示页（layouts.py） -->
+  <group name="layouts">
+    <text key="preview.title">实时预览</text>
+    <text key="top_nav_bar.title">顶部导航栏</text>
+    <text key="top_nav_bar.desc">Logo + 菜单 + 搜索 + 头像的窗口级顶部导航。</text>
+    <text key="holy_grail.title">圣杯布局</text>
+    <text key="holy_grail.desc">header / footer / 双侧栏 / 主区，QSplitter 可拖拽调整。</text>
+    <text key="card_grid.title">卡片网格</text>
+    <text key="card_grid.desc">按断点 1 / 2 / 3 / 4 列自适应的卡片网格。</text>
+    <text key="single_column.title">单列堆叠</text>
+    <text key="single_column.desc">最大宽 760 居中的单列垂直节奏布局。</text>
+    <text key="sidebar_layout.title">侧边栏布局</text>
+    <text key="sidebar_layout.desc">左侧导航 + 右侧内容，可折叠为图标栏。</text>
+    <text key="master_detail.title">列表-详情</text>
+    <text key="master_detail.desc">左列表右详情，窄断点自动堆叠。</text>
+    <text key="split_panel.title">分栏面板</text>
+    <text key="split_panel.desc">QSplitter 2-3 栏，记忆拖拽比例。</text>
+    <text key="dashboard_grid.title">仪表盘网格</text>
+    <text key="dashboard_grid.desc">12 列网格，卡片跨 3 / 4 / 6 / 12 列。</text>
+    <text key="hero_section.title">英雄区</text>
+    <text key="hero_section.desc">大标题 + 副文案 + 双按钮 + 右侧插图占位。</text>
+    <text key="centered_container.title">居中容器</text>
+    <text key="centered_container.desc">内容限宽 960 居中展示。</text>
+    <text key="waterfall.title">瀑布流</text>
+    <text key="waterfall.desc">2-4 列不等高卡片瀑布流。</text>
+    <text key="media_left_right.title">图文左右</text>
+    <text key="media_left_right.desc">图左文右 / 图右文左交替段落。</text>
+    <text key="chat_conversation.title">流式对话</text>
+    <text key="chat_conversation.desc">AI 对话页面：Markdown 消息气泡 + 流式追加 + 气泡操作条 + 底部输入区。</text>
+  </group>
+  <!-- 布局演示示例数据（layout_samples.py） -->
+  <group name="layout_samples">
+    <text key="sidebar.brand">控制台</text>
+    <text key="tnb.brand">UI Kit 控制台</text>
+    <text key="tnb.menu.home">首页</text>
+    <text key="tnb.menu.products">产品</text>
+    <text key="tnb.menu.docs">文档</text>
+    <text key="tnb.menu.community">社区</text>
+    <text key="tnb.menu.about">关于</text>
+    <text key="tnb.search_placeholder">搜索文档、组件...</text>
+    <text key="tnb.user_text">我</text>
+    <text key="tnb.title">欢迎使用 UI Kit</text>
+    <text key="tnb.subtitle">这是顶部导航栏布局预设的窗口级示例，下方为内容卡片，主题切换时颜色自动跟随。</text>
+    <text key="tnb.card.1.title">功能模块一</text>
+    <text key="tnb.card.1.desc">用于演示的内容卡片，色块取 primary.subtle 令牌。</text>
+    <text key="tnb.card.2.title">功能模块二</text>
+    <text key="tnb.card.2.desc">用于演示的内容卡片，色块取 success.subtle 令牌。</text>
+    <text key="tnb.card.3.title">功能模块三</text>
+    <text key="tnb.card.3.desc">用于演示的内容卡片，色块取 warning.subtle 令牌。</text>
+    <text key="tnb.card.4.title">功能模块四</text>
+    <text key="tnb.card.4.desc">用于演示的内容卡片，色块取 danger.subtle 令牌。</text>
+    <text key="hg.title">圣杯布局</text>
+    <text key="hg.nav.1">概览</text>
+    <text key="hg.nav.2">分析</text>
+    <text key="hg.nav.3">报表</text>
+    <text key="hg.nav.4">成员</text>
+    <text key="hg.nav.5">设置</text>
+    <text key="hg.action.refresh">刷新</text>
+    <text key="hg.action.settings">设置</text>
+    <text key="hg.footer_note">页脚：拖拽中间分栏手柄可调整侧栏宽度</text>
+    <text key="hg.status">就绪</text>
+    <text key="hg.center.title">主内容区</text>
+    <text key="hg.center.para.1">圣杯布局由页头、页脚、左右侧栏与主内容区组成，中间三区放在 QSplitter 中，拖拽分栏手柄即可调整各栏宽度。</text>
+    <text key="hg.center.para.2">窗口变窄时按断点依次隐藏右侧栏与左侧栏，保证主内容区始终可用。</text>
+    <text key="hg.side.head">相关信息</text>
+    <text key="hg.side.item.1">更新日志 v1.0</text>
+    <text key="hg.side.item.2">设计规范</text>
+    <text key="hg.side.item.3">组件清单</text>
+    <text key="hg.side.item.4">常见问题</text>
+    <text key="cg.card.1.title">数据看板</text>
+    <text key="cg.card.1.desc">汇总关键指标的内容卡片，色块取 primary.subtle 令牌。</text>
+    <text key="cg.card.2.title">任务中心</text>
+    <text key="cg.card.2.desc">展示待办与进度的内容卡片，色块取 success.subtle 令牌。</text>
+    <text key="cg.card.3.title">消息通知</text>
+    <text key="cg.card.3.desc">聚合系统消息的内容卡片，色块取 warning.subtle 令牌。</text>
+    <text key="cg.card.4.title">风险预警</text>
+    <text key="cg.card.4.desc">呈现异常项的内容卡片，色块取 danger.subtle 令牌。</text>
+    <text key="cg.card.5.title">团队动态</text>
+    <text key="cg.card.5.desc">展示协作动态的内容卡片，主题切换自动跟随。</text>
+    <text key="cg.card.6.title">文件库</text>
+    <text key="cg.card.6.desc">管理项目文件的内容卡片，主题切换自动跟随。</text>
+    <text key="cg.card.7.title">日程安排</text>
+    <text key="cg.card.7.desc">查看近期日程的内容卡片，主题切换自动跟随。</text>
+    <text key="cg.card.8.title">系统设置</text>
+    <text key="cg.card.8.desc">进入偏好设置的内容卡片，主题切换自动跟随。</text>
+    <text key="sc.kicker">布局预设 · 单列堆叠</text>
+    <text key="sc.title">用统一的垂直节奏组织长文内容</text>
+    <text key="sc.subtitle">单列布局将阅读动线收敛到一条中轴：所有区块限宽 760px 居中，段落与区块间距全部取自 space 令牌。</text>
+    <text key="sc.para.1">单列堆叠适合文档、博客与公告等以阅读为主的场景。限宽让每行文字保持舒适的阅读长度，居中留白则让内容在宽屏下依然聚焦。</text>
+    <text key="sc.para.2">本示例中的间距（space.4 段落、space.6 区块）、圆角（radius.lg 封面）与颜色（primary.subtle 封面、secondary 正文）全部来自设计令牌，切换亮 / 暗主题时自动跟随。</text>
+    <text key="sc.para.3">窗口继续收窄时，本布局不做分档重排，而是让 760px 的列随窗口线性收缩，保证任何宽度下都只有一条阅读中轴。</text>
+    <text key="sc.quote">「好的布局不喧哗：它退到内容背后，用节奏与留白说话。」</text>
+    <text key="sc.action.read">阅读全文</text>
+    <text key="sc.action.fav">收藏</text>
+    <text key="sb.nav.home">首页</text>
+    <text key="sb.nav.component">组件</text>
+    <text key="sb.nav.chart">图表</text>
+    <text key="sb.nav.layout">布局</text>
+    <text key="sb.nav.animation">动画</text>
+    <text key="sb.nav.settings">设置</text>
+    <text key="sb.crumb">首页 / 概览</text>
+    <text key="sb.title">项目概览</text>
+    <text key="sb.stat.users.title">访问用户</text>
+    <text key="sb.stat.users.note">较上周 +8.2%</text>
+    <text key="sb.stat.projects.title">活跃项目</text>
+    <text key="sb.stat.projects.note">本周新增 4 个</text>
+    <text key="sb.stat.todo.title">待办事项</text>
+    <text key="sb.stat.todo.note">3 项即将到期</text>
+    <text key="sb.panel.note">内容区：可替换为表格、表单或图表。侧栏在窄窗口下会自动折叠为图标栏。</text>
+    <text key="md.item.1.title">产品周报 · 第 24 期</text>
+    <text key="md.item.1.summary">本周核心指标回顾</text>
+    <text key="md.item.1.body">本周活跃用户环比增长 8.2%，新增项目 4 个，重点跟进项 3 个均已按期推进。下周将发布 v1.1 灰度版本。</text>
+    <text key="md.item.2.title">设计评审纪要</text>
+    <text key="md.item.2.summary">令牌与主题契约确认</text>
+    <text key="md.item.2.body">评审确认了色彩、间距、圆角与阴影令牌的最终数值，亮 / 暗双主题共用同一套语义键，组件侧只引用令牌不写死数值。</text>
+    <text key="md.item.3.title">发布检查单</text>
+    <text key="md.item.3.summary">v1.0 发布前核对</text>
+    <text key="md.item.3.body">检查单覆盖：令牌完整性、双主题截图、离屏自测退出码、文档与示例代码同步。全部通过后方可打 tag。</text>
+    <text key="md.item.4.title">用户访谈记录</text>
+    <text key="md.item.4.summary">5 位种子用户反馈</text>
+    <text key="md.item.4.body">用户普遍认可响应式侧栏与分栏面板；希望在后续版本增加密度切换与更多图表示例。</text>
+    <text key="md.item.5.title">迭代计划草稿</text>
+    <text key="md.item.5.summary">下一周期范围初拟</text>
+    <text key="md.item.5.body">下一迭代聚焦：组件库补齐、动画预设验收、Demo 导航完善。列表-详情布局将用于邮件与任务中心。</text>
+    <text key="md.title">收件箱</text>
+    <text key="md.action.read">标记已读</text>
+    <text key="md.action.archive">归档</text>
+    <text key="sp.nav.1">工作台</text>
+    <text key="sp.nav.2">项目</text>
+    <text key="sp.nav.3">数据</text>
+    <text key="sp.nav.4">设置</text>
+    <text key="sp.list.1">季度总结</text>
+    <text key="sp.list.2">里程碑计划</text>
+    <text key="sp.list.3">评审纪要</text>
+    <text key="sp.list.4">发布检查单</text>
+    <text key="sp.list.5">访谈记录</text>
+    <text key="sp.list.6">迭代草稿</text>
+    <text key="sp.content.title">内容区</text>
+    <text key="sp.content.note">拖动分栏手柄调整栏宽，本布局会记忆调整后的比例；窗口尺寸变化时按比例重新分配。窄断点下依次隐藏导航栏与列表栏。</text>
+    <text key="db.stat.users.title">总用户数</text>
+    <text key="db.stat.users.note">较上周 +8.2%</text>
+    <text key="db.stat.projects.title">活跃项目</text>
+    <text key="db.stat.projects.note">本周新增 12 个</text>
+    <text key="db.stat.revenue.title">总收入</text>
+    <text key="db.stat.revenue.note">达成月度目标 76%</text>
+    <text key="db.stat.alerts.title">异常告警</text>
+    <text key="db.stat.alerts.note">2 项待处理</text>
+    <text key="db.chart.title">近八周访问趋势</text>
+    <text key="db.feed.title">最新动态</text>
+    <text key="db.feed.1">发布了 v1.0 正式版</text>
+    <text key="db.feed.2">合并了 6 个组件分支</text>
+    <text key="db.feed.3">新增 2 位协作者</text>
+    <text key="db.feed.4">更新了设计规范文档</text>
+    <text key="db.quota.title">资源用量</text>
+    <text key="db.quota.storage">存储空间</text>
+    <text key="db.quota.compute">计算配额</text>
+    <text key="db.todo.title">本周待办</text>
+    <text key="db.todo.1">完成布局库验收</text>
+    <text key="db.todo.2">补齐组件双主题截图</text>
+    <text key="db.todo.3">撰写使用文档</text>
+    <text key="db.banner.title">公告</text>
+    <text key="db.banner.text">布局预设已覆盖全部 13 个场景；跨度随断点自动重排，窗口收窄时卡片纵向堆叠。</text>
+    <text key="hero.kicker">InstructionX_UIKit · 布局预设</text>
+    <text key="hero.title">用令牌与断点
+搭建响应式界面</text>
+    <text key="hero.subtitle">颜色、间距、圆角全部取自设计令牌，亮 / 暗主题开箱即用；按窗口宽度自动切换排布，窄屏下插图移到文案下方。</text>
+    <text key="hero.primary">开始使用</text>
+    <text key="hero.secondary">查看文档</text>
+    <text key="hero.hint">无需编写样式表，动态属性 + 全局 QSS 即可完成主题化。</text>
+    <text key="cc.title">账号设置</text>
+    <text key="cc.subtitle">居中容器示例：内容限宽 960px，窗口收窄时内容卡片按 3/2/1 列重排。</text>
+    <text key="cc.action.save">保存修改</text>
+    <text key="cc.action.cancel">取消</text>
+    <text key="cc.card.1.title">个人资料</text>
+    <text key="cc.card.1.desc">头像、昵称与签名等基础信息。</text>
+    <text key="cc.card.2.title">安全设置</text>
+    <text key="cc.card.2.desc">密码、二次验证与登录设备。</text>
+    <text key="cc.card.3.title">消息偏好</text>
+    <text key="cc.card.3.desc">通知渠道与免打扰时段。</text>
+    <text key="cc.card.4.title">主题外观</text>
+    <text key="cc.card.4.desc">亮色 / 暗色主题与密度。</text>
+    <text key="cc.card.5.title">API 密钥</text>
+    <text key="cc.card.5.desc">访问令牌与调用配额。</text>
+    <text key="cc.card.6.title">账单信息</text>
+    <text key="cc.card.6.desc">套餐、发票与支付方式。</text>
+    <text key="cc.note">提示：居中容器通过「两侧弹性留白 + 内容最大宽度」实现，在超宽屏下内容依然保持可读的中轴宽度。</text>
+    <text key="wf.item.1">山间晨雾</text>
+    <text key="wf.item.2">城市夜景</text>
+    <text key="wf.item.3">静物写生</text>
+    <text key="wf.item.4">海边日落</text>
+    <text key="wf.item.5">森林小径</text>
+    <text key="wf.item.6">老街巷口</text>
+    <text key="wf.item.7">雨后屋檐</text>
+    <text key="wf.item.8">雪原足迹</text>
+    <text key="wf.item.9">沙漠星空</text>
+    <text key="wf.item.10">湖畔倒影</text>
+    <text key="wf.item.11">窗台绿植</text>
+    <text key="wf.item.12">巷尾猫影</text>
+    <text key="wf.meta">作品 {n} · 演示</text>
+    <text key="ml.section.1.title">特性一：令牌驱动</text>
+    <text key="ml.section.1.body">颜色、间距、圆角全部来自统一的设计令牌。组件与布局只引用语义键，不写死任何数值，因此换肤与品牌定制只需要改一份令牌表。</text>
+    <text key="ml.section.2.title">特性二：双主题开箱即用</text>
+    <text key="ml.section.2.body">亮色与暗色主题共用同一套语义键，切换时全局 QSS 与自绘色块同步刷新，无需重启应用，也无需为每个页面单独适配。</text>
+    <text key="ml.section.3.title">特性三：响应式断点</text>
+    <text key="ml.section.3.body">布局按窗口宽度在 xs 到 xl 五档断点间自适应：网格重排列数、侧栏折叠、图文上下堆叠，全部在 resizeEvent 中完成。</text>
+    <text key="ml.link">了解更多</text>
+    <text key="chat.info">InstructionX-Lite</text>
+    <text key="chat.user.1">这个 UI Kit 的 Markdown 组件支持哪些语法？</text>
+    <text key="chat.assistant.1"><![CDATA[**MarkdownView** 基于 Qt 内置引擎，支持：
+
+- 标题、**加粗**、*斜体*、~~删除线~~
+- 有序 / 无序 / 任务列表
+- `行内代码` 与代码围栏
+- 表格、引用、分割线、链接
+
+```python
+from InstructionX_UIKit.components import MarkdownView
+
+view = MarkdownView("# 你好")
+```]]></text>
+    <text key="chat.user.2">代码块会做语法高亮吗？</text>
+    <text key="chat.assistant.2"><![CDATA[不会。代码块文字颜色与正文一致，仅以等宽字族和底色区分。
+
+| 特性 | 状态 |
+|------|------|
+| 语法高亮 | 不支持 |
+| 等宽字族 | 支持 |
+| 底色 | `bg.subtle` 令牌 |]]></text>
+    <text key="chat.user.3">能渲染数学公式吗？</text>
+    <text key="chat.assistant.3"><![CDATA[可以，支持 LaTeX 语法。行内公式如 $E=mc^2$，块级公式：
+
+$$\frac{-b \pm \sqrt{b^2-4ac}}{2a}$$
+
+公式由 matplotlib mathtext 后台异步渲染并缓存，流式追加时命中缓存零耗时。]]></text>
+    <text key="chat.user.4">能画 Mermaid 图吗？</text>
+    <text key="chat.assistant.4"><![CDATA[可以，由官方 mermaid.js 引擎渲染（WebEngine，随包分发不联网），全量图型可用。图表可交互：**拖动平移、Ctrl+滚轮缩放**，右上角工具条支持放大 / 缩小 / 复位 / 适宽。
+
+```mermaid
+flowchart LR
+    A[用户提问] --> B{理解意图}
+    B -- 明确 --> C[检索知识库]
+    B -- 模糊 --> D[请求澄清]
+    C --> E[生成回答]
+    D --> E
+```
+
+时序图同样支持：
+
+```mermaid
+sequenceDiagram
+    participant U as 用户
+    participant A as 助手
+    U->>A: 发送问题
+    A->>A: 推理与检索
+    A-->>U: 流式返回回答
+```]]></text>
+    <text key="chat.user.5">剩下的格式一口气展示一下吧。</text>
+    <text key="chat.assistant.5"><![CDATA[好的，以下是其余全部格式。
+
+## 标题层级
+
+支持 `#` 至 `######` 六级标题，正文段落自动换行。
+
+### 引用与分割线
+
+> 引用块使用次级文字颜色，
+> 可以跨越多行。
+
+---
+
+### 嵌套与任务列表
+
+- 水果
+  - 苹果
+  - 香蕉
+- [x] 已完成事项
+- [ ] 待办事项
+
+### 链接
+
+项目仓库：[InstructionX_UIKit](https://github.com/KKPIP-Tech/InstructionX_UIKit)，点击链接时发射 `linkActivated` 信号。
+
+> 提示：脚注、内嵌 HTML 与网络图片不在支持之列。]]></text>
+    <text key="chat.stream_reply"><![CDATA[好的，这是一次**全格式流式输出**演示：
+
+1. 调用方收到 token 后调用 `append_to_message(index, chunk)`；
+2. 布局自动增长气泡高度并跟随滚动；
+3. 用户上翻阅读历史时不会被打断。
+
+> 布局本身不承载任何 AI 逻辑，消息数据完全由调用方驱动。
+
+流式途中也能实时渲染行内公式 $e^{i\pi}+1=0$ 与块级公式：
+
+$$\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}$$
+
+以及表格：
+
+| 阶段 | 状态 |
+|------|------|
+| 接收 token | 进行中 |
+| 渲染 | 实时 |
+
+代码围栏在闭合前按纯文本降级显示，闭合后重排：
+
+```python
+reply = ""
+for token in stream:
+    reply += token
+    view.append_markdown(token)
+```
+
+Mermaid 图同理，围栏闭合后异步渲染并就位：
+
+```mermaid
+flowchart LR
+    T[token 流] --> P[增量解析]
+    P --> R[实时渲染]
+```
+
+流式输出结束，感谢观看。]]></text>
+    <text key="chat.stream_continue"><![CDATA[**（继续生成）** 补充说明：操作条的复制 / 删除 / 编辑由布局直接执行，重新生成 / 继续生成仅发射 `regenerateRequested` / `continueRequested` 信号，具体行为完全由调用方决定。]]></text>
+    <text key="chat.status.ready">最近操作：暂无（试试发送消息，或悬停气泡使用操作条）</text>
+    <text key="chat.status.submitted">最近操作：提交了新消息，AI 正在流式回复</text>
+    <text key="chat.status.deleted">最近操作：删除第 {n} 条消息（由布局直接执行）</text>
+    <text key="chat.status.edited">最近操作：编辑第 {n} 条消息（由布局直接执行）</text>
+    <text key="chat.status.regenerate">最近操作：重新生成第 {n} 条消息（模拟流式重放）</text>
+    <text key="chat.status.continue">最近操作：继续生成第 {n} 条消息（追加演示文本）</text>
+  </group>
+  <!-- 基础控件全家福 -->
+  <group name="basic_widgets">
+    <text key="title">基础控件</text>
+    <text key="desc">Qt 原生控件在全局 QSS 美化下的全家福：按钮、输入、数字日期、下拉、滑块表盘、进度数码、文本显示、容器、数据视图与窗口部件，以及标准对话框触发。</text>
+    <text key="sec.buttons">按钮（QPushButton / QToolButton）</text>
+    <text key="btn.default">默认按钮</text>
+    <text key="btn.primary">主要按钮</text>
+    <text key="btn.danger">危险按钮</text>
+    <text key="btn.disabled">禁用按钮</text>
+    <text key="tb.tool">工具按钮</text>
+    <text key="tb.menu">带菜单</text>
+    <text key="sec.text_inputs">文本输入（QLineEdit / QTextEdit / QPlainTextEdit）</text>
+    <text key="le.text">单行输入框</text>
+    <text key="le.placeholder">placeholder 占位</text>
+    <text key="te.text">QTextEdit 富文本编辑：支持 &lt;b&gt;加粗&lt;/b&gt; 与 &lt;i&gt;斜体&lt;/i&gt;。</text>
+    <text key="pe.text">QPlainTextEdit 纯文本编辑：
+第二行内容。</text>
+    <text key="sec.number_date">数字 / 日期时间（QSpinBox / QDoubleSpinBox / QDate* / QKeySequenceEdit）</text>
+    <text key="sec.combo">下拉选择（QComboBox / QFontComboBox）</text>
+    <text key="cb.item.1">选项一</text>
+    <text key="cb.item.2">选项二</text>
+    <text key="cb.item.3">选项三</text>
+    <text key="sec.slider_dial">滑块 / 表盘 / 进度 / 数码（QSlider / QDial / QProgressBar / QLCDNumber）</text>
+    <text key="sec.display">文本显示 / 日历（QTextBrowser / QCalendarWidget）</text>
+    <text key="tb.html">&lt;h4&gt;QTextBrowser&lt;/h4&gt;&lt;p&gt;只读富文本浏览器，支持链接与锚点。&lt;/p&gt;&lt;ul&gt;&lt;li&gt;项目一&lt;/li&gt;&lt;li&gt;项目二&lt;/li&gt;&lt;/ul&gt;</text>
+    <text key="sec.container">容器（QGroupBox / QTabWidget / QToolBox）</text>
+    <text key="gb.title">分组框</text>
+    <text key="gb.content">QGroupBox 内的内容</text>
+    <text key="gb.button">按钮</text>
+    <text key="tab.1">标签一</text>
+    <text key="tab.2">标签二</text>
+    <text key="tab.3">标签三</text>
+    <text key="tab.content">{name} 内容</text>
+    <text key="drawer.1">抽屉一</text>
+    <text key="drawer.1.content">抽屉一内容</text>
+    <text key="drawer.2">抽屉二</text>
+    <text key="drawer.2.content">抽屉二内容</text>
+    <text key="sec.views">数据视图（QListWidget / QTreeWidget / QTableWidget）</text>
+    <text key="lw.item.1">列表项 一</text>
+    <text key="lw.item.2">列表项 二</text>
+    <text key="lw.item.3">列表项 三</text>
+    <text key="lw.item.4">列表项 四</text>
+    <text key="tree.header.name">名称</text>
+    <text key="tree.header.value">值</text>
+    <text key="tree.node">节点 {n}</text>
+    <text key="tree.child">子节点 {n}.1</text>
+    <text key="table.col.1">列一</text>
+    <text key="table.col.2">列二</text>
+    <text key="table.col.3">列三</text>
+    <text key="sec.window_parts">窗口部件（QMenuBar / QToolBar / QStatusBar）</text>
+    <text key="menu.file">文件(&amp;F)</text>
+    <text key="menu.file.new">新建</text>
+    <text key="menu.file.open">打开</text>
+    <text key="menu.edit">编辑(&amp;E)</text>
+    <text key="menu.edit.undo">撤销</text>
+    <text key="toolbar.title">主工具栏</text>
+    <text key="toolbar.new">新建</text>
+    <text key="toolbar.save">保存</text>
+    <text key="toolbar.help">帮助</text>
+    <text key="central">中央内容区</text>
+    <text key="status.ready">就绪</text>
+    <text key="sec.dialogs">标准对话框（点击触发）</text>
+    <text key="dlg.msg.text">这是 QMessageBox 信息对话框。</text>
+    <text key="dlg.file.title">QFileDialog 选择文件</text>
+    <text key="dlg.color.title">QColorDialog 选择颜色</text>
+    <text key="dlg.font.title">QFontDialog 选择字体</text>
+    <text key="dlg.input.label">请输入文本：</text>
+    <text key="dlg.hint">点击按钮弹出对应的标准对话框。</text>
+  </group>
+  <!-- 组件 · 输入演示页 -->
+  <group name="inputs">
+    <text key="button.title">Button 按钮</text>
+    <text key="button.desc">六种变体、三种尺寸，支持加载态、块级与圆角 / 圆形。</text>
+    <text key="button.sec.variant">变体 variant</text>
+    <text key="button.variant.primary">主要</text>
+    <text key="button.variant.default">默认</text>
+    <text key="button.variant.dashed">虚线</text>
+    <text key="button.variant.text">文字</text>
+    <text key="button.variant.link">链接</text>
+    <text key="button.variant.danger">危险</text>
+    <text key="button.sec.size">尺寸 / 状态</text>
+    <text key="button.size.sm">小号</text>
+    <text key="button.size.md">中号</text>
+    <text key="button.size.lg">大号</text>
+    <text key="button.size.loading">加载中</text>
+    <text key="button.size.disabled">禁用</text>
+    <text key="button.size.block">块级按钮 block</text>
+    <text key="button.sec.shape">形状 shape</text>
+    <text key="button.shape.round">圆角</text>
+    <text key="button.shape.pill">胶囊</text>
+    <text key="icon_button.title">IconButton 图标按钮</text>
+    <text key="icon_button.desc">QToolButton 封装，支持文本符号 / QIcon，变体、尺寸与形状。</text>
+    <text key="icon_button.sec.icons">图标与形状</text>
+    <text key="icon_button.sec.size">尺寸 / 禁用</text>
+    <text key="checkbox.title">CheckBox 复选框</text>
+    <text key="checkbox.desc">QSS 自绘指示框，支持三态与禁用态。</text>
+    <text key="checkbox.sec.state">状态</text>
+    <text key="checkbox.state.unchecked">未选中</text>
+    <text key="checkbox.state.checked">已选中</text>
+    <text key="checkbox.state.partial">部分选中（三态）</text>
+    <text key="checkbox.state.disabled">禁用</text>
+    <text key="radio.title">RadioButton 单选框</text>
+    <text key="radio.desc">RadioGroup 按 id 管理互斥选择，支持按文案选中。</text>
+    <text key="radio.sec.group">单选组</text>
+    <text key="radio.opt.1">方案一</text>
+    <text key="radio.opt.2">方案二</text>
+    <text key="radio.opt.3">方案三</text>
+    <text key="radio.disabled">禁用</text>
+    <text key="switch.title">Switch 开关</text>
+    <text key="switch.desc">自绘滑块开关，带过渡动画，sm / md 两种尺寸。</text>
+    <text key="switch.sec">开关</text>
+    <text key="line_edit.title">LineEdit 输入框</text>
+    <text key="line_edit.desc">前后缀图标、清除按钮、密码切换、error 红色边框。</text>
+    <text key="line_edit.sec.basic">基础与前后缀</text>
+    <text key="line_edit.ph.username">请输入用户名</text>
+    <text key="line_edit.sec.state">密码 / 错误 / 禁用 / 尺寸</text>
+    <text key="line_edit.err.content">错误内容</text>
+    <text key="line_edit.disabled">禁用</text>
+    <text key="line_edit.ph.sm">小号</text>
+    <text key="line_edit.ph.lg">大号</text>
+    <text key="text_area.title">TextArea 文本域</text>
+    <text key="text_area.desc">自适应高度、最大长度与字数统计。</text>
+    <text key="text_area.sec">自适应高度 + 字数统计</text>
+    <text key="text_area.ph.intro">介绍一下自己（自适应高度 + 字数统计）</text>
+    <text key="text_area.sample">这是一段示例文本，演示自适应高度与右下角的字数统计。</text>
+    <text key="text_area.ph.disabled">禁用</text>
+    <text key="spin_box.title">SpinBox 数字框</text>
+    <text key="spin_box.desc">整数与小数调节框，统一高度与按钮样式。</text>
+    <text key="spin_box.sec">数字调节框</text>
+    <text key="spin_box.suffix">元</text>
+    <text key="combo_box.title">ComboBox 下拉框</text>
+    <text key="combo_box.desc">下拉样式、搜索过滤选项与非法输入回退。</text>
+    <text key="combo_box.sec">下拉框</text>
+    <text key="combo_box.city.beijing">北京</text>
+    <text key="combo_box.city.shanghai">上海</text>
+    <text key="combo_box.city.guangzhou">广州</text>
+    <text key="combo_box.fruit.apple">苹果</text>
+    <text key="combo_box.fruit.banana">香蕉</text>
+    <text key="combo_box.fruit.orange">橙子</text>
+    <text key="combo_box.ph.fruit">搜索水果</text>
+    <text key="combo_box.item.disabled">不可用</text>
+    <text key="slider.title">Slider 滑块</text>
+    <text key="slider.desc">刻度与数值提示，QSS 精致滑轨。</text>
+    <text key="slider.sec">滑块</text>
+    <text key="date_picker.title">DatePicker 日期选择</text>
+    <text key="date_picker.desc">弹出自定义样式的中文日历。</text>
+    <text key="date_picker.sec">日期选择</text>
+    <text key="time_picker.title">TimePicker 时间选择</text>
+    <text key="time_picker.desc">时 / 分 / 秒时间调节框。</text>
+    <text key="time_picker.sec">时间选择</text>
+    <text key="rating.title">Rating 评分</text>
+    <text key="rating.desc">自绘星级，允许半星，value 信号。</text>
+    <text key="rating.sec">评分</text>
+    <text key="color_picker.title">ColorPicker 颜色选择</text>
+    <text key="color_picker.desc">色块按钮 + QColorDialog，colorChanged 信号。</text>
+    <text key="color_picker.sec">颜色选择</text>
+    <text key="auto_complete.title">AutoComplete 自动完成</text>
+    <text key="auto_complete.desc">QCompleter 封装，延迟过滤。</text>
+    <text key="auto_complete.sec">自动完成</text>
+    <text key="auto_complete.fruit.apple">苹果</text>
+    <text key="auto_complete.fruit.banana">香蕉</text>
+    <text key="auto_complete.fruit.orange">橙子</text>
+    <text key="auto_complete.fruit.apple_pie">苹果派</text>
+    <text key="auto_complete.fruit.grape">葡萄</text>
+    <text key="auto_complete.ph">输入以搜索水果</text>
+    <text key="auto_complete.ph.disabled">禁用</text>
+    <text key="auto_complete.hint">输入关键字后延迟过滤候选，回车选中。</text>
+    <text key="cascader.title">Cascader 级联选择</text>
+    <text key="cascader.desc">按钮 + 多级菜单，pathChanged 信号。</text>
+    <text key="cascader.sec">级联选择</text>
+    <text key="cascader.region.zj">浙江</text>
+    <text key="cascader.region.hz">杭州</text>
+    <text key="cascader.region.nb">宁波</text>
+    <text key="cascader.region.gd">广东</text>
+    <text key="cascader.region.gz">广州</text>
+    <text key="cascader.region.sz">深圳</text>
+    <text key="cascader.none">无</text>
+    <text key="transfer.title">Transfer 穿梭框</text>
+    <text key="transfer.desc">双列表左右移动，changed 信号。</text>
+    <text key="transfer.sec">穿梭框</text>
+    <text key="transfer.fruit.apple">苹果</text>
+    <text key="transfer.fruit.banana">香蕉</text>
+    <text key="transfer.fruit.orange">橙子</text>
+    <text key="transfer.fruit.grape">葡萄</text>
+    <text key="transfer.fruit.watermelon">西瓜</text>
+    <text key="upload.title">UploadWidget 上传</text>
+    <text key="upload.desc">拖拽区 + 文件选择，filesChanged 信号。</text>
+    <text key="upload.sec">上传</text>
+    <text key="upload.file.report">季度报告.docx</text>
+    <text key="upload.file.data">数据汇总.csv</text>
+    <text key="upload.file.design">设计稿.png</text>
+    <text key="upload.hint">拖拽文件到此处，或点击选择文件；列表可移除。</text>
+    <text key="segmented.title">SegmentedControl 分段控制</text>
+    <text key="segmented.desc">自绘滑动指示块，currentChanged 信号。</text>
+    <text key="segmented.sec">分段控制器</text>
+    <text key="segmented.mode.list">列表</text>
+    <text key="segmented.mode.card">卡片</text>
+    <text key="segmented.mode.disabled">禁用项</text>
+    <text key="segmented.period.day">日</text>
+    <text key="segmented.period.week">周</text>
+    <text key="segmented.period.month">月</text>
+    <text key="segmented.period.year">年</text>
+    <text key="segmented.ab.a">甲</text>
+    <text key="segmented.ab.b">乙</text>
+    <text key="form.title">FormLayout 表单</text>
+    <text key="form.desc">必填星号、错误提示行与整表校验。</text>
+    <text key="form.sec">表单校验</text>
+    <text key="form.label.user">用户名</text>
+    <text key="form.label.mail">邮箱</text>
+    <text key="form.label.note">备注</text>
+    <text key="form.err.min_len">至少 3 个字符</text>
+    <text key="form.err.mail">邮箱格式不正确</text>
+    <text key="form.hint">必填星号 + 校验错误提示行；上方邮箱故意填写非法值以展示错误态。</text>
+  </group>
+  <!-- 组件 · 展示演示页 -->
+  <group name="display">
+    <text key="avatar.title">Avatar 头像</text>
+    <text key="avatar.desc">圆形 / 方形，图片 / 文字 / 图标回退，多种尺寸。</text>
+    <text key="avatar.sec">头像</text>
+    <text key="avatar.name.1">张三</text>
+    <text key="avatar.name.2">李</text>
+    <text key="avatar.name.3">王芳</text>
+    <text key="badge.title">Badge 徽标</text>
+    <text key="badge.desc">包裹任意子控件角标、独立点模式、99+ 上限。</text>
+    <text key="badge.sec">徽标</text>
+    <text key="badge.btn.messages">消息中心</text>
+    <text key="badge.btn.notifications">通知</text>
+    <text key="badge.btn.dot">红点</text>
+    <text key="card.title">Card 卡片</text>
+    <text key="card.desc">title / extra / footer 槽，hoverable、bordered 变体。</text>
+    <text key="card.sec">卡片</text>
+    <text key="card.order.title">订单概览</text>
+    <text key="card.order.more">更多</text>
+    <text key="card.order.body">本月订单 1,280 笔，环比增长 12.5%。</text>
+    <text key="card.order.footer">更新于 10 分钟前</text>
+    <text key="card.plain.title">无边框卡片</text>
+    <text key="card.plain.body">hoverable + bordered 变体演示。</text>
+    <text key="descriptions.page_title">Descriptions 描述列表</text>
+    <text key="descriptions.title">用户信息</text>
+    <text key="descriptions.desc">列数自适应，可选边框。</text>
+    <text key="descriptions.sec">描述列表</text>
+    <text key="descriptions.label.name">姓名</text>
+    <text key="descriptions.value.name">张三</text>
+    <text key="descriptions.label.phone">手机号</text>
+    <text key="descriptions.label.city">城市</text>
+    <text key="descriptions.value.city">上海</text>
+    <text key="descriptions.label.mail">邮箱</text>
+    <text key="descriptions.label.role">角色</text>
+    <text key="descriptions.value.role">管理员</text>
+    <text key="descriptions.label.status">状态</text>
+    <text key="descriptions.value.status">在职</text>
+    <text key="list_view.title">ListWidget 列表</text>
+    <text key="list_view.desc">统一项高、hover 与选中样式。</text>
+    <text key="list_view.sec">列表</text>
+    <text key="list_view.item.inbox">收件箱</text>
+    <text key="list_view.item.starred">星标邮件</text>
+    <text key="list_view.item.sent">已发送</text>
+    <text key="list_view.item.drafts">草稿箱</text>
+    <text key="list_view.item.trash">已删除</text>
+    <text key="table.title">Table 表格</text>
+    <text key="table.desc">斑马纹、紧凑行高、排序与空状态占位。</text>
+    <text key="table.sec">表格</text>
+    <text key="table.header.name">姓名</text>
+    <text key="table.header.dept">部门</text>
+    <text key="table.header.sales">销售额</text>
+    <text key="table.name.1">张三</text>
+    <text key="table.name.2">李四</text>
+    <text key="table.name.3">王五</text>
+    <text key="table.name.4">赵六</text>
+    <text key="table.region.east">华东</text>
+    <text key="table.region.north">华北</text>
+    <text key="table.region.south">华南</text>
+    <text key="table.region.southwest">西南</text>
+    <text key="table.empty">暂无符合条件的数据</text>
+    <text key="tree.title">Tree 树</text>
+    <text key="tree.desc">缩进线样式与复选支持。</text>
+    <text key="tree.sec">树</text>
+    <text key="tree.fruit">水果</text>
+    <text key="tree.apple">苹果</text>
+    <text key="tree.fuji">红富士</text>
+    <text key="tree.gala">嘎啦</text>
+    <text key="tree.banana">香蕉</text>
+    <text key="tree.veg">蔬菜</text>
+    <text key="tree.cabbage">白菜</text>
+    <text key="tree.radish">萝卜</text>
+    <text key="timeline.title">Timeline 时间轴</text>
+    <text key="timeline.desc">自绘节点颜色 / 图标，pending 尾部。右侧面板实时调节节点颜色、图标、pending、线条样式 / 粗细、节点半径、行距、轴侧与字号。</text>
+    <text key="timeline.sec">时间轴（右侧参数实时生效）</text>
+    <text key="timeline.item.1">创建订单</text>
+    <text key="timeline.item.2">支付成功</text>
+    <text key="timeline.item.3">商家已接单</text>
+    <text key="timeline.pending_default">等待骑手接单</text>
+    <text key="timeline.panel_title">时间轴参数</text>
+    <text key="timeline.opt.theme">主题 primary</text>
+    <text key="timeline.opt.success">成功 success</text>
+    <text key="timeline.opt.warning">警告 warning</text>
+    <text key="timeline.opt.danger">危险 danger</text>
+    <text key="timeline.opt.dot">圆点</text>
+    <text key="timeline.opt.icon">图标</text>
+    <text key="timeline.opt.solid">实线</text>
+    <text key="timeline.opt.dashed">虚线</text>
+    <text key="timeline.opt.dotted">点线</text>
+    <text key="timeline.opt.left">左侧</text>
+    <text key="timeline.opt.right">右侧</text>
+    <text key="timeline.p.node_color">节点{n}颜色</text>
+    <text key="timeline.p.pending_on">显示 pending</text>
+    <text key="timeline.p.pending_text">pending 文本</text>
+    <text key="timeline.p.icon_mode">节点图标</text>
+    <text key="timeline.p.line_style">线条样式</text>
+    <text key="timeline.p.line_width">线条粗细</text>
+    <text key="timeline.p.dot_radius">节点半径</text>
+    <text key="timeline.p.spacing">行距附加</text>
+    <text key="timeline.p.axis_side">轴线位置</text>
+    <text key="timeline.p.font_size">正文字号</text>
+    <text key="timeline.p.time_font_size">时间字号</text>
+    <text key="statistic.title">Statistic 统计数值</text>
+    <text key="statistic.desc">标题 + 大数值 + 前后缀 + 趋势箭头。</text>
+    <text key="statistic.sec">统计数值</text>
+    <text key="statistic.users">活跃用户</text>
+    <text key="statistic.suffix.people">人</text>
+    <text key="statistic.revenue">成交金额</text>
+    <text key="statistic.tickets">待处理工单</text>
+    <text key="calendar.title">Calendar 日历</text>
+    <text key="calendar.desc">中文表头、今日高亮。</text>
+    <text key="calendar.sec">日历</text>
+    <text key="carousel.title">Carousel 走马灯</text>
+    <text key="carousel.desc">QStackedLayout + 指示点 + 左右箭头，autoplay。</text>
+    <text key="carousel.sec">走马灯</text>
+    <text key="carousel.page">第 {n} 屏</text>
+    <text key="image_view.title">ImageView 图片</text>
+    <text key="image_view.desc">圆角图片、加载失败占位、hover 预览蒙层。</text>
+    <text key="image_view.sec">图片</text>
+    <text key="image_view.hint">左：圆角图片 + hover 预览蒙层；右：加载失败占位。</text>
+    <text key="qrcode_view.title">QRCodeView 二维码</text>
+    <text key="qrcode_view.desc">qrcode 库生成，容错级别参数。</text>
+    <text key="qrcode_view.sec">二维码</text>
+    <text key="qrcode_view.content">InstructionX_UIKit 二维码</text>
+    <text key="comment.title">CommentView 评论</text>
+    <text key="comment.desc">头像 + 作者 + 时间 + 内容 + 操作行，可嵌套回复。</text>
+    <text key="comment.sec">评论</text>
+    <text key="comment.author.1">张三</text>
+    <text key="comment.author.2">李四</text>
+    <text key="comment.author.3">王五</text>
+    <text key="comment.body.1">这个组件库的暗色主题做得很细致，表格斑马纹很清楚。</text>
+    <text key="comment.body.2">同感，期待图表页面。</text>
+    <text key="comment.body.3">折叠面板的动画也很顺滑。</text>
+    <text key="comment.time.1">2 小时前</text>
+    <text key="comment.time.2">1 小时前</text>
+    <text key="comment.time.3">30 分钟前</text>
+    <text key="comment.action.reply">回复</text>
+    <text key="comment.action.like">赞</text>
+    <text key="collapse.title">Collapse 折叠面板</text>
+    <text key="collapse.desc">手风琴可选，动画展开。</text>
+    <text key="collapse.sec">折叠面板</text>
+    <text key="collapse.q1">什么是 InstructionX_UIKit？</text>
+    <text key="collapse.a1">一套基于设计令牌与主题系统的 PySide6 组件库。</text>
+    <text key="collapse.q2">如何切换暗色主题？</text>
+    <text key="collapse.a2">调用 ThemeManager.instance().toggle() 即可全局切换。</text>
+    <text key="collapse.q3">是否支持自定义组件？</text>
+    <text key="collapse.a3">可以，所有组件均基于 Qt 原生控件子类化。</text>
+    <text key="empty.title">Empty 空状态</text>
+    <text key="empty.desc">自绘插画 + 描述 + 操作按钮槽。</text>
+    <text key="empty.sec">空状态</text>
+    <text key="empty.text">暂无搜索结果，换个关键词试试</text>
+    <text key="empty.action">清空筛选</text>
+    <text key="tooltip.title">Tooltip 工具提示</text>
+    <text key="tooltip.desc">set_tooltip(widget, text) 富样式 QToolTip。</text>
+    <text key="tooltip.sec">工具提示</text>
+    <text key="tooltip.btn.hover">悬停查看提示</text>
+    <text key="tooltip.tip.rich">这是由全局 QSS 统一样式的工具提示。</text>
+    <text key="tooltip.tip.title">操作提示</text>
+    <text key="tooltip.btn.plain">纯文本提示</text>
+    <text key="tooltip.tip.plain">只有正文的提示</text>
+    <text key="tooltip.hint">运行 Demo 后将鼠标悬停在按钮上即可看到富样式提示。</text>
+    <text key="popover.title">Popover 气泡卡片</text>
+    <text key="popover.desc">相对锚点弹出（QFrame, Popup），带箭头。</text>
+    <text key="popover.sec">气泡卡片</text>
+    <text key="popover.btn">点击弹出气泡卡片</text>
+    <text key="popover.pop.title">快捷筛选</text>
+    <text key="popover.pop.body">按状态、时间或负责人筛选列表数据。
+点击外部区域关闭。</text>
+    <text key="popover.hint">点击按钮相对锚点弹出带箭头气泡卡片。</text>
+  </group>
+  <!-- MarkdownView 演示页（markdown_view.py）；Markdown 示例正文用 CDATA 原样保留换行 -->
+  <group name="markdown_view">
+    <text key="title">MarkdownView Markdown 渲染</text>
+    <text key="desc">Qt 内置引擎原生渲染 Markdown，令牌化样式，支持流式追加、LaTeX 公式与 Mermaid 图表。</text>
+    <text key="sec.basic">基础渲染</text>
+    <text key="sec.math">数学公式（LaTeX）</text>
+    <text key="sec.mermaid">Mermaid 图表</text>
+    <text key="sec.mermaid_view">MermaidView 独立使用</text>
+    <text key="sec.stream">流式追加（模拟 AI 逐字输出，含 LaTeX 公式与 Mermaid 实时渲染）</text>
+    <text key="sec.empty">空状态</text>
+    <text key="replay">重新播放</text>
+    <text key="hint.mermaid">图表是可交互的：拖动平移、Ctrl+滚轮缩放，右上角工具条可放大 / 缩小 / 复位 / 适宽。该查看器即 MermaidView，以叠加层方式嵌在文档图位上；WebEngine 不可用时自动降级为内置自绘渲染器（flowchart / sequenceDiagram / pie 子集），交互保留。</text>
+    <text key="hint.mermaid_view">MermaidView 可脱离 MarkdownView 单独使用：MermaidView("flowchart LR\n    A[开始] --&gt; B[结束]")；语法错误经 render_failed 信号上报。</text>
+    <text key="sample.basic"><![CDATA[## 渲染能力一览
+
+正文支持 **加粗**、*斜体*、~~删除线~~ 与 `行内代码`。
+
+- 无序列表项
+- 支持任务列表：
+- [x] 已完成的事项
+- [ ] 待办事项
+
+> 引用块使用次要文本色，适合展示引用与提示。
+
+```python
+def fibonacci(n):
+    a, b = 0, 1
+    for _ in range(n):
+        a, b = b, a + b
+    return a
+```
+
+| 语法 | 支持情况 |
+|------|----------|
+| 表格 | 支持 |
+| 代码围栏 | 支持（等宽字体 + 底色，不做语法高亮） |
+
+[链接使用主题主色](https://github.com/KKPIP-Tech/InstructionX_UIKit)]]></text>
+    <text key="sample.math"><![CDATA[行内公式：质能方程 $E=mc^2$，以及欧拉恒等式 $e^{i\pi}+1=0$。
+
+块级公式（求根公式）：
+
+$$\frac{-b \pm \sqrt{b^2-4ac}}{2a}$$
+
+也支持 `\[...\]` 与 `\begin{equation}` 环境：
+
+\[\int_0^\infty e^{-x^2}\,dx = \frac{\sqrt{\pi}}{2}\]
+
+\begin{equation}
+a^2 + b^2 = c^2
+\end{equation}
+
+公式由 matplotlib mathtext 在后台线程异步渲染并缓存，渲染期间以源码占位；
+代码围栏与行内代码中的 `$...$` 不会被当作公式。]]></text>
+    <text key="sample.mermaid"><![CDATA[Mermaid 围栏渲染为可交互图表（官方 mermaid.js 引擎，随包分发不联网），
+官方全量图型可用，随主题令牌着色：
+
+```mermaid
+flowchart LR
+    A[用户提问] --> B{理解意图}
+    B -- 明确 --> C[检索知识库]
+    B -- 模糊 --> D[请求澄清]
+    C --> E[生成回答]
+    D --> E
+```
+
+```mermaid
+sequenceDiagram
+    participant U as 用户
+    participant A as 助手
+    U->>A: 发送问题
+    A->>A: 推理与检索
+    A-->>U: 流式返回回答
+```
+
+```mermaid
+pie title 本周时间分布
+    "编码": 40
+    "阅读文档": 25
+    "讨论设计": 20
+    "其他": 15
+```
+
+流式追加中未闭合的 mermaid 围栏按代码块降级显示，闭合后重排为图表；
+语法错误时显示失败占位图。]]></text>
+    <text key="sample.stream"><![CDATA[## 流式渲染能力演示
+
+这段内容由**逐 token 追加**生成，涵盖 Markdown 与 LaTeX 的主要渲染能力。
+
+### 行内公式
+
+质能方程 $E=mc^2$、欧拉恒等式 $e^{i\pi}+1=0$。
+
+### 块级公式
+
+求根公式：
+
+$$
+\frac{-b \pm \sqrt{b^2-4ac}}{2a}
+$$
+
+### 表格与代码
+
+| 语法 | 写法 |
+|------|------|
+| 行内公式 | `$...$` |
+| 块级公式 | `$$...$$` / `\[...\]` |
+
+```python
+view = MarkdownView()
+for token in stream:       # 逐 token 到达
+    view.append_markdown(token)
+```
+
+Mermaid 围栏在闭合后异步渲染并就位：
+
+```mermaid
+flowchart LR
+    T[token 流] --> P[增量解析]
+    P --> R[实时渲染]
+```
+
+> 公式由 matplotlib mathtext 后台异步渲染，命中 LRU 缓存零耗时。]]></text>
+    <text key="sample.standalone"><![CDATA[flowchart LR
+    A[开始] --> B[处理]
+    B --> C[结束]]]></text>
+  </group>
+  <group name="feedback">
+    <text key="tabs.sec">三种样式</text>
+    <text key="tabs.tab.1">概览</text>
+    <text key="tabs.tab.2">明细</text>
+    <text key="tabs.tab.3">设置</text>
+    <text key="tabs.content">{variant} - {page} 内容区</text>
+    <text key="tabs.title">Tabs 标签页</text>
+    <text key="tabs.desc">line / card / segmented 三种样式。</text>
+    <text key="anchor.sec">锚点联动</text>
+    <text key="anchor.sec.1">基本信息</text>
+    <text key="anchor.sec.2">安全设置</text>
+    <text key="anchor.sec.3">通知偏好</text>
+    <text key="anchor.sec.4">关于产品</text>
+    <text key="anchor.body">配置项示例文本</text>
+    <text key="anchor.title">Anchor 锚点</text>
+    <text key="anchor.desc">配合 QScrollArea 高亮当前段，点击滚动定位。</text>
+    <text key="breadcrumb.sec">面包屑</text>
+    <text key="breadcrumb.first.1">首页</text>
+    <text key="breadcrumb.first.2">组件库</text>
+    <text key="breadcrumb.first.3">导航</text>
+    <text key="breadcrumb.first.4">面包屑</text>
+    <text key="breadcrumb.second.1">仪表盘</text>
+    <text key="breadcrumb.second.2">实时数据</text>
+    <text key="breadcrumb.second.3">节点详情</text>
+    <text key="breadcrumb.title">Breadcrumb 面包屑</text>
+    <text key="breadcrumb.desc">分隔符可配，末级加粗，可点击。</text>
+    <text key="dropdown.sec">下拉菜单按钮</text>
+    <text key="dropdown.btn">更多操作</text>
+    <text key="dropdown.item.edit">编辑</text>
+    <text key="dropdown.item.share">分享</text>
+    <text key="dropdown.item.disabled">禁用项</text>
+    <text key="dropdown.item.delete">删除</text>
+    <text key="dropdown.hint">菜单项支持图标 / 快捷键 / 危险项。</text>
+    <text key="dropdown.title">DropdownButton 下拉菜单</text>
+    <text key="dropdown.desc">QMenu 封装，菜单项带图标 / 快捷键 / 危险项。</text>
+    <text key="nav_menu.sec">侧边导航菜单</text>
+    <text key="nav_menu.group.1">概览</text>
+    <text key="nav_menu.group.2">系统管理</text>
+    <text key="nav_menu.item.dashboard">仪表盘</text>
+    <text key="nav_menu.item.monitor">实时监控</text>
+    <text key="nav_menu.item.users">用户管理</text>
+    <text key="nav_menu.item.roles">角色权限</text>
+    <text key="nav_menu.item.settings">偏好设置</text>
+    <text key="nav_menu.title">NavMenu 侧边导航</text>
+    <text key="nav_menu.desc">分组、折叠、选中条指示。</text>
+    <text key="page_header.sec">页头</text>
+    <text key="page_header.order.title">订单详情</text>
+    <text key="page_header.order.sub">编号 SO-20240601-008，创建于 2024-06-01</text>
+    <text key="page_header.order.bc.1">订单中心</text>
+    <text key="page_header.order.bc.2">订单列表</text>
+    <text key="page_header.order.bc.3">订单详情</text>
+    <text key="page_header.action.export">导出</text>
+    <text key="page_header.action.edit">编辑订单</text>
+    <text key="page_header.settings.title">系统设置</text>
+    <text key="page_header.settings.sub">全局参数与偏好</text>
+    <text key="page_header.title">PageHeader 页头</text>
+    <text key="page_header.desc">返回、标题、副标题、面包屑槽、操作区。</text>
+    <text key="pagination.sec">分页</text>
+    <text key="pagination.title">Pagination 分页</text>
+    <text key="pagination.desc">页码省略、跳转输入、每页条数。</text>
+    <text key="steps.sec">步骤条（右侧参数实时生效）</text>
+    <text key="steps.pool.1.title">填写信息</text>
+    <text key="steps.pool.1.desc">必填项校验</text>
+    <text key="steps.pool.2.title">确认订单</text>
+    <text key="steps.pool.2.desc">核对金额</text>
+    <text key="steps.pool.3.title">支付</text>
+    <text key="steps.pool.3.desc">担保交易</text>
+    <text key="steps.pool.4.title">发货</text>
+    <text key="steps.pool.4.desc">48 小时内</text>
+    <text key="steps.pool.5.title">完成</text>
+    <text key="steps.pool.5.desc"></text>
+    <text key="steps.panel_title">步骤条参数</text>
+    <text key="steps.p.orientation">方向</text>
+    <text key="steps.p.current">当前步骤</text>
+    <text key="steps.p.count">步骤数</text>
+    <text key="steps.p.status2">步骤2状态</text>
+    <text key="steps.p.status3">步骤3状态</text>
+    <text key="steps.p.node_radius">节点半径</text>
+    <text key="steps.p.link_style">连接线样式</text>
+    <text key="steps.p.link_width">连接线宽</text>
+    <text key="steps.p.clickable">点击切换步骤</text>
+    <text key="steps.opt.horizontal">水平</text>
+    <text key="steps.opt.vertical">垂直</text>
+    <text key="steps.opt.auto">自动</text>
+    <text key="steps.opt.wait">等待 wait</text>
+    <text key="steps.opt.process">进行 process</text>
+    <text key="steps.opt.finish">完成 finish</text>
+    <text key="steps.opt.error">出错 error</text>
+    <text key="steps.opt.solid">实线</text>
+    <text key="steps.opt.dashed">虚线</text>
+    <text key="steps.opt.dotted">点线</text>
+    <text key="steps.title">Steps 步骤条</text>
+    <text key="steps.desc">水平 / 垂直，wait / process / finish / error 状态。右侧面板实时调节方向、当前步骤、步骤数、各步显式状态、节点半径、连接线样式 / 线宽，并可开启点击节点切换步骤。</text>
+    <text key="alert.sec">警告提示</text>
+    <text key="alert.info.title">系统升级通知</text>
+    <text key="alert.info.body">本周六 02:00 - 04:00 进行例行维护。</text>
+    <text key="alert.success.title">保存成功</text>
+    <text key="alert.success.body">全部配置已写入配置文件。</text>
+    <text key="alert.warning.title">磁盘空间不足</text>
+    <text key="alert.warning.body">剩余空间低于 10%，请及时清理。</text>
+    <text key="alert.warning.action">去清理</text>
+    <text key="alert.error.title">任务执行失败</text>
+    <text key="alert.error.body">第 3 个子任务超时退出。</text>
+    <text key="alert.error.action">查看日志</text>
+    <text key="alert.title">Alert 警告提示</text>
+    <text key="alert.desc">info / success / warning / error，可关闭、带操作。</text>
+    <text key="dialog.sec">统一对话框</text>
+    <text key="dialog.btn.confirm">打开确认对话框</text>
+    <text key="dialog.btn.info">打开信息对话框</text>
+    <text key="dialog.confirm.title">确认删除</text>
+    <text key="dialog.confirm.body">删除后不可恢复，确定继续吗？</text>
+    <text key="dialog.info.title">操作完成</text>
+    <text key="dialog.info.body">数据同步已完成。</text>
+    <text key="dialog.hint">Dialog.confirm() / Dialog.info() 静态便捷方法。</text>
+    <text key="dialog.title">Dialog 对话框</text>
+    <text key="dialog.desc">统一标题栏与按钮区，confirm() / info() 静态方法。</text>
+    <text key="drawer.sec">抽屉</text>
+    <text key="drawer.btn">{pos} 抽屉</text>
+    <text key="drawer.content">从 {pos} 边滑入的抽屉内容。</text>
+    <text key="drawer.hint">四边滑入，宽度可拖拽。</text>
+    <text key="drawer.title">Drawer 抽屉</text>
+    <text key="drawer.desc">四边滑入，宽度可拖拽。</text>
+    <text key="notification.sec">通知提醒框</text>
+    <text key="notification.btn.success">成功通知</text>
+    <text key="notification.btn.error">错误通知</text>
+    <text key="notification.btn.info">信息通知</text>
+    <text key="notification.btn.warning">警告通知</text>
+    <text key="notification.msg_title">{kind} 标题</text>
+    <text key="notification.body">这是通知提醒的正文内容。</text>
+    <text key="notification.hint">右上角堆叠弹出，自动消失，带进度条。</text>
+    <text key="notification.title">Notification 通知提醒</text>
+    <text key="notification.desc">右上角堆叠弹出，自动消失，进度条。</text>
+    <text key="message.sec">全局轻提示</text>
+    <text key="message.btn.success">成功</text>
+    <text key="message.btn.warning">警告</text>
+    <text key="message.btn.info">信息</text>
+    <text key="message.btn.error">错误</text>
+    <text key="message.text">这是一条 {kind} 轻提示</text>
+    <text key="message.hint">顶部居中轻提示 info / success / warning / error。</text>
+    <text key="message.title">Message 全局提示</text>
+    <text key="message.desc">顶部居中轻提示，四种类型。</text>
+    <text key="popconfirm.sec">气泡确认框</text>
+    <text key="popconfirm.btn">删除文件</text>
+    <text key="popconfirm.text">确定删除该文件吗？此操作不可恢复。</text>
+    <text key="popconfirm.hint">点击按钮弹出气泡确认框，确认 / 取消。</text>
+    <text key="popconfirm.title">Popconfirm 气泡确认</text>
+    <text key="popconfirm.desc">Popover 式气泡确认框。</text>
+    <text key="result.sec">结果页</text>
+    <text key="result.success.title">提交成功</text>
+    <text key="result.success.sub">我们已收到你的申请，将在 2 个工作日内处理完毕。</text>
+    <text key="result.notfound.title">页面不存在</text>
+    <text key="result.notfound.sub">请检查地址是否正确，或返回首页。</text>
+    <text key="result.error.title">操作失败</text>
+    <text key="result.error.sub">服务器繁忙，请稍后重试。</text>
+    <text key="result.action.home">返回首页</text>
+    <text key="result.action.detail">查看详情</text>
+    <text key="result.title">ResultView 结果页</text>
+    <text key="result.desc">success / error / info / 404 自绘图标 + 标题 + 操作。</text>
+    <text key="skeleton.sec">骨架屏</text>
+    <text key="skeleton.hint">标题 / 段落 / 头像 / 按钮形状，微光动画。</text>
+    <text key="skeleton.title">Skeleton 骨架屏</text>
+    <text key="skeleton.desc">标题 / 段落 / 头像 / 按钮形状，微光动画。</text>
+    <text key="spinner.sec">加载中</text>
+    <text key="spinner.tip.loading">加载中</text>
+    <text key="spinner.tip.wait">请稍候…</text>
+    <text key="spinner.title">Spinner 加载中</text>
+    <text key="spinner.desc">旋转弧，size 与 tip 文案。</text>
+    <text key="progress_bar.sec">进度</text>
+    <text key="progress_bar.title">ProgressBar 进度条</text>
+    <text key="progress_bar.desc">直线 / 环形进度，状态色。</text>
+    <text key="tour.sec">漫游式引导</text>
+    <text key="tour.target.a">目标按钮 A</text>
+    <text key="tour.target.b">目标按钮 B</text>
+    <text key="tour.btn.start">开始引导</text>
+    <text key="tour.step.1.title">第一步</text>
+    <text key="tour.step.1.body">这是目标按钮 A 的引导说明。</text>
+    <text key="tour.step.2.title">第二步</text>
+    <text key="tour.step.2.body">这是目标按钮 B 的引导说明。</text>
+    <text key="tour.hint">高亮目标控件 + 步骤气泡，上一步 / 下一步 / 跳过。</text>
+    <text key="tour.title">Tour 漫游引导</text>
+    <text key="tour.desc">高亮目标控件 + 步骤气泡。</text>
+  </group>
+  <group name="anim_property">
+    <text key="fade_in.title">fade_in 淡入</text>
+    <text key="fade_out.title">fade_out 淡出</text>
+    <text key="slide_in.title">slide_in 滑入</text>
+    <text key="zoom_in.title">zoom_in 缩放进入</text>
+    <text key="spring_pop.title">spring_pop 弹性弹出</text>
+    <text key="badge_pop.title">badge_pop 角标弹入</text>
+    <text key="stagger_in.title">stagger_in 交错入场</text>
+    <text key="blur_in.title">blur_in 模糊进入</text>
+    <text key="mask_reveal.title">mask_reveal 遮罩揭示</text>
+    <text key="hover_lift.title">hover_lift 悬停上浮</text>
+    <text key="morph.title">button_morph_loading 按钮变形</text>
+    <text key="ripple.title">ripple 涟漪</text>
+    <text key="switch.title">switch_toggle 开关切换</text>
+    <text key="pulse.title">pulse 脉冲</text>
+    <text key="bounce.title">bounce 弹跳</text>
+    <text key="swing.title">swing 摇摆</text>
+    <text key="shake.title">shake 抖动</text>
+    <text key="flash.title">flash_highlight 高亮闪烁</text>
+    <text key="float_loop.title">float_loop 漂浮循环</text>
+    <text key="pulse_glow.title">pulse_glow 辉光呼吸</text>
+    <text key="breathing.title">breathing 呼吸</text>
+    <text key="gflow.title">gradient_flow 背景渐变</text>
+    <text key="gtext.title">gradient_text_flow 文字渐变</text>
+    <text key="cross_fade.title">cross_fade 交叉淡化</text>
+    <text key="page_trans.title">page_transition 页面切换</text>
+    <text key="slide_trans.title">slide_transition 滑动过渡</text>
+    <text key="container_morph.title">container_morph 容器变形</text>
+    <text key="shared_element.title">shared_element 共享元素</text>
+    <text key="fade_in.hint">透明度 0 → 1</text>
+    <text key="fade_out.hint">渐隐直至隐藏（稍后自动复原）</text>
+    <text key="slide_in.hint">从指定方向偏移滑入</text>
+    <text key="zoom_in.hint">由小放大进入</text>
+    <text key="spring_pop.hint">回弹式弹出</text>
+    <text key="badge_pop.hint">角标弹性入场</text>
+    <text key="stagger_in.hint">子控件依次淡入上移</text>
+    <text key="blur_in.hint">模糊半径 → 0</text>
+    <text key="mask_reveal.hint">逐帧裁剪揭示</text>
+    <text key="hover_lift.hint">鼠标悬停上浮（安装后悬停查看）</text>
+    <text key="morph.hint">点击在加载 ↔ 还原间切换</text>
+    <text key="ripple.hint">Material 点击波纹</text>
+    <text key="switch.hint">按压回弹 + 换态</text>
+    <text key="pulse.hint">缩放心跳强调</text>
+    <text key="bounce.hint">上移后落地回弹</text>
+    <text key="swing.hint">左右摇摆</text>
+    <text key="shake.hint">水平抖动</text>
+    <text key="flash.hint">主题色叠加淡出</text>
+    <text key="float_loop.hint">原位上下往复（循环）</text>
+    <text key="pulse_glow.hint">投影半径呼吸（循环）</text>
+    <text key="breathing.hint">透明度呼吸（循环）</text>
+    <text key="gflow.hint">渐变色带流动（循环）</text>
+    <text key="gtext.hint">逐字色相流动（循环）</text>
+    <text key="cross_fade.hint">两页 A/B 交叉淡化</text>
+    <text key="page_trans.hint">QStackedWidget 切页</text>
+    <text key="slide_trans.hint">源滑出 / 目标滑入</text>
+    <text key="container_morph.hint">大小 / 圆角变形 ↔ 还原</text>
+    <text key="shared_element.hint">控件几何 A→B 往返</text>
+    <text key="fade_in.block">淡入</text>
+    <text key="fade_out.block">淡出</text>
+    <text key="slide_in.block">滑入</text>
+    <text key="zoom_in.block">缩放</text>
+    <text key="spring_pop.block">弹性</text>
+    <text key="blur_in.block">模糊</text>
+    <text key="mask_reveal.block">揭示</text>
+    <text key="hover_lift.block">悬停我</text>
+    <text key="morph.block">提交</text>
+    <text key="ripple.block">点我涟漪</text>
+    <text key="pulse.block">脉冲</text>
+    <text key="bounce.block">弹跳</text>
+    <text key="swing.block">摇摆</text>
+    <text key="shake.block">抖动</text>
+    <text key="flash.block">闪烁</text>
+    <text key="float_loop.block">漂浮</text>
+    <text key="pulse_glow.block">辉光</text>
+    <text key="breathing.block">呼吸</text>
+    <text key="gtext.block">渐变流动文字</text>
+    <text key="cross_fade.block_a">页面 A</text>
+    <text key="cross_fade.block_b">页面 B</text>
+    <text key="page_trans.block_a">第一页</text>
+    <text key="page_trans.block_b">第二页</text>
+    <text key="slide_trans.block_a">甲</text>
+    <text key="slide_trans.block_b">乙</text>
+    <text key="fade_in.p.duration">时长</text>
+    <text key="fade_in.p.easing">缓动</text>
+    <text key="fade_in.p.opacity">起始透明度</text>
+    <text key="fade_out.p.duration">时长</text>
+    <text key="fade_out.p.easing">缓动</text>
+    <text key="slide_in.p.direction">方向</text>
+    <text key="slide_in.p.distance">距离</text>
+    <text key="slide_in.p.fade">同步淡入</text>
+    <text key="slide_in.p.duration">时长</text>
+    <text key="zoom_in.p.scale">起始缩放</text>
+    <text key="zoom_in.p.fade">同步淡入</text>
+    <text key="zoom_in.p.duration">时长</text>
+    <text key="spring_pop.p.scale">起始缩放</text>
+    <text key="spring_pop.p.duration">时长</text>
+    <text key="badge_pop.p.duration">时长</text>
+    <text key="badge_pop.p.easing">缓动</text>
+    <text key="stagger_in.p.interval">间隔</text>
+    <text key="stagger_in.p.offset">起始偏移</text>
+    <text key="stagger_in.p.duration">时长</text>
+    <text key="blur_in.p.radius">模糊半径</text>
+    <text key="blur_in.p.duration">时长</text>
+    <text key="mask_reveal.p.direction">方向</text>
+    <text key="mask_reveal.p.duration">时长</text>
+    <text key="hover_lift.p.dy">上移距离</text>
+    <text key="hover_lift.p.shadow">阴影切换</text>
+    <text key="hover_lift.p.duration">时长</text>
+    <text key="morph.p.duration">变形时长</text>
+    <text key="morph.p.pulse">呼吸周期</text>
+    <text key="ripple.p.opacity">起始不透明度</text>
+    <text key="ripple.p.duration">时长</text>
+    <text key="switch.p.duration">时长</text>
+    <text key="switch.p.easing">缓动</text>
+    <text key="pulse.p.peak">峰值缩放</text>
+    <text key="pulse.p.loops">循环次数</text>
+    <text key="pulse.p.duration">时长</text>
+    <text key="bounce.p.height">弹跳高度</text>
+    <text key="bounce.p.loops">循环次数</text>
+    <text key="bounce.p.duration">时长</text>
+    <text key="swing.p.angle">摆角(度)</text>
+    <text key="swing.p.loops">循环次数</text>
+    <text key="swing.p.duration">时长</text>
+    <text key="shake.p.amplitude">振幅</text>
+    <text key="shake.p.loops">循环次数</text>
+    <text key="shake.p.duration">时长</text>
+    <text key="flash.p.times">闪烁次数</text>
+    <text key="flash.p.opacity">不透明度</text>
+    <text key="flash.p.color">高亮色</text>
+    <text key="flash.p.duration">时长</text>
+    <text key="float_loop.p.dy">幅度</text>
+    <text key="float_loop.p.duration">周期</text>
+    <text key="float_loop.p.loops">循环次数</text>
+    <text key="float_loop.p.unlimited">无限</text>
+    <text key="pulse_glow.p.min_blur">最小半径</text>
+    <text key="pulse_glow.p.max_blur">最大半径</text>
+    <text key="pulse_glow.p.duration">周期</text>
+    <text key="breathing.p.opacity">最低透明度</text>
+    <text key="breathing.p.duration">周期</text>
+    <text key="gflow.p.palette">色带</text>
+    <text key="gflow.p.direction">方向</text>
+    <text key="gflow.p.duration">周期</text>
+    <text key="gflow.palette.theme">主题 蓝→绿</text>
+    <text key="gflow.palette.warm">暖 橙→红</text>
+    <text key="gflow.palette.violet">紫→粉</text>
+    <text key="gtext.p.text">文本</text>
+    <text key="gtext.p.duration">周期</text>
+    <text key="cross_fade.p.duration">时长</text>
+    <text key="cross_fade.p.easing">缓动</text>
+    <text key="page_trans.p.kind">模式</text>
+    <text key="page_trans.p.direction">方向</text>
+    <text key="page_trans.p.duration">时长</text>
+    <text key="slide_trans.p.direction">方向</text>
+    <text key="slide_trans.p.duration">时长</text>
+    <text key="slide_trans.p.hide_source">结束后隐藏源</text>
+    <text key="container_morph.p.radius">目标圆角</text>
+    <text key="container_morph.p.duration">时长</text>
+    <text key="shared_element.p.duration">时长</text>
+    <text key="shared_element.p.easing">缓动</text>
+    <text key="shared_element.p.fade">同步淡入</text>
+    <text key="sec">属性动画（28 个预设 · 调参数后点「播放」重放）</text>
+    <text key="title">动画 · 属性</text>
+    <text key="desc">基于 QPropertyAnimation / QVariantAnimation / 动画组的 28 个属性动画预设。每张卡片带 2-4 个参数（时长 / 缓动 / 方向 / 幅度 / 循环次数等），调整后点击「播放」按新参数重放；循环类动画参数变化即时重启。</text>
+  </group>
+  <group name="anim_painted">
+    <text key="spinner.title">SpinnerArc 旋转圈</text>
+    <text key="dots.title">BouncingDots 跳动的点</text>
+    <text key="check.title">CheckDraw 对勾描绘</text>
+    <text key="like.title">LikeBurstButton 点赞爆裂</text>
+    <text key="magnet.title">MagneticButton 磁吸按钮</text>
+    <text key="skeleton.title">SkeletonShimmer 骨架微光</text>
+    <text key="shimmer.title">Shimmer 区域微光</text>
+    <text key="striped.title">ProgressStriped 条纹进度</text>
+    <text key="parallax.title">ParallaxArea 视差滚动</text>
+    <text key="reveal.title">ScrollReveal 滚动渐显</text>
+    <text key="strip.title">HorizontalScrollStrip 横滚条带</text>
+    <text key="sticky.title">StickyHeader 粘性固定头</text>
+    <text key="progress.title">ScrollProgressBar 滚动进度</text>
+    <text key="story.title">ScrollStoryArea 滚动叙事</text>
+    <text key="marquee.title">MarqueeLabel 跑马灯</text>
+    <text key="fluid.title">FluidBackground 流体背景</text>
+    <text key="typewriter.title">TypewriterLabel 打字机</text>
+    <text key="decode.title">TextDecodeLabel 文字解码</text>
+    <text key="number.title">NumberRollLabel 数字滚动</text>
+    <text key="letters.title">LetterStaggerLabel 逐字进场</text>
+    <text key="tilt.title">CardTilt 卡片倾斜</text>
+    <text key="cube.title">CubeRotator 立方体旋转</text>
+    <text key="flip.title">FlipCard 翻转卡片</text>
+    <text key="cover.title">CoverFlow 立体轮播</text>
+    <text key="spinner.hint">自动旋转的加载圈</text>
+    <text key="dots.hint">加载中的跳动圆点</text>
+    <text key="check.hint">对勾路径描绘</text>
+    <text key="like.hint">心形 + 粒子爆裂</text>
+    <text key="magnet.hint">按钮随鼠标位移（移动鼠标查看）</text>
+    <text key="skeleton.hint">骨架屏微光扫过</text>
+    <text key="shimmer.hint">任意区域微光扫过</text>
+    <text key="striped.hint">条纹流动 + 进度动画</text>
+    <text key="parallax.hint">播放滚动查看视差</text>
+    <text key="reveal.hint">播放滚动渐显内容块</text>
+    <text key="strip.hint">自动横向滚动</text>
+    <text key="sticky.hint">播放滚动吸附 / 释放</text>
+    <text key="progress.hint">播放滚动驱动顶部进度条</text>
+    <text key="story.hint">播放滚动推进叙事时间线</text>
+    <text key="marquee.hint">长文本循环滚动</text>
+    <text key="fluid.hint">正弦叠加的流体渐变</text>
+    <text key="typewriter.hint">逐字输出 + 光标</text>
+    <text key="decode.hint">乱码逐步解码为文本</text>
+    <text key="number.hint">count-up 数字滚动（播放先归零再滚到目标）</text>
+    <text key="letters.hint">逐字上浮进场</text>
+    <text key="tilt.hint">鼠标移动查看 3D 倾斜</text>
+    <text key="cube.hint">两面 3D 立方体翻转</text>
+    <text key="flip.hint">点击卡片或「播放」正反面翻转</text>
+    <text key="cover.hint">3-7 项透视堆叠轮播</text>
+    <text key="spinner.p.size">尺寸</text>
+    <text key="spinner.p.line_width">线宽</text>
+    <text key="spinner.p.speed">速度(度/帧)</text>
+    <text key="dots.p.count">圆点数</text>
+    <text key="dots.p.diameter">直径</text>
+    <text key="dots.p.amplitude">振幅</text>
+    <text key="dots.p.period">周期</text>
+    <text key="check.p.size">尺寸</text>
+    <text key="check.p.duration">时长</text>
+    <text key="like.p.size">尺寸</text>
+    <text key="like.p.particle_count">粒子数</text>
+    <text key="magnet.p.text">文本</text>
+    <text key="magnet.p.max_offset">最大位移</text>
+    <text key="magnet.p.magnet_range">磁吸范围</text>
+    <text key="skeleton.p.period">周期</text>
+    <text key="skeleton.p.interval">帧间隔</text>
+    <text key="shimmer.p.period">周期</text>
+    <text key="shimmer.p.band">光带宽度</text>
+    <text key="striped.p.height">高度</text>
+    <text key="striped.p.stripe">条纹宽</text>
+    <text key="striped.p.target">目标值</text>
+    <text key="parallax.p.layers">图层数</text>
+    <text key="parallax.p.layer_height">层高</text>
+    <text key="reveal.p.blocks">内容块数</text>
+    <text key="reveal.p.threshold">渐显阈值</text>
+    <text key="strip.p.step">步进速度</text>
+    <text key="strip.p.interval">帧间隔</text>
+    <text key="strip.p.autoplay">自动播放</text>
+    <text key="sticky.p.rows">正文行数</text>
+    <text key="sticky.p.cover_height">遮盖高度</text>
+    <text key="progress.p.height">进度条高</text>
+    <text key="progress.p.rows">内容行数</text>
+    <text key="story.p.steps">步数</text>
+    <text key="story.p.delta">播放步长</text>
+    <text key="marquee.p.text">文本</text>
+    <text key="marquee.p.speed">速度</text>
+    <text key="marquee.p.gap">间隔</text>
+    <text key="marquee.p.pause">停顿</text>
+    <text key="fluid.p.blobs">色团数</text>
+    <text key="fluid.p.speed">速度</text>
+    <text key="fluid.p.fps">帧率</text>
+    <text key="typewriter.p.text">文本</text>
+    <text key="typewriter.p.interval">字间隔</text>
+    <text key="typewriter.p.cursor">显示光标</text>
+    <text key="decode.p.text">文本</text>
+    <text key="decode.p.step">步进</text>
+    <text key="decode.p.span">乱码跨度</text>
+    <text key="number.p.decimals">小数位</text>
+    <text key="number.p.prefix">前缀</text>
+    <text key="number.p.target">目标值</text>
+    <text key="number.p.duration">时长</text>
+    <text key="letters.p.text">文本</text>
+    <text key="letters.p.stagger">字间隔</text>
+    <text key="letters.p.rise">上浮高度</text>
+    <text key="tilt.p.max_angle">最大倾角</text>
+    <text key="tilt.p.persp">透视距离</text>
+    <text key="cube.p.persp">透视距离</text>
+    <text key="cube.p.auto">自动旋转</text>
+    <text key="flip.p.front">正面文本</text>
+    <text key="flip.p.back">背面文本</text>
+    <text key="flip.p.persp">透视距离</text>
+    <text key="cover.p.items">项数</text>
+    <text key="cover.p.persp">透视距离</text>
+    <text key="magnet.default">磁吸按钮</text>
+    <text key="parallax.layer">视差图层 {n}（factor={f}）</text>
+    <text key="reveal.block">内容块 {n}</text>
+    <text key="strip.1">设计</text>
+    <text key="strip.2">令牌</text>
+    <text key="strip.3">组件</text>
+    <text key="strip.4">动画</text>
+    <text key="strip.5">布局</text>
+    <text key="strip.6">主题</text>
+    <text key="strip.7">画廊</text>
+    <text key="strip.8">图表</text>
+    <text key="sticky.header">粘性章节头</text>
+    <text key="sticky.row">正文行 {n}</text>
+    <text key="progress.row">行 {n}</text>
+    <text key="story.step">第 {n} 步</text>
+    <text key="story.body">这是步骤的详细说明文本，</text>
+    <text key="marquee.default">跑马灯：这是一条很长很长需要循环滚动展示的中文公告文本</text>
+    <text key="typewriter.default">打字机效果：中文逐字输出。</text>
+    <text key="decode.default">解码完成的目标文本</text>
+    <text key="letters.default">逐字进场效果</text>
+    <text key="tilt.content">封面内容</text>
+    <text key="cube.face_a">正面 A</text>
+    <text key="cube.face_b">侧面 B</text>
+    <text key="flip.default.front">问题面</text>
+    <text key="flip.default.back">答案面</text>
+    <text key="cover.1">设计</text>
+    <text key="cover.2">组件</text>
+    <text key="cover.3">动画</text>
+    <text key="cover.4">布局</text>
+    <text key="cover.5">主题</text>
+    <text key="cover.6">令牌</text>
+    <text key="cover.7">图表</text>
+    <text key="sec">自绘 / 定时器动画（24 个预设 · 调参数即重建，点「播放」重放）</text>
+    <text key="title">动画 · 自绘</text>
+    <text key="desc">基于 QTimer + paintEvent 的 24 个自绘动画预设。每张卡片带 2-4 个构造参数（尺寸 / 速度 / 数量 / 周期 / 文本等），调整即按新参数重建演示控件：连续型自动重启，触发型点击「播放」重放，滚动型点击「播放」驱动滚动演示。</text>
+  </group>
+  <group name="charts">
+    <text key="bar.title">bar 柱状图 · 月度销量</text>
+    <text key="pictorial.title">pictorialBar 象形柱图 · 城市降雨量</text>
+    <text key="line.title">line 折线图 · 月均气温</text>
+    <text key="scatter.title">scatter 散点图 · 气温×湿度</text>
+    <text key="effect_scatter.title">effectScatter 涟漪散点 · 热门签到城市</text>
+    <text key="candlestick.title">candlestick K线 · 示例股价</text>
+    <text key="boxplot.title">boxplot 箱线图 · 加班工时分布</text>
+    <text key="heatmap_grid.title">heatmap 热力图(grid) · 时段×星期客流量</text>
+    <text key="heatmap_calendar.title">heatmap 热力图(日历) · 代码提交</text>
+    <text key="parallel.title">parallel 平行坐标 · 学生成绩</text>
+    <text key="themeriver.title">themeRiver 主题河 · 话题热度</text>
+    <text key="pie.title">pie 饼图 · 部门预算</text>
+    <text key="radar.title">radar 雷达图 · 产品评估</text>
+    <text key="gauge.title">gauge 仪表盘 · 目标完成率</text>
+    <text key="funnel.title">funnel 漏斗图 · 注册转化</text>
+    <text key="sunburst.title">sunburst 旭日图 · 营收构成</text>
+    <text key="treemap.title">treemap 矩形树图 · 存储占用</text>
+    <text key="tree.title">tree 树图 · 组织架构</text>
+    <text key="sankey.title">sankey 桑基图 · 能源流向</text>
+    <text key="graph.title">graph 关系图 · 知识图谱</text>
+    <text key="lines.title">lines 线图 · 热门航线</text>
+    <text key="grid_mix.title">grid 坐标系 · 柱线点混合</text>
+    <text key="polar.title">polar 坐标系 · 风向频率折线</text>
+    <text key="single_axis.title">singleAxis 坐标系 · 成绩分布散点</text>
+    <text key="calendar_coord.title">calendar 坐标系 · 每日步数热力</text>
+    <text key="map.title">map 地图 · 区域销量（示意数据）</text>
+    <text key="bar.hint">stack / barWidth / barBorderRadius；yAxis 为 category 时自动水平</text>
+    <text key="pictorial.hint">symbol / symbolRepeat / symbolSize</text>
+    <text key="line.hint">smooth / areaStyle / step / showSymbol（阶梯开启时覆盖平滑）</text>
+    <text key="scatter.hint">symbolSize 固定值或按第三维（AQI）6~24px 映射</text>
+    <text key="effect_scatter.hint">rippleEffect: {period, scale}（QTimer 驱动扩散圆）</text>
+    <text key="candlestick.hint">OHLC 数据；红涨绿跌（colorUp / colorDown 可覆盖）</text>
+    <text key="boxplot.hint">数据 [min, Q1, 中位, Q3, max]</text>
+    <text key="heatmap_grid.hint">配合顶层 visualMap（inRange.colors）或默认主题色带</text>
+    <text key="heatmap_calendar.hint">coordinateSystem: calendar；calendar: {year, cellSize}</text>
+    <text key="parallel.hint">parallelAxis 定义维度；每行数据一条折线穿轴</text>
+    <text key="themeriver.hint">数据 [时间, 值, 系列名]；流带平滑 + 居中基线</text>
+    <text key="pie.hint">radius: [内,外] 环形 / roseType 南丁格尔 / label.position</text>
+    <text key="radar.hint">indicator: [{name, max}]；多系列各一个多边形</text>
+    <text key="gauge.hint">min/max / progress / axisLine 色段 / pointer / detail</text>
+    <text key="funnel.hint">sort / gap / label.position</text>
+    <text key="sunburst.hint">层级 data: [{name, value, children}]；radius 内孔/外半径</text>
+    <text key="treemap.hint">squarified 布局；breadcrumb / gapWidth / label</text>
+    <text key="tree.hint">orient: LR/TB；edge: polyline/curve</text>
+    <text key="sankey.hint">nodes/links；layoutIterations 减少流带交叉</text>
+    <text key="graph.hint">layout: force（确定性随机种子）/ circular</text>
+    <text key="lines.hint">data: [{coords: [[x1,y1],[x2,y2]]}]；trailEffect 尾迹动画</text>
+    <text key="grid_mix.hint">xAxis/yAxis + bar/line/scatter 多系列混合</text>
+    <text key="polar.hint">polar/angleAxis/radiusAxis + line(coordinateSystem=polar)</text>
+    <text key="single_axis.hint">singleAxis + scatter(coordinateSystem=singleAxis)</text>
+    <text key="calendar_coord.hint">calendar: {year, cellSize} + heatmap(coordinateSystem=calendar)</text>
+    <text key="map.hint">map: "demo" 内置 7 大区块示意地图；可经 geo.regions 自定义多边形</text>
+    <text key="data.month.1">1月</text>
+    <text key="data.month.2">2月</text>
+    <text key="data.month.3">3月</text>
+    <text key="data.month.4">4月</text>
+    <text key="data.month.5">5月</text>
+    <text key="data.month.6">6月</text>
+    <text key="data.month.7">7月</text>
+    <text key="data.month.8">8月</text>
+    <text key="data.month.9">9月</text>
+    <text key="data.month.10">10月</text>
+    <text key="data.month.11">11月</text>
+    <text key="data.month.12">12月</text>
+    <text key="data.weekday.1">周一</text>
+    <text key="data.weekday.2">周二</text>
+    <text key="data.weekday.3">周三</text>
+    <text key="data.weekday.4">周四</text>
+    <text key="data.weekday.5">周五</text>
+    <text key="data.weekday.6">周六</text>
+    <text key="data.weekday.7">周日</text>
+    <text key="data.city.beijing">北京</text>
+    <text key="data.city.shanghai">上海</text>
+    <text key="data.city.guangzhou">广州</text>
+    <text key="data.city.shenzhen">深圳</text>
+    <text key="data.city.hangzhou">杭州</text>
+    <text key="data.city.chengdu">成都</text>
+    <text key="data.city.xian">西安</text>
+    <text key="data.city.wuhan">武汉</text>
+    <text key="data.city.kunming">昆明</text>
+    <text key="data.day">{n}日</text>
+    <text key="data.group">{c}组</text>
+    <text key="data.hour">{h}时</text>
+    <text key="data.unit.piece">件</text>
+    <text key="data.unit.yuan">元</text>
+    <text key="data.unit.hour">小时</text>
+    <text key="data.unit.amount">量</text>
+    <text key="data.axis.temp">气温℃</text>
+    <text key="data.axis.humidity">湿度%</text>
+    <text key="data.axis.longitude">经度</text>
+    <text key="data.axis.latitude">纬度</text>
+    <text key="data.axis.score">分数</text>
+    <text key="data.series.offline">线下门店</text>
+    <text key="data.series.online">线上商城</text>
+    <text key="data.series.total">总量</text>
+    <text key="data.series.rainfall">年降雨量</text>
+    <text key="data.series.weather">城市天气样本</text>
+    <text key="data.series.checkin">热门签到城市</text>
+    <text key="data.series.stock">示例股价</text>
+    <text key="data.series.overtime">加班工时</text>
+    <text key="data.series.traffic">客流量</text>
+    <text key="data.series.commits">代码提交</text>
+    <text key="data.series.scores">学生成绩</text>
+    <text key="data.series.topic_heat">话题热度</text>
+    <text key="data.series.budget">部门预算</text>
+    <text key="data.series.eval">产品评估</text>
+    <text key="data.series.quarter_cur">本季度</text>
+    <text key="data.series.quarter_prev">上季度</text>
+    <text key="data.series.goal">季度目标完成率</text>
+    <text key="data.series.rate">完成率</text>
+    <text key="data.series.conversion">注册转化</text>
+    <text key="data.series.revenue">营收构成</text>
+    <text key="data.series.storage">存储占用</text>
+    <text key="data.series.org">组织架构</text>
+    <text key="data.series.energy">能源流向</text>
+    <text key="data.series.kg">知识图谱</text>
+    <text key="data.series.routes">热门航线</text>
+    <text key="data.series.sales">销量</text>
+    <text key="data.series.price">均价</text>
+    <text key="data.series.promo">促销节点</text>
+    <text key="data.series.wind">风向频率</text>
+    <text key="data.series.scores_dist">期末成绩分布</text>
+    <text key="data.series.steps">每日步数(千)</text>
+    <text key="data.series.region_sales">区域销量</text>
+    <text key="data.series.month_sales">月度销量</text>
+    <text key="data.series.month_price">月度均价</text>
+    <text key="data.dept.rd">研发</text>
+    <text key="data.dept.marketing">市场</text>
+    <text key="data.dept.ops">运营</text>
+    <text key="data.dept.design">设计</text>
+    <text key="data.dept.admin">行政</text>
+    <text key="data.sun.hardware">硬件</text>
+    <text key="data.sun.phone">手机</text>
+    <text key="data.sun.tablet">平板</text>
+    <text key="data.sun.wearable">穿戴</text>
+    <text key="data.sun.software">软件</text>
+    <text key="data.sun.cloud">云服务</text>
+    <text key="data.sun.appstore">应用商店</text>
+    <text key="data.sun.content">内容</text>
+    <text key="data.sun.video">视频</text>
+    <text key="data.sun.music">音乐</text>
+    <text key="data.sun.reading">阅读</text>
+    <text key="data.tm.video">视频</text>
+    <text key="data.tm.movie">电影</text>
+    <text key="data.tm.series">剧集</text>
+    <text key="data.tm.photo">照片</text>
+    <text key="data.tm.camera">相机相册</text>
+    <text key="data.tm.screenshot">截图</text>
+    <text key="data.tm.app">应用</text>
+    <text key="data.tm.doc">文档</text>
+    <text key="data.tm.system">系统</text>
+    <text key="data.org.ceo">总经理</text>
+    <text key="data.org.tech">技术中心</text>
+    <text key="data.org.frontend">前端组</text>
+    <text key="data.org.backend">后端组</text>
+    <text key="data.org.algorithm">算法组</text>
+    <text key="data.org.product">产品中心</text>
+    <text key="data.org.product_group">产品组</text>
+    <text key="data.org.design_group">设计组</text>
+    <text key="data.org.operation">运营中心</text>
+    <text key="data.org.market_group">市场组</text>
+    <text key="data.org.service_group">客服组</text>
+    <text key="data.energy.coal">煤炭</text>
+    <text key="data.energy.hydro">水电</text>
+    <text key="data.energy.wind">风电</text>
+    <text key="data.energy.solar">光伏</text>
+    <text key="data.energy.industry">工业</text>
+    <text key="data.energy.residential">居民</text>
+    <text key="data.energy.transport">交通</text>
+    <text key="data.energy.loss">损耗</text>
+    <text key="data.graph.chip">芯片</text>
+    <text key="data.graph.phone">手机</text>
+    <text key="data.graph.car">汽车</text>
+    <text key="data.graph.appliance">家电</text>
+    <text key="data.graph.os">操作系统</text>
+    <text key="data.graph.ecosystem">应用生态</text>
+    <text key="data.graph.cloud">云服务</text>
+    <text key="data.graph.ai">人工智能</text>
+    <text key="data.dir.1">北</text>
+    <text key="data.dir.2">东北</text>
+    <text key="data.dir.3">东</text>
+    <text key="data.dir.4">东南</text>
+    <text key="data.dir.5">南</text>
+    <text key="data.dir.6">西南</text>
+    <text key="data.dir.7">西</text>
+    <text key="data.dir.8">西北</text>
+    <text key="data.region.1">华北</text>
+    <text key="data.region.2">东北</text>
+    <text key="data.region.3">华东</text>
+    <text key="data.region.4">华南</text>
+    <text key="data.region.5">华中</text>
+    <text key="data.region.6">西南</text>
+    <text key="data.region.7">西北</text>
+    <text key="data.subject.1">语文</text>
+    <text key="data.subject.2">数学</text>
+    <text key="data.subject.3">英语</text>
+    <text key="data.subject.4">物理</text>
+    <text key="data.subject.5">化学</text>
+    <text key="data.topic.1">新机发布</text>
+    <text key="data.topic.2">系统更新</text>
+    <text key="data.topic.3">售后服务</text>
+    <text key="data.topic.4">线下活动</text>
+    <text key="data.topic.5">联名合作</text>
+    <text key="data.funnel.1">访问落地页</text>
+    <text key="data.funnel.2">点击注册</text>
+    <text key="data.funnel.3">填写资料</text>
+    <text key="data.funnel.4">完成认证</text>
+    <text key="data.funnel.5">首次付费</text>
+    <text key="data.dim.1">功能</text>
+    <text key="data.dim.2">性能</text>
+    <text key="data.dim.3">易用</text>
+    <text key="data.dim.4">稳定</text>
+    <text key="data.dim.5">生态</text>
+    <text key="data.dim.6">服务</text>
+    <text key="data.mark.average">均值</text>
+    <text key="data.mark.max">峰值</text>
+    <text key="data.mark.threshold">警戒线</text>
+    <text key="opt.symbol.rect">矩形</text>
+    <text key="opt.symbol.circle">圆形</text>
+    <text key="opt.symbol.pin">图钉</text>
+    <text key="opt.step.none">无</text>
+    <text key="opt.step.start">起点</text>
+    <text key="opt.step.middle">中点</text>
+    <text key="opt.step.end">终点</text>
+    <text key="opt.ramp.blue">主题蓝</text>
+    <text key="opt.ramp.warm">暖色</text>
+    <text key="opt.cell.auto">自动</text>
+    <text key="opt.cell.s">小 10</text>
+    <text key="opt.cell.m">中 14</text>
+    <text key="opt.cell.l">大 18</text>
+    <text key="opt.year.2024">2024 年</text>
+    <text key="opt.year.2025">2025 年</text>
+    <text key="opt.year.2026">2026 年</text>
+    <text key="opt.rose.none">无</text>
+    <text key="opt.rose.radius">半径</text>
+    <text key="opt.rose.area">面积</text>
+    <text key="opt.label_pos.outside">外部引线</text>
+    <text key="opt.label_pos.inside">内部百分比</text>
+    <text key="opt.label_pos.center">中心总计</text>
+    <text key="opt.shape.polygon">多边形</text>
+    <text key="opt.shape.circle">圆形</text>
+    <text key="opt.sort.descending">降序</text>
+    <text key="opt.sort.ascending">升序</text>
+    <text key="opt.sort.none">原序</text>
+    <text key="opt.funnel_label.outer">外侧</text>
+    <text key="opt.funnel_label.inside">层内</text>
+    <text key="opt.orient.lr">左右</text>
+    <text key="opt.orient.tb">上下</text>
+    <text key="opt.edge.polyline">正交折线</text>
+    <text key="opt.edge.curve">贝塞尔曲线</text>
+    <text key="opt.layout.force">力导</text>
+    <text key="opt.layout.circular">圆环</text>
+    <text key="opt.map_orient.vertical">纵向</text>
+    <text key="opt.map_orient.horizontal">横向</text>
+    <text key="opt.mark_line.average">平均线</text>
+    <text key="opt.mark_line.max">最大值线</text>
+    <text key="opt.mark_line.threshold">警戒线 300</text>
+    <text key="bar.p.stack">堆叠</text>
+    <text key="bar.p.bar_width">柱宽占比</text>
+    <text key="bar.p.radius">圆角</text>
+    <text key="bar.p.horizontal">水平条形</text>
+    <text key="pictorial.p.symbol">符号</text>
+    <text key="pictorial.p.repeat">重复堆叠</text>
+    <text key="pictorial.p.size">符号尺寸</text>
+    <text key="line.p.smooth">平滑</text>
+    <text key="line.p.area">面积填充</text>
+    <text key="line.p.step">阶梯</text>
+    <text key="line.p.symbol">数据点</text>
+    <text key="scatter.p.n">样本数</text>
+    <text key="scatter.p.zmap">第三维映射大小</text>
+    <text key="scatter.p.size">固定点径</text>
+    <text key="effect_scatter.p.period">涟漪周期(秒)</text>
+    <text key="effect_scatter.p.scale">扩散倍数</text>
+    <text key="effect_scatter.p.size">点径</text>
+    <text key="candlestick.p.n">交易日数</text>
+    <text key="candlestick.p.width">实体宽(0=自动)</text>
+    <text key="boxplot.p.groups">组数</text>
+    <text key="boxplot.p.width">箱体宽(0=自动)</text>
+    <text key="heatmap_grid.p.visual_map">视觉映射</text>
+    <text key="heatmap_grid.p.ramp">色带</text>
+    <text key="heatmap_calendar.p.year">年份</text>
+    <text key="heatmap_calendar.p.cell">单元格</text>
+    <text key="heatmap_calendar.p.visual_map">视觉映射</text>
+    <text key="parallel.p.dims">维度数</text>
+    <text key="parallel.p.n">学生数</text>
+    <text key="themeriver.p.series">话题数</text>
+    <text key="themeriver.p.months">月数</text>
+    <text key="pie.p.donut">环形</text>
+    <text key="pie.p.rose">玫瑰图</text>
+    <text key="pie.p.label_pos">标签位置</text>
+    <text key="radar.p.shape">形状</text>
+    <text key="radar.p.area">面积填充</text>
+    <text key="radar.p.split">圈环数</text>
+    <text key="gauge.p.value">目标值(%)</text>
+    <text key="gauge.p.progress">进度弧</text>
+    <text key="gauge.p.segments">分段色</text>
+    <text key="funnel.p.sort">排序</text>
+    <text key="funnel.p.gap">层间距</text>
+    <text key="funnel.p.label_pos">标签</text>
+    <text key="sunburst.p.labels">旋转标签</text>
+    <text key="sunburst.p.min_angle">标签角阈值</text>
+    <text key="treemap.p.crumb">路径条</text>
+    <text key="treemap.p.gap">间隙</text>
+    <text key="treemap.p.labels">名称标签</text>
+    <text key="tree.p.orient">方向</text>
+    <text key="tree.p.edge">边样式</text>
+    <text key="tree.p.size">节点直径</text>
+    <text key="sankey.p.node_width">节点宽</text>
+    <text key="sankey.p.node_gap">节点间距</text>
+    <text key="sankey.p.iters">布局迭代</text>
+    <text key="graph.p.layout">布局</text>
+    <text key="graph.p.repulsion">斥力</text>
+    <text key="graph.p.size">节点直径</text>
+    <text key="lines.p.curveness">弯曲度</text>
+    <text key="lines.p.trail">移动亮点</text>
+    <text key="lines.p.width">线宽</text>
+    <text key="grid_mix.p.smooth">折线平滑</text>
+    <text key="grid_mix.p.area">面积填充</text>
+    <text key="grid_mix.p.scatter">叠加散点</text>
+    <text key="polar.p.shape">形状</text>
+    <text key="polar.p.area">面积填充</text>
+    <text key="polar.p.smooth">平滑</text>
+    <text key="single_axis.p.n">样本数</text>
+    <text key="single_axis.p.size">点径</text>
+    <text key="calendar_coord.p.year">年份</text>
+    <text key="calendar_coord.p.cell">单元格</text>
+    <text key="map.p.visual_map">视觉映射</text>
+    <text key="map.p.ramp">色带</text>
+    <text key="map.p.orient">映射条方向</text>
+    <text key="comp.p.mark_line">标线</text>
+    <text key="comp.p.mark_area">标域(3~5月)</text>
+    <text key="comp.p.visual_map">视觉映射</text>
+    <text key="comp.p.zoom_end">缩放窗口(%)</text>
+    <text key="sec.cartesian">直角坐标系列（11 种 · grid / 平行 / 日历）</text>
+    <text key="sec.hierarchy">层级占比系列（6 种）</text>
+    <text key="sec.relation">关系流向系列（4 种）</text>
+    <text key="sec.coord">坐标系与地图（4 坐标系 + map 系列）</text>
+    <text key="comp.sec">组件综合演示（标注 / 视觉映射 / 缩放 / 刷选 / 工具箱 / 时间轴）</text>
+    <text key="comp.card_title">年度销售总览 · 组件综合</text>
+    <text key="comp.panel_title">演示参数</text>
+    <text key="comp.keys_note">涉及 option 键：series.markPoint / series.markLine / series.markArea / visualMap / dataZoom(slider+inside) / brush / toolbox / timeline(+options 三帧)。可交互：滚轮缩放、滑块窗口、矩形刷选、右上角工具按钮、底部时间轴播放。</text>
+    <text key="comp.chart_title">年度销售总览</text>
+    <text key="comp.chart_sub">拖动时间轴切换年度</text>
+    <text key="title">图表</text>
+    <text key="desc">InstructionX_UIKit.charts 原生图表引擎（纯 QPainter 自绘，无 WebView）：ECharts 风格 set_option / update_option API，主题感知实时换肤。21 个系列各配演示卡（随页面宽度 1~3 列自适应排布），另设四坐标系、map 与组件综合演示（大图整行撑满）。参数修改即按新 option 重建图表。</text>
+  </group>
+  <group name="blueprint">
+    <text key="title">蓝图（节点图）</text>
+    <text key="hint">类 UE5 Blueprint / ComfyUI 节点图编辑器。右键空白创建节点、引脚拖出连线、Delete 删除选中。「运行 / 单步」为纯 UI 模拟：仅驱动 ExecutionController 状态指示，不含任何业务逻辑。</text>
+    <text key="toolbar.run">运行</text>
+    <text key="toolbar.step">单步</text>
+    <text key="toolbar.reset">重置</text>
+    <text key="toolbar.fit">适应视图</text>
+    <text key="toolbar.save">保存 JSON</text>
+    <text key="toolbar.load">加载 JSON</text>
+    <text key="status.ready">就绪</text>
+    <text key="status.running">运行中 {cur}/{total} …</text>
+    <text key="backend.label">渲染后端：{backend}（UIKIT_BLUEPRINT_GL 环境变量可控制）</text>
+    <text key="backend.gl">OpenGL（GPU 加速）</text>
+    <text key="backend.software">软件渲染（CPU）</text>
+    <text key="status.done">模拟完成：{count} 个节点 · 总耗时 {ms} ms（纯模拟，无业务逻辑）</text>
+    <text key="status.save_fail">保存失败：{error}</text>
+    <text key="status.saved">已保存：{path}</text>
+    <text key="status.load_fail">加载失败：{error}</text>
+    <text key="status.loaded">已加载：{path}（{nodes} 节点 / {edges} 边）</text>
+    <text key="panel.title">属性面板</text>
+    <text key="panel.empty_hint">在画布中选中一个节点，查看 / 编辑其属性。</text>
+    <text key="panel.no_props">该节点无可编辑属性。</text>
+    <text key="info.title">标题：{title}</text>
+    <text key="info.type">类型：{type}    ID：{id}</text>
+    <text key="info.status">状态：{status}</text>
+    <text key="info.status_elapsed">耗时：{ms} ms</text>
+    <text key="preset.pre">预处理（归一化）</text>
+    <text key="preset.infer">模型推理（CNN）</text>
+    <text key="preset.post">后处理（边缘检测）</text>
+    <text key="dlg.save">保存蓝图 JSON</text>
+    <text key="dlg.load">加载蓝图 JSON</text>
+    <text key="dlg.filter">JSON 文件 (*.json)</text>
+    <text key="node.cat.input">输入</text>
+    <text key="node.cat.process">处理</text>
+    <text key="node.cat.model">模型</text>
+    <text key="node.cat.output">输出</text>
+    <text key="node.cat.util">工具</text>
+    <text key="node.load_image.name">加载图像</text>
+    <text key="node.load_image.desc">从磁盘加载图像（image 输出）</text>
+    <text key="node.noise.name">随机噪声</text>
+    <text key="node.noise.desc">生成随机噪声张量（tensor 输出）</text>
+    <text key="node.resize.name">Resize</text>
+    <text key="node.resize.desc">调整图像尺寸（宽 / 高 / 插值可编辑）</text>
+    <text key="node.normalize.name">归一化</text>
+    <text key="node.normalize.desc">图像归一化为张量（预处理）</text>
+    <text key="node.gaussian_blur.name">高斯模糊</text>
+    <text key="node.gaussian_blur.desc">高斯模糊（半径 Slider 可调）</text>
+    <text key="node.edge_detect.name">边缘检测</text>
+    <text key="node.edge_detect.desc">从张量提取边缘（后处理）</text>
+    <text key="node.cnn.name">CNN 模块</text>
+    <text key="node.cnn.desc">卷积骨干（层数 / 通道数可编辑）</text>
+    <text key="node.transformer.name">Transformer 模块</text>
+    <text key="node.transformer.desc">注意力模块（层数 / 头数可编辑）</text>
+    <text key="node.fusion.name">融合</text>
+    <text key="node.fusion.desc">两路 tensor 加权融合</text>
+    <text key="node.save_result.name">保存结果</text>
+    <text key="node.save_result.desc">把结果写出到磁盘</text>
+    <text key="node.log_output.name">日志输出</text>
+    <text key="node.log_output.desc">打印任意数据到日志</text>
+    <text key="node.perf_probe.name">性能探针</text>
+    <text key="node.perf_probe.desc">统计上游耗时并透传数据</text>
+    <text key="body.width">宽</text>
+    <text key="body.height">高</text>
+    <text key="body.interpolation">插值</text>
+    <text key="body.layers">层数</text>
+    <text key="body.channels">通道</text>
+    <text key="body.radius">半径</text>
+    <text key="body.heads">头数</text>
+    <text key="prop.file_path">文件路径</text>
+    <text key="prop.mode">色彩模式</text>
+    <text key="prop.seed">随机种子</text>
+    <text key="prop.shape">形状</text>
+    <text key="prop.width">宽度</text>
+    <text key="prop.height">高度</text>
+    <text key="prop.interpolation">插值</text>
+    <text key="prop.mean">均值</text>
+    <text key="prop.std">标准差</text>
+    <text key="prop.radius">半径</text>
+    <text key="prop.method">算法</text>
+    <text key="prop.threshold">阈值</text>
+    <text key="prop.layers">层数</text>
+    <text key="prop.channels">通道数</text>
+    <text key="prop.heads">注意力头</text>
+    <text key="prop.weight">融合权重</text>
+    <text key="prop.output_path">输出路径</text>
+    <text key="prop.format">格式</text>
+    <text key="prop.level">级别</text>
+    <text key="prop.warn_ms">告警阈值 ms</text>
+    <text key="prop.enabled">启用</text>
+  </group>
+</texts>

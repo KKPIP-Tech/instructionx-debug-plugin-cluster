@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
 """布局演示的示例数据与卡片构建器（Demo 程序专用）。
 
-InstructionX_UIKit 的 12 个布局预设全部为 API 驱动、不含任何假数据；
+InstructionX_UIKit 的 13 个布局预设全部为 API 驱动、不含任何假数据；
 本模块集中存放演示用的示例内容（原是布局内置的占位数据，已迁入
 Demo），``layouts.py`` 各演示页从这里取数据并传给布局。
 
-同时，每个布局给出 ``USAGE`` 单行调用示例，演示页顶部以灰字代码
-标签展示，开发者照此即可用 Kit 复现相同效果。
+多语言：模块级数据常量全部改为 ``xxx(tr)`` 构建函数（``tr`` 由
+``common.bind_tr`` 绑定 ``layout_samples`` 分组），语言切换时页面重建
+即以新语言取数。
+
+同时，每个布局给出 ``USAGE`` 单行调用示例（代码即文档，不翻译），
+演示页顶部以灰字代码标签展示，开发者照此即可用 Kit 复现相同效果。
 """
 
 from PySide6.QtCore import Qt
@@ -22,15 +26,17 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from InstructionX_UIKit.theme import T, ThemeManager
+from InstructionX_UIKit.theme import T, set_property
 from InstructionX_UIKit.layouts.helpers import (
     TokenColorChip,
     apply_token_font,
     titled_card,
 )
 
+from .common import connect_theme_refresh
+
 # ---------------------------------------------------------------------------
-# 各布局的单行用法示例（演示页顶部灰字代码标签）
+# 各布局的单行用法示例（演示页顶部灰字代码标签；代码即文档，不翻译）
 # ---------------------------------------------------------------------------
 
 USAGE = {
@@ -46,77 +52,78 @@ USAGE = {
     "centered_container": 'create_centered_container(title=..., actions=[...], cards=[(标题, 描述, 色块键)])',
     "waterfall": 'create_waterfall(items=[(标题, 色块键, 档位2-6), ...])',
     "media_left_right": 'create_media_left_right(sections=[(标题, 正文, 色块键)], link_text="了解更多")',
+    "chat_conversation": 'create_chat_conversation(messages=[{"role": "user", "content": ...}, {"role": "assistant", "content": "# markdown", "info": "模型名"}])',
 }
 
 # ---------------------------------------------------------------------------
 # 顶部导航栏
 # ---------------------------------------------------------------------------
 
-TOP_NAV_BAR = dict(
-    brand="UI Kit 控制台",
-    menu_items=("首页", "产品", "文档", "社区", "关于"),
-    search_placeholder="搜索文档、组件...",
-    user_text="我",
-    title="欢迎使用 UI Kit",
-    subtitle="这是顶部导航栏布局预设的窗口级示例，下方为内容卡片，主题切换时颜色自动跟随。",
-    cards=(
-        ("功能模块一", "用于演示的内容卡片，色块取 primary.subtle 令牌。", "color.primary.subtle"),
-        ("功能模块二", "用于演示的内容卡片，色块取 success.subtle 令牌。", "color.success.subtle"),
-        ("功能模块三", "用于演示的内容卡片，色块取 warning.subtle 令牌。", "color.warning.subtle"),
-        ("功能模块四", "用于演示的内容卡片，色块取 danger.subtle 令牌。", "color.danger.subtle"),
-    ),
-)
+def top_nav_bar(tr) -> dict:
+    """顶部导航栏布局示例数据。"""
+    return dict(
+        brand=tr("tnb.brand"),
+        menu_items=tuple(tr(f"tnb.menu.{k}") for k in
+                         ("home", "products", "docs", "community", "about")),
+        search_placeholder=tr("tnb.search_placeholder"),
+        user_text=tr("tnb.user_text"),
+        title=tr("tnb.title"),
+        subtitle=tr("tnb.subtitle"),
+        cards=tuple(
+            (tr(f"tnb.card.{i}.title"), tr(f"tnb.card.{i}.desc"), key)
+            for i, key in enumerate(
+                ("color.primary.subtle", "color.success.subtle",
+                 "color.warning.subtle", "color.danger.subtle"), start=1)),
+    )
 
 # ---------------------------------------------------------------------------
 # 圣杯布局
 # ---------------------------------------------------------------------------
 
-HOLY_GRAIL = dict(
-    title="圣杯布局",
-    nav_items=("概览", "分析", "报表", "成员", "设置"),
-    header_actions=("刷新", "设置"),
-    footer_note="页脚：拖拽中间分栏手柄可调整侧栏宽度",
-    status="就绪",
-)
+def holy_grail(tr) -> dict:
+    """圣杯布局示例数据。"""
+    return dict(
+        title=tr("hg.title"),
+        nav_items=tuple(tr(f"hg.nav.{i}") for i in range(1, 6)),
+        header_actions=(tr("hg.action.refresh"), tr("hg.action.settings")),
+        footer_note=tr("hg.footer_note"),
+        status=tr("hg.status"),
+    )
 
 
-def build_holy_grail_center() -> QWidget:
+def build_holy_grail_center(tr) -> QWidget:
     """圣杯布局主内容区示例：标题 + 色块 + 说明段落。"""
     panel = QWidget()
     lay = QVBoxLayout(panel)
     lay.setContentsMargins(T("space.2"), T("space.2"), T("space.2"), T("space.2"))
     lay.setSpacing(T("space.3"))
-    title = QLabel("主内容区")
+    title = QLabel(tr("hg.center.title"))
     apply_token_font(title, "font.title.md", "font.weight.semibold")
     lay.addWidget(title)
     chip = TokenColorChip("color.primary.subtle", "radius.md")
     chip.setMinimumHeight(T("space.16") * 2)
     lay.addWidget(chip)
-    for text in (
-        "圣杯布局由页头、页脚、左右侧栏与主内容区组成，中间三区放在 QSplitter 中，"
-        "拖拽分栏手柄即可调整各栏宽度。",
-        "窗口变窄时按断点依次隐藏右侧栏与左侧栏，保证主内容区始终可用。",
-    ):
+    for text in (tr("hg.center.para.1"), tr("hg.center.para.2")):
         para = QLabel(text)
-        para.setProperty("role", "secondary")
+        set_property(para, "role", "secondary")
         para.setWordWrap(True)
         lay.addWidget(para)
     lay.addStretch(1)
     return panel
 
 
-def build_holy_grail_side() -> QWidget:
+def build_holy_grail_side(tr) -> QWidget:
     """圣杯布局右侧栏示例：相关信息列表。"""
     panel = QWidget()
     lay = QVBoxLayout(panel)
     lay.setContentsMargins(0, 0, 0, 0)
     lay.setSpacing(T("space.2"))
-    head = QLabel("相关信息")
+    head = QLabel(tr("hg.side.head"))
     apply_token_font(head, "font.sm", "font.weight.semibold")
-    head.setProperty("role", "tertiary")
+    set_property(head, "role", "tertiary")
     lay.addWidget(head)
     listing = QListWidget()
-    listing.addItems(("更新日志 v1.0", "设计规范", "组件清单", "常见问题"))
+    listing.addItems(tr(f"hg.side.item.{i}") for i in range(1, 5))
     lay.addWidget(listing, 1)
     return panel
 
@@ -124,54 +131,38 @@ def build_holy_grail_side() -> QWidget:
 # 卡片网格
 # ---------------------------------------------------------------------------
 
-#: 示例卡片数据（标题、描述、色块令牌）
-CARD_GRID_ITEMS = (
-    ("数据看板", "汇总关键指标的内容卡片，色块取 primary.subtle 令牌。", "color.primary.subtle"),
-    ("任务中心", "展示待办与进度的内容卡片，色块取 success.subtle 令牌。", "color.success.subtle"),
-    ("消息通知", "聚合系统消息的内容卡片，色块取 warning.subtle 令牌。", "color.warning.subtle"),
-    ("风险预警", "呈现异常项的内容卡片，色块取 danger.subtle 令牌。", "color.danger.subtle"),
-    ("团队动态", "展示协作动态的内容卡片，主题切换自动跟随。", "color.primary.subtle"),
-    ("文件库", "管理项目文件的内容卡片，主题切换自动跟随。", "color.success.subtle"),
-    ("日程安排", "查看近期日程的内容卡片，主题切换自动跟随。", "color.warning.subtle"),
-    ("系统设置", "进入偏好设置的内容卡片，主题切换自动跟随。", "color.danger.subtle"),
-)
+def card_grid_items(tr) -> tuple:
+    """示例卡片数据（标题、描述、色块令牌）。"""
+    color_keys = ("color.primary.subtle", "color.success.subtle",
+                  "color.warning.subtle", "color.danger.subtle")
+    return tuple(
+        (tr(f"cg.card.{i}.title"), tr(f"cg.card.{i}.desc"), color_keys[(i - 1) % 4])
+        for i in range(1, 9))
 
 # ---------------------------------------------------------------------------
 # 单列堆叠
 # ---------------------------------------------------------------------------
 
-SINGLE_COLUMN = dict(
-    kicker="布局预设 · 单列堆叠",
-    title="用统一的垂直节奏组织长文内容",
-    subtitle="单列布局将阅读动线收敛到一条中轴：所有区块限宽 760px 居中，"
-             "段落与区块间距全部取自 space 令牌。",
-    cover_key="color.primary.subtle",
-    paragraphs=(
-        "单列堆叠适合文档、博客与公告等以阅读为主的场景。"
-        "限宽让每行文字保持舒适的阅读长度，居中留白则让内容在宽屏下依然聚焦。",
-        "本示例中的间距（space.4 段落、space.6 区块）、圆角（radius.lg 封面）"
-        "与颜色（primary.subtle 封面、secondary 正文）全部来自设计令牌，"
-        "切换亮 / 暗主题时自动跟随。",
-        "窗口继续收窄时，本布局不做分档重排，而是让 760px 的列随窗口线性收缩，"
-        "保证任何宽度下都只有一条阅读中轴。",
-    ),
-    quote="「好的布局不喧哗：它退到内容背后，用节奏与留白说话。」",
-    actions=(("阅读全文", "primary"), ("收藏", "default")),
-)
+def single_column(tr) -> dict:
+    """单列堆叠布局示例数据。"""
+    return dict(
+        kicker=tr("sc.kicker"),
+        title=tr("sc.title"),
+        subtitle=tr("sc.subtitle"),
+        cover_key="color.primary.subtle",
+        paragraphs=tuple(tr(f"sc.para.{i}") for i in range(1, 4)),
+        quote=tr("sc.quote"),
+        actions=((tr("sc.action.read"), "primary"), (tr("sc.action.fav"), "default")),
+    )
 
 # ---------------------------------------------------------------------------
 # 侧边栏布局
 # ---------------------------------------------------------------------------
 
-#: 导航项示例：（图标名, 文本），图标取自 InstructionX_UIKit.icons
-SIDEBAR_NAV_ITEMS = (
-    ("home", "首页"),
-    ("component", "组件"),
-    ("chart", "图表"),
-    ("layout", "布局"),
-    ("animation", "动画"),
-    ("settings", "设置"),
-)
+def sidebar_nav_items(tr) -> tuple:
+    """导航项示例：（图标名, 文本），图标取自 InstructionX_UIKit.icons。"""
+    return tuple((icon, tr(f"sb.nav.{icon}")) for icon in
+                 ("home", "component", "chart", "layout", "animation", "settings"))
 
 
 def _stat_card(title, value, note):
@@ -182,40 +173,33 @@ def _stat_card(title, value, note):
     lay.setContentsMargins(T("space.4"), T("space.3"), T("space.4"), T("space.3"))
     lay.setSpacing(T("space.1"))
     head = QLabel(title)
-    head.setProperty("role", "secondary")
+    set_property(head, "role", "secondary")
     lay.addWidget(head)
     number = QLabel(value)
     apply_token_font(number, "font.display", "font.weight.bold")
     lay.addWidget(number)
     foot = QLabel(note)
-    foot.setProperty("role", "tertiary")
+    set_property(foot, "role", "tertiary")
     apply_token_font(foot, "font.sm")
     lay.addWidget(foot)
     return card
 
 
-def build_sidebar_content() -> QWidget:
-    """侧边栏布局内容区示例：面包屑 + 标题 + 统计卡 + 内容面板。"""
-    content = QWidget()
-    lay = QVBoxLayout(content)
-    lay.setContentsMargins(0, 0, 0, 0)
-    lay.setSpacing(T("space.4"))
-
-    crumb = QLabel("首页 / 概览")
-    crumb.setProperty("role", "tertiary")
-    apply_token_font(crumb, "font.sm")
-    lay.addWidget(crumb)
-    title = QLabel("项目概览")
-    apply_token_font(title, "font.title.lg", "font.weight.semibold")
-    lay.addWidget(title)
-
+def _sidebar_stats(tr) -> QGridLayout:
+    """内容区顶部三张统计卡片。"""
     stats = QGridLayout()
     stats.setSpacing(T("space.4"))
-    stats.addWidget(_stat_card("访问用户", "12,846", "较上周 +8.2%"), 0, 0)
-    stats.addWidget(_stat_card("活跃项目", "36", "本周新增 4 个"), 0, 1)
-    stats.addWidget(_stat_card("待办事项", "9", "3 项即将到期"), 0, 2)
-    lay.addLayout(stats)
+    stats.addWidget(_stat_card(tr("sb.stat.users.title"), "12,846",
+                               tr("sb.stat.users.note")), 0, 0)
+    stats.addWidget(_stat_card(tr("sb.stat.projects.title"), "36",
+                               tr("sb.stat.projects.note")), 0, 1)
+    stats.addWidget(_stat_card(tr("sb.stat.todo.title"), "9",
+                               tr("sb.stat.todo.note")), 0, 2)
+    return stats
 
+
+def _sidebar_panel(tr) -> QFrame:
+    """内容区主体面板：色块 + 说明。"""
     panel = QFrame()
     panel.setFrameShape(QFrame.StyledPanel)
     panel_lay = QVBoxLayout(panel)
@@ -224,63 +208,72 @@ def build_sidebar_content() -> QWidget:
     chip = TokenColorChip("color.primary.subtle", "radius.md")
     chip.setMinimumHeight(T("space.16") * 2)
     panel_lay.addWidget(chip)
-    note = QLabel("内容区：可替换为表格、表单或图表。侧栏在窄窗口下会自动折叠为图标栏。")
-    note.setProperty("role", "secondary")
+    note = QLabel(tr("sb.panel.note"))
+    set_property(note, "role", "secondary")
     note.setWordWrap(True)
     panel_lay.addWidget(note)
-    lay.addWidget(panel, 1)
+    return panel
+
+
+def build_sidebar_content(tr) -> QWidget:
+    """侧边栏布局内容区示例：面包屑 + 标题 + 统计卡 + 内容面板。"""
+    content = QWidget()
+    lay = QVBoxLayout(content)
+    lay.setContentsMargins(0, 0, 0, 0)
+    lay.setSpacing(T("space.4"))
+
+    crumb = QLabel(tr("sb.crumb"))
+    set_property(crumb, "role", "tertiary")
+    apply_token_font(crumb, "font.sm")
+    lay.addWidget(crumb)
+    title = QLabel(tr("sb.title"))
+    apply_token_font(title, "font.title.lg", "font.weight.semibold")
+    lay.addWidget(title)
+    lay.addLayout(_sidebar_stats(tr))
+    lay.addWidget(_sidebar_panel(tr), 1)
     return content
 
 # ---------------------------------------------------------------------------
 # 列表-详情
 # ---------------------------------------------------------------------------
 
-#: 示例条目：（标题, 摘要, 详情正文）
-MASTER_DETAIL_ITEMS = (
-    ("产品周报 · 第 24 期", "本周核心指标回顾", "本周活跃用户环比增长 8.2%，新增项目 4 个，"
-     "重点跟进项 3 个均已按期推进。下周将发布 v1.1 灰度版本。"),
-    ("设计评审纪要", "令牌与主题契约确认", "评审确认了色彩、间距、圆角与阴影令牌的最终数值，"
-     "亮 / 暗双主题共用同一套语义键，组件侧只引用令牌不写死数值。"),
-    ("发布检查单", "v1.0 发布前核对", "检查单覆盖：令牌完整性、双主题截图、离屏自测退出码、"
-     "文档与示例代码同步。全部通过后方可打 tag。"),
-    ("用户访谈记录", "5 位种子用户反馈", "用户普遍认可响应式侧栏与分栏面板；"
-     "希望在后续版本增加密度切换与更多图表示例。"),
-    ("迭代计划草稿", "下一周期范围初拟", "下一迭代聚焦：组件库补齐、动画预设验收、"
-     "Demo 导航完善。列表-详情布局将用于邮件与任务中心。"),
-)
-
-MASTER_DETAIL = dict(
-    items=MASTER_DETAIL_ITEMS,
-    title="收件箱",
-    actions=(("标记已读", "primary"), ("归档", "default")),
-)
+def master_detail(tr) -> dict:
+    """列表-详情布局示例数据（条目：标题, 摘要, 详情正文）。"""
+    items = tuple(
+        (tr(f"md.item.{i}.title"), tr(f"md.item.{i}.summary"), tr(f"md.item.{i}.body"))
+        for i in range(1, 6))
+    return dict(
+        items=items,
+        title=tr("md.title"),
+        actions=((tr("md.action.read"), "primary"), (tr("md.action.archive"), "default")),
+    )
 
 # ---------------------------------------------------------------------------
 # 分栏面板
 # ---------------------------------------------------------------------------
 
-SPLIT_PANEL = dict(
-    nav_items=("工作台", "项目", "数据", "设置"),
-    list_items=("季度总结", "里程碑计划", "评审纪要", "发布检查单",
-                "访谈记录", "迭代草稿"),
-)
+def split_panel(tr) -> dict:
+    """分栏面板布局示例数据。"""
+    return dict(
+        nav_items=tuple(tr(f"sp.nav.{i}") for i in range(1, 5)),
+        list_items=tuple(tr(f"sp.list.{i}") for i in range(1, 7)),
+    )
 
 
-def build_split_panel_content() -> QWidget:
+def build_split_panel_content(tr) -> QWidget:
     """分栏面板内容区示例：标题 + 色块 + 说明。"""
     panel = QWidget()
     lay = QVBoxLayout(panel)
     lay.setContentsMargins(0, 0, 0, 0)
     lay.setSpacing(T("space.3"))
-    title = QLabel("内容区")
+    title = QLabel(tr("sp.content.title"))
     apply_token_font(title, "font.title.md", "font.weight.semibold")
     lay.addWidget(title)
     chip = TokenColorChip("color.primary.subtle", "radius.md")
     chip.setMinimumHeight(T("space.16") + T("space.8"))
     lay.addWidget(chip)
-    note = QLabel("拖动分栏手柄调整栏宽，本布局会记忆调整后的比例；"
-                  "窗口尺寸变化时按比例重新分配。窄断点下依次隐藏导航栏与列表栏。")
-    note.setProperty("role", "secondary")
+    note = QLabel(tr("sp.content.note"))
+    set_property(note, "role", "secondary")
     note.setWordWrap(True)
     lay.addWidget(note)
     lay.addStretch(1)
@@ -300,7 +293,7 @@ class _DemoBarChart(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setMinimumHeight(T("space.16") * 2)
-        ThemeManager.instance().theme_changed.connect(self.update)
+        connect_theme_refresh(self)
 
     def paintEvent(self, event):  # noqa: N802
         painter = QPainter(self)
@@ -317,149 +310,182 @@ class _DemoBarChart(QWidget):
             painter.drawRoundedRect(x, self.height() - bar_h, bar_w, bar_h, radius, radius)
 
 
-def build_dashboard_cards() -> list:
-    """构建仪表盘 9 张示例卡片（依次对应 3/3/3/3/8/4/6/6/12 列跨度）。"""
+def _dash_stat_cards(tr) -> list:
+    """仪表盘前 4 张统计卡片（依次占 3/3/3/3 列跨度）。"""
     cards = []
-
-    stats = (("总用户数", "24,317", "较上周 +8.2%"),
-             ("活跃项目", "142", "本周新增 12 个"),
-             ("总收入", "¥86,400", "达成月度目标 76%"),
-             ("异常告警", "3", "2 项待处理"))
-    for title, value, note in stats:
-        card, lay = titled_card(title)
+    specs = (("users", "24,317"), ("projects", "142"),
+             ("revenue", "¥86,400"), ("alerts", "3"))
+    for name, value in specs:
+        card, lay = titled_card(tr(f"db.stat.{name}.title"))
         number = QLabel(value)
         apply_token_font(number, "font.display", "font.weight.bold")
         lay.addWidget(number)
-        foot = QLabel(note)
-        foot.setProperty("role", "secondary")
+        foot = QLabel(tr(f"db.stat.{name}.note"))
+        set_property(foot, "role", "secondary")
         apply_token_font(foot, "font.sm")
         lay.addWidget(foot)
         lay.addStretch(1)
         cards.append(card)
+    return cards
 
-    chart_card, chart_lay = titled_card("近八周访问趋势")
-    chart_lay.addWidget(_DemoBarChart(), 1)
-    cards.append(chart_card)
 
-    feed_card, feed_lay = titled_card("最新动态")
-    for text in ("发布了 v1.0 正式版", "合并了 6 个组件分支",
-                 "新增 2 位协作者", "更新了设计规范文档"):
-        row = QHBoxLayout()
-        row.setSpacing(T("space.2"))
+def _dash_feed_card(tr) -> QFrame:
+    """「最新动态」卡片（8 列跨度）。"""
+    card, lay = titled_card(tr("db.feed.title"))
+    for i in range(1, 5):
+        line = QHBoxLayout()
+        line.setSpacing(T("space.2"))
         dot = TokenColorChip("color.primary", "radius.pill")
         dot.setFixedSize(T("space.2"), T("space.2"))
-        row.addWidget(dot, 0, Qt.AlignVCenter)
-        label = QLabel(text)
-        label.setProperty("role", "secondary")
-        row.addWidget(label, 1)
-        feed_lay.addLayout(row)
-    feed_lay.addStretch(1)
-    cards.append(feed_card)
+        line.addWidget(dot, 0, Qt.AlignVCenter)
+        label = QLabel(tr(f"db.feed.{i}"))
+        set_property(label, "role", "secondary")
+        line.addWidget(label, 1)
+        lay.addLayout(line)
+    lay.addStretch(1)
+    return card
 
-    quota_card, quota_lay = titled_card("资源用量")
-    for name, value in (("存储空间", 65), ("计算配额", 42)):
-        label = QLabel(name)
-        label.setProperty("role", "secondary")
-        quota_lay.addWidget(label)
+
+def _dash_quota_card(tr) -> QFrame:
+    """「资源用量」卡片（6 列跨度）。"""
+    card, lay = titled_card(tr("db.quota.title"))
+    for name_key, value in (("storage", 65), ("compute", 42)):
+        label = QLabel(tr(f"db.quota.{name_key}"))
+        set_property(label, "role", "secondary")
+        lay.addWidget(label)
         bar = QProgressBar()
         bar.setRange(0, 100)
         bar.setValue(value)
-        quota_lay.addWidget(bar)
-    quota_lay.addStretch(1)
-    cards.append(quota_card)
+        lay.addWidget(bar)
+    lay.addStretch(1)
+    return card
 
-    todo_card, todo_lay = titled_card("本周待办")
-    for text in ("完成布局库验收", "补齐组件双主题截图", "撰写使用文档"):
-        label = QLabel(f"· {text}")
-        label.setProperty("role", "secondary")
-        todo_lay.addWidget(label)
-    todo_lay.addStretch(1)
-    cards.append(todo_card)
 
-    banner_card, banner_lay = titled_card("公告")
-    banner = QLabel("布局预设已覆盖全部 12 个场景；跨度随断点自动重排，窗口收窄时卡片纵向堆叠。")
-    banner.setProperty("role", "secondary")
+def _dash_todo_card(tr) -> QFrame:
+    """「本周待办」卡片（6 列跨度）。"""
+    card, lay = titled_card(tr("db.todo.title"))
+    for i in range(1, 4):
+        label = QLabel(f"· {tr(f'db.todo.{i}')}")
+        set_property(label, "role", "secondary")
+        lay.addWidget(label)
+    lay.addStretch(1)
+    return card
+
+
+def _dash_banner_card(tr) -> QFrame:
+    """「公告」卡片（12 列跨度）。"""
+    card, lay = titled_card(tr("db.banner.title"))
+    banner = QLabel(tr("db.banner.text"))
+    set_property(banner, "role", "secondary")
     banner.setWordWrap(True)
-    banner_lay.addWidget(banner)
-    cards.append(banner_card)
+    lay.addWidget(banner)
+    return card
 
+
+def build_dashboard_cards(tr) -> list:
+    """构建仪表盘 9 张示例卡片（依次对应 3/3/3/3/8/4/6/6/12 列跨度）。"""
+    cards = _dash_stat_cards(tr)
+    chart_card, chart_lay = titled_card(tr("db.chart.title"))
+    chart_lay.addWidget(_DemoBarChart(), 1)
+    cards.append(chart_card)
+    cards.append(_dash_feed_card(tr))
+    cards.append(_dash_quota_card(tr))
+    cards.append(_dash_todo_card(tr))
+    cards.append(_dash_banner_card(tr))
     return cards
 
 # ---------------------------------------------------------------------------
 # 英雄区
 # ---------------------------------------------------------------------------
 
-HERO_SECTION = dict(
-    kicker="InstructionX_UIKit · 布局预设",
-    title="用令牌与断点\n搭建响应式界面",
-    subtitle="颜色、间距、圆角全部取自设计令牌，亮 / 暗主题开箱即用；"
-             "按窗口宽度自动切换排布，窄屏下插图移到文案下方。",
-    primary_text="开始使用",
-    secondary_text="查看文档",
-    hint="无需编写样式表，动态属性 + 全局 QSS 即可完成主题化。",
-)
+def hero_section(tr) -> dict:
+    """英雄区布局示例数据。"""
+    return dict(
+        kicker=tr("hero.kicker"),
+        title=tr("hero.title"),
+        subtitle=tr("hero.subtitle"),
+        primary_text=tr("hero.primary"),
+        secondary_text=tr("hero.secondary"),
+        hint=tr("hero.hint"),
+    )
 
 # ---------------------------------------------------------------------------
 # 居中容器
 # ---------------------------------------------------------------------------
 
-CENTERED_CONTAINER = dict(
-    title="账号设置",
-    subtitle="居中容器示例：内容限宽 960px，窗口收窄时内容卡片按 3/2/1 列重排。",
-    actions=(("保存修改", "primary"), ("取消", "default")),
-    cards=(
-        ("个人资料", "头像、昵称与签名等基础信息。", "color.primary"),
-        ("安全设置", "密码、二次验证与登录设备。", "color.success"),
-        ("消息偏好", "通知渠道与免打扰时段。", "color.warning"),
-        ("主题外观", "亮色 / 暗色主题与密度。", "color.primary"),
-        ("API 密钥", "访问令牌与调用配额。", "color.success"),
-        ("账单信息", "套餐、发票与支付方式。", "color.warning"),
-    ),
-    note="提示：居中容器通过「两侧弹性留白 + 内容最大宽度」实现，"
-         "在超宽屏下内容依然保持可读的中轴宽度。",
-)
+def centered_container(tr) -> dict:
+    """居中容器布局示例数据。"""
+    color_keys = ("color.primary", "color.success", "color.warning")
+    cards = tuple(
+        (tr(f"cc.card.{i}.title"), tr(f"cc.card.{i}.desc"), color_keys[(i - 1) % 3])
+        for i in range(1, 7))
+    return dict(
+        title=tr("cc.title"),
+        subtitle=tr("cc.subtitle"),
+        actions=((tr("cc.action.save"), "primary"), (tr("cc.action.cancel"), "default")),
+        cards=cards,
+        note=tr("cc.note"),
+    )
 
 # ---------------------------------------------------------------------------
 # 瀑布流
 # ---------------------------------------------------------------------------
 
-#: 示例卡片：（标题, 色块令牌, 内容量档位 2-6, 元信息）
-WATERFALL_ITEMS = tuple(
-    (title, key, ratio, f"作品 {i + 1:02d} · 演示")
-    for i, (title, key, ratio) in enumerate((
-        ("山间晨雾", "color.primary.subtle", 3),
-        ("城市夜景", "color.success.subtle", 5),
-        ("静物写生", "color.warning.subtle", 2),
-        ("海边日落", "color.danger.subtle", 4),
-        ("森林小径", "color.primary.subtle", 6),
-        ("老街巷口", "color.success.subtle", 3),
-        ("雨后屋檐", "color.warning.subtle", 5),
-        ("雪原足迹", "color.danger.subtle", 2),
-        ("沙漠星空", "color.primary.subtle", 4),
-        ("湖畔倒影", "color.success.subtle", 6),
-        ("窗台绿植", "color.warning.subtle", 3),
-        ("巷尾猫影", "color.danger.subtle", 5),
-    ))
-)
+def waterfall_items(tr) -> tuple:
+    """示例卡片：（标题, 色块令牌, 内容量档位 2-6, 元信息）。"""
+    color_keys = ("color.primary.subtle", "color.success.subtle",
+                  "color.warning.subtle", "color.danger.subtle")
+    ratios = (3, 5, 2, 4, 6, 3, 5, 2, 4, 6, 3, 5)
+    return tuple(
+        (tr(f"wf.item.{i}"), color_keys[(i - 1) % 4], ratios[i - 1],
+         tr("wf.meta", n=f"{i:02d}"))
+        for i in range(1, 13))
 
 # ---------------------------------------------------------------------------
 # 图文左右
 # ---------------------------------------------------------------------------
 
-MEDIA_LEFT_RIGHT = dict(
-    sections=(
-        ("特性一：令牌驱动",
-         "颜色、间距、圆角全部来自统一的设计令牌。组件与布局只引用语义键，"
-         "不写死任何数值，因此换肤与品牌定制只需要改一份令牌表。",
-         "color.primary.subtle"),
-        ("特性二：双主题开箱即用",
-         "亮色与暗色主题共用同一套语义键，切换时全局 QSS 与自绘色块同步刷新，"
-         "无需重启应用，也无需为每个页面单独适配。",
-         "color.success.subtle"),
-        ("特性三：响应式断点",
-         "布局按窗口宽度在 xs 到 xl 五档断点间自适应：网格重排列数、侧栏折叠、"
-         "图文上下堆叠，全部在 resizeEvent 中完成。",
-         "color.warning.subtle"),
-    ),
-    link_text="了解更多",
-)
+def media_left_right(tr) -> dict:
+    """图文左右布局示例数据。"""
+    color_keys = ("color.primary.subtle", "color.success.subtle",
+                  "color.warning.subtle")
+    sections = tuple(
+        (tr(f"ml.section.{i}.title"), tr(f"ml.section.{i}.body"), color_keys[i - 1])
+        for i in range(1, 4))
+    return dict(sections=sections, link_text=tr("ml.link"))
+
+# ---------------------------------------------------------------------------
+# 流式对话
+# ---------------------------------------------------------------------------
+
+#: set_message_stats 演示：以真实值覆盖首条 AI 消息的统计展示
+CHAT_STATS_DEMO = {"tokens": 386, "elapsed": 2.4, "speed": 160.8}
+
+#: 首条 AI 消息索引（chat_messages 交替 user/assistant，第 2 条为首个 AI 消息）
+CHAT_FIRST_ASSISTANT_INDEX = 1
+
+
+def chat_messages(tr) -> list:
+    """示例对话：[{"role", "content", "info"}, ...]。
+
+    内容覆盖 MarkdownView 主要特性：行内样式、列表、引用、分割线、表格、
+    代码围栏、行内 / 块级公式、Mermaid 图、链接；AI 气泡附 info 自定义
+    文案（模型名称）。
+    """
+    info = tr("chat.info")
+    messages = []
+    for i in range(1, 6):
+        messages.append({"role": "user", "content": tr(f"chat.user.{i}")})
+        messages.append({"role": "assistant", "info": info,
+                         "content": tr(f"chat.assistant.{i}")})
+    return messages
+
+
+def chat_stream_reply(tr) -> str:
+    """模拟流式回复正文（提交 / 重新生成时由演示控制器逐段追加）。"""
+    return tr("chat.stream_reply")
+
+
+def chat_stream_continue(tr) -> str:
+    """「继续生成」演示文本（接到 continueRequested 信号后向原消息追加）。"""
+    return tr("chat.stream_continue")

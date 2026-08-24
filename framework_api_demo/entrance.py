@@ -93,6 +93,11 @@ class FrameworkAPIDemoPlugin(IPlugin):
             dp.register_plugin(plugin_id, "FrameworkAPIDemo")
         except DataProviderError as e:
             err = str(e)
+            # 耦合风险说明：DataProvider 未提供「插件已注册」的独立查询方法或
+            # 专用异常类型，这里只能按错误文案匹配（中英文双写兜底）。若框架未来
+            # 调整 register_plugin 的报错文案，此判定会失效并退化为记日志后跳过
+            # set_active_instance——语义上重复注册本就该忽略，仍然安全，但框架
+            # 改动注册报错文案时需同步检查此处。
             if "已存在" not in err and "exists" not in err.lower():
                 self._log(f"注册插件失败: {err}")
                 return
@@ -115,7 +120,8 @@ class FrameworkAPIDemoPlugin(IPlugin):
     def _iter_cleanup_services(self):
         """返回需要执行卸载清理的服务实例（跳过未初始化的）"""
         return [
-            s for s in (self.data_service, self.task_service, self.llm_service)
+            s for s in (self.data_service, self.task_service, self.llm_service,
+                        self.mcp_service)
             if s is not None
         ]
 
@@ -130,7 +136,9 @@ class FrameworkAPIDemoPlugin(IPlugin):
             )
 
     def _create_widget(self, parent=None, data_provider=None) -> QWidget:
-        """创建插件主控件（UI 构建由 MainWidget 完成）"""
+        """创建插件主控件（UI 构建由 MainWidget 完成；注入取词门面与插件 UUID）"""
+        services = self._get_services()
+        i18n = services.localization if services is not None else None
         widget = MainWidget(
             data_service=self.data_service,
             task_service=self.task_service,
@@ -139,10 +147,12 @@ class FrameworkAPIDemoPlugin(IPlugin):
             info_service=self.info_service,
             mcp_service=self.mcp_service,
             parent=parent,
+            i18n=i18n,
+            plugin_id=self.plugin_id,
         )
         self._main_widget = widget
-        widget.append_log("Framework API Demo 插件已加载")
-        widget.append_log(f"插件 ID: {self.plugin_id}")
+        widget.append_log(widget.tr_text("main", "log.loaded"))
+        widget.append_log(widget.tr_text("main", "log.plugin_id", id=self.plugin_id))
         return widget
 
     def _log(self, message: str):

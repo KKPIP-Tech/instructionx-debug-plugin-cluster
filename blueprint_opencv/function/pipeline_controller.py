@@ -51,6 +51,16 @@ class PipelineController:
     # 图快照
     # ------------------------------------------------------------------
 
+    def set_max_nodes(self, max_nodes: int) -> None:
+        """更新单次运行节点数防御性上限（线程安全）。
+
+        缺省取 ``DEFAULT_MAX_NODES``；ui 层读取 config/default.json 的
+        ``graph.max_nodes`` 后经 service 透传到本方法（跨插件路径不读
+        配置，保留常量缺省）。
+        """
+        with self._lock:
+            self._max_nodes = int(max_nodes)
+
     def update_graph(self, graph_dict: dict) -> None:
         """更新当前图快照（运行前由 service 从画布 ``to_dict()`` 取）。
 
@@ -173,9 +183,11 @@ class PipelineController:
         try:
             normalized = PipelineExecutor.normalize_graph(graph)
             node_count = len(normalized.get("nodes", []))
-            if node_count > self._max_nodes:
+            with self._lock:
+                max_nodes = self._max_nodes
+            if node_count > max_nodes:
                 raise NodeExecutionError(
-                    f"节点数量 {node_count} 超过上限 {self._max_nodes}，无法运行")
+                    f"节点数量 {node_count} 超过上限 {max_nodes}，无法运行")
             self._executor.validate_graph(graph)
         except NodeExecutionError:
             with self._lock:

@@ -49,8 +49,8 @@ demo_plugin_id 由 plugin_id 经确定性哈希生成（配置 `demo.plugin_id_p
 会话管理、共享 ToolRegistry 注册与 chat_with_tools 多轮工具调用、
 generate_image / text_to_speech（结果经 save_asset 落盘）、
 get_usage_stats / validate_provider。
-阻塞型调用（流式、会话发送、工具对话、多模态）一律经 register_sync_task
-放入工作线程执行。
+阻塞型调用（聊天/嵌入、流式、会话发送、工具对话、多模态）一律经 register_async_task
+提交到任务线程池执行（register_sync_task 为调用线程内联执行，仅用于同步任务演示）。
 
 ### `APIDemoService`
 封装 PluginManager 的插件查询、API 发现、Function Tools 导出与跨插件调用。
@@ -71,13 +71,29 @@ mcp_manager / mcp_client 为 Optional 注入，未注入时返回统一错误字
 notifier 并自行 run_in_ui_thread 封送。LLM/MCP 演示用消息前缀区分事件类型，
 各通道前缀独立避免串台：
 
+- 聊天：`[聊天完成]` / `[聊天失败] `（后台任务化后由事件驱动，UI 拉取聚合结果）
+- 嵌入：`[嵌入完成]` / `[嵌入失败] `
 - 流式聊天：`[流式片段] ` / `[流式完成]` / `[流式失败] `
 - 会话：`[会话回复] ` / `[会话失败] ` / `[会话流式片段] ` / `[会话流式完成]` / `[会话流式失败] `
 - 工具对话：`[工具对话完成]` / `[工具对话失败] `
+- 工具流式对话：`[工具流式片段] ` / `[工具流式完成]` / `[工具流式失败] `
 - 多模态：`[图片生成完成]` / `[图片生成失败] ` / `[语音合成完成]` / `[语音合成失败] `
 
 聚合结果（完整文本、usage 等）在工作线程写入服务实例的 `_last_*` 字段，
 UI 收到完成事件后经 `get_last_*_result()` 拉取展示。
+
+## 请求防重入（LLM 触发按钮）
+
+LLM 页全部发起型按钮（聊天/流式/会话三入口/工具对话/工具流式/嵌入/
+图片生成/语音合成）在发起后台请求时经 `_begin_llm_request(btn)` 禁用，
+对应完成/失败事件分发处（或发起即失败的分支）经 `_end_llm_request(btn)`
+恢复，防止请求进行中重复提交。会话流式的普通/带图两个入口共用
+STREAM_DONE/STREAM_ERROR 事件，事件到达时两个按钮一并恢复（幂等无害）。
+
+## 布局度量常量（ui/metrics.py）
+
+主控件与各 Tab 的间距/边距/限高（像素）集中于 `ui/metrics.py`，
+0（无边距/无间距）属无语义字面量豁免；修改度量改一处全局生效。
 
 ## 线程封送模式（notifier / run_in_ui_thread）
 
@@ -88,12 +104,13 @@ UI 收到完成事件后经 `get_last_*_result()` 拉取展示。
 
 ## 卸载清理链（on_plugin_unloaded）
 
-entrance 遍历已初始化的 data / task / llm 三个服务，逐个调用其 `cleanup()`
+entrance 遍历已初始化的 data / task / llm / mcp 四个服务，逐个调用其 `cleanup()`
 （异常仅记日志不逃逸）：
 
 - `DataDemoService.cleanup()`：取消全部订阅（unsubscribe）、注销演示插件命名空间；
 - `TaskDemoService.cleanup()`：停止全部长期任务、注销全部定时任务（逐项容错）；
 - `LLMDemoService.cleanup()`：注销共享注册表中的演示工具、删除本插件创建的全部会话。
+- `MCPDemoService.cleanup()`：逐个断开仍连接的远程 MCP Server（逐项容错记日志）。
 
 ## 关键设计决策
 

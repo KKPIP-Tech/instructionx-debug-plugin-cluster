@@ -4,7 +4,10 @@
 覆盖按钮 / 输入 / 数字日期 / 下拉 / 滑块表盘 / 进度数码 / 文本显示 /
 容器 / 数据视图 / 窗口部件，以及标准对话框（QMessageBox / QFileDialog /
 QColorDialog / QFontDialog / QInputDialog）的触发按钮。亮 / 暗主题自动换肤。
+文案经 ``bind_tr`` 按 ``basic_widgets`` 分组取词。
 """
+
+from typing import Optional
 
 from PySide6.QtCore import Qt, QDate, QTime, QDateTime
 from PySide6.QtGui import QAction, QColor
@@ -54,20 +57,22 @@ from PySide6.QtGui import QFont
 
 from InstructionX_UIKit.theme import set_property
 
-from .common import Section, col, hint_label, make_page, row
+from core.interfaces import ILocalizationFacade
+
+from .common import Section, bind_tr, col, hint_label, make_page, row
 
 __all__ = ["create_page"]
 
 
-def _buttons_section():
-    box = Section("按钮（QPushButton / QToolButton）")
+def _buttons_section(tr):
+    box = Section(tr("sec.buttons"))
     box.layout().addWidget(row(
-        QPushButton("默认按钮"),
-        _v("主要按钮", "primary"),
-        _v("危险按钮", "danger"),
-        _v("禁用按钮", None, False)))
-    tb1 = QToolButton(); tb1.setText("工具按钮")
-    tb2 = QToolButton(); tb2.setText("带菜单")
+        QPushButton(tr("btn.default")),
+        _v(tr("btn.primary"), "primary"),
+        _v(tr("btn.danger"), "danger"),
+        _v(tr("btn.disabled"), None, False)))
+    tb1 = QToolButton(); tb1.setText(tr("tb.tool"))
+    tb2 = QToolButton(); tb2.setText(tr("tb.menu"))
     tb2.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
     box.layout().addWidget(row(tb1, tb2))
     return box
@@ -81,21 +86,21 @@ def _v(text, variant, enabled=True):
     return b
 
 
-def _text_inputs_section():
-    box = Section("文本输入（QLineEdit / QTextEdit / QPlainTextEdit）")
-    le = QLineEdit("单行输入框")
+def _text_inputs_section(tr):
+    box = Section(tr("sec.text_inputs"))
+    le = QLineEdit(tr("le.text"))
     le.setMinimumWidth(200)
-    box.layout().addWidget(row(le, QLineEdit("placeholder 占位")))
-    te = QTextEdit("QTextEdit 富文本编辑：支持 <b>加粗</b> 与 <i>斜体</i>。")
+    box.layout().addWidget(row(le, QLineEdit(tr("le.placeholder"))))
+    te = QTextEdit(tr("te.text"))
     te.setFixedHeight(90)
-    pe = QPlainTextEdit("QPlainTextEdit 纯文本编辑：\n第二行内容。")
+    pe = QPlainTextEdit(tr("pe.text"))
     pe.setFixedHeight(90)
     box.layout().addWidget(row(te, pe))
     return box
 
 
-def _number_date_section():
-    box = Section("数字 / 日期时间（QSpinBox / QDoubleSpinBox / QDate* / QKeySequenceEdit）")
+def _number_date_section(tr):
+    box = Section(tr("sec.number_date"))
     box.layout().addWidget(row(
         QSpinBox(value=42), QDoubleSpinBox(value=3.14),
         QKeySequenceEdit()))
@@ -106,18 +111,18 @@ def _number_date_section():
     return box
 
 
-def _combo_section():
-    box = Section("下拉选择（QComboBox / QFontComboBox）")
+def _combo_section(tr):
+    box = Section(tr("sec.combo"))
     cb = QComboBox()
-    cb.addItems(["选项一", "选项二", "选项三"])
+    cb.addItems([tr(f"cb.item.{i}") for i in range(1, 4)])
     fcb = QFontComboBox()
     fcb.setMinimumWidth(200)
     box.layout().addWidget(row(cb, fcb))
     return box
 
 
-def _slider_dial_section():
-    box = Section("滑块 / 表盘 / 进度 / 数码（QSlider / QDial / QProgressBar / QLCDNumber）")
+def _slider_dial_section(tr):
+    box = Section(tr("sec.slider_dial"))
     sl = QSlider(Qt.Horizontal, value=55)
     sl.setMinimumWidth(240)
     dial = QDial(value=40)
@@ -132,11 +137,10 @@ def _slider_dial_section():
     return box
 
 
-def _display_section():
-    box = Section("文本显示 / 日历（QTextBrowser / QCalendarWidget）")
+def _display_section(tr):
+    box = Section(tr("sec.display"))
     tb = QTextBrowser()
-    tb.setHtml("<h4>QTextBrowser</h4><p>只读富文本浏览器，支持链接与锚点。</p>"
-               "<ul><li>项目一</li><li>项目二</li></ul>")
+    tb.setHtml(tr("tb.html"))
     tb.setFixedHeight(180)
     tb.setMinimumWidth(300)
     cal = QCalendarWidget()
@@ -145,38 +149,41 @@ def _display_section():
     return box
 
 
-def _container_section():
-    box = Section("容器（QGroupBox / QTabWidget / QToolBox）")
-    gb = QGroupBox("分组框")
+def _container_section(tr):
+    box = Section(tr("sec.container"))
+    gb = QGroupBox(tr("gb.title"))
     gl = QVBoxLayout(gb)
-    gl.addWidget(QLabel("QGroupBox 内的内容"))
-    gl.addWidget(QPushButton("按钮"))
+    gl.addWidget(QLabel(tr("gb.content")))
+    gl.addWidget(QPushButton(tr("gb.button")))
     tabs = QTabWidget()
-    for name in ("标签一", "标签二", "标签三"):
-        tabs.addTab(QLabel(f"{name} 内容", alignment=Qt.AlignCenter), name)
+    for i in range(1, 4):
+        name = tr(f"tab.{i}")
+        tabs.addTab(QLabel(tr("tab.content", name=name), alignment=Qt.AlignCenter), name)
     tabs.setFixedHeight(150)
     toolbox = QToolBox()
-    toolbox.addItem(QLabel("抽屉一内容", alignment=Qt.AlignCenter), "抽屉一")
-    toolbox.addItem(QLabel("抽屉二内容", alignment=Qt.AlignCenter), "抽屉二")
+    toolbox.addItem(QLabel(tr("drawer.1.content"), alignment=Qt.AlignCenter),
+                    tr("drawer.1"))
+    toolbox.addItem(QLabel(tr("drawer.2.content"), alignment=Qt.AlignCenter),
+                    tr("drawer.2"))
     toolbox.setFixedHeight(150)
     box.layout().addWidget(row(gb, tabs, toolbox))
     return box
 
 
-def _views_section():
-    box = Section("数据视图（QListWidget / QTreeWidget / QTableWidget）")
+def _views_section(tr):
+    box = Section(tr("sec.views"))
     lw = QListWidget()
-    lw.addItems(["列表项 一", "列表项 二", "列表项 三", "列表项 四"])
+    lw.addItems([tr(f"lw.item.{i}") for i in range(1, 5)])
     lw.setCurrentRow(1)
     tree = QTreeWidget()
-    tree.setHeaderLabels(["名称", "值"])
+    tree.setHeaderLabels([tr("tree.header.name"), tr("tree.header.value")])
     for i in range(3):
-        it = QTreeWidgetItem([f"节点 {i + 1}", str(i)])
-        it.addChild(QTreeWidgetItem([f"子节点 {i + 1}.1", "x"]))
+        it = QTreeWidgetItem([tr("tree.node", n=i + 1), str(i)])
+        it.addChild(QTreeWidgetItem([tr("tree.child", n=i + 1), "x"]))
         tree.addTopLevelItem(it)
     tree.expandAll()
     table = QTableWidget(3, 3)
-    table.setHorizontalHeaderLabels(["列一", "列二", "列三"])
+    table.setHorizontalHeaderLabels([tr(f"table.col.{i}") for i in range(1, 4)])
     for r in range(3):
         for c in range(3):
             table.setItem(r, c, QTableWidgetItem(f"{r + 1},{c + 1}"))
@@ -186,81 +193,84 @@ def _views_section():
     return box
 
 
-def _window_parts_section():
-    box = Section("窗口部件（QMenuBar / QToolBar / QStatusBar）")
-    win = QMainWindow()
+def _window_menus(win, tr) -> None:
+    """填充演示主窗口的菜单栏（文件 / 编辑）。"""
     mb = win.menuBar()
-    m_file = mb.addMenu("文件(&F)")
-    m_file.addAction("新建")
-    m_file.addAction("打开")
-    m_edit = mb.addMenu("编辑(&E)")
-    m_edit.addAction("撤销")
-    tb = QToolBar("主工具栏")
-    tb.addAction(QAction("新建", win))
-    tb.addAction(QAction("保存", win))
+    m_file = mb.addMenu(tr("menu.file"))
+    m_file.addAction(tr("menu.file.new"))
+    m_file.addAction(tr("menu.file.open"))
+    m_edit = mb.addMenu(tr("menu.edit"))
+    m_edit.addAction(tr("menu.edit.undo"))
+
+
+def _window_toolbar(win, tr) -> None:
+    """填充演示主窗口的工具栏（新建 / 保存 / 帮助）。"""
+    tb = QToolBar(tr("toolbar.title"))
+    tb.addAction(QAction(tr("toolbar.new"), win))
+    tb.addAction(QAction(tr("toolbar.save"), win))
     tb.addSeparator()
-    tb.addAction(QAction("帮助", win))
+    tb.addAction(QAction(tr("toolbar.help"), win))
     win.addToolBar(tb)
-    win.setCentralWidget(QLabel("中央内容区", alignment=Qt.AlignCenter))
+
+
+def _window_parts_section(tr):
+    box = Section(tr("sec.window_parts"))
+    win = QMainWindow()
+    _window_menus(win, tr)
+    _window_toolbar(win, tr)
+    win.setCentralWidget(QLabel(tr("central"), alignment=Qt.AlignCenter))
     sb = QStatusBar()
-    sb.showMessage("就绪")
+    sb.showMessage(tr("status.ready"))
     win.setStatusBar(sb)
     win.setFixedHeight(240)
     box.layout().addWidget(win)
     return box
 
 
-def _dialogs_section(page):
-    box = Section("标准对话框（点击触发）")
+def _dialog_handlers(page, tr) -> list:
+    """系统对话框演示的 (按钮文案, 触发函数) 表。"""
+    return [
+        ("QMessageBox", lambda: QMessageBox.information(
+            page, "QMessageBox", tr("dlg.msg.text"))),
+        ("QFileDialog", lambda: QFileDialog.getOpenFileName(
+            page, tr("dlg.file.title"))),
+        ("QColorDialog", lambda: QColorDialog.getColor(
+            QColor("#3F5E8C"), page, tr("dlg.color.title"))),
+        ("QFontDialog", lambda: QFontDialog.getFont(
+            page, tr("dlg.font.title"))),
+        ("QInputDialog", lambda: QInputDialog.getText(
+            page, "QInputDialog", tr("dlg.input.label"))),
+    ]
 
-    def _msg():
-        QMessageBox.information(page, "QMessageBox", "这是 QMessageBox 信息对话框。")
 
-    def _file():
-        QFileDialog.getOpenFileName(page, "QFileDialog 选择文件")
-
-    def _color():
-        QColorDialog.getColor(QColor("#3F5E8C"), page, "QColorDialog 选择颜色")
-
-    def _font():
-        QFontDialog.getFont(page, "QFontDialog 选择字体")
-
-    def _input():
-        QInputDialog.getText(page, "QInputDialog", "请输入文本：")
-
+def _dialogs_section(page, tr):
+    box = Section(tr("sec.dialogs"))
     btns = []
-    for text, fn in (("QMessageBox", _msg), ("QFileDialog", _file),
-                     ("QColorDialog", _color), ("QFontDialog", _font),
-                     ("QInputDialog", _input)):
+    for text, fn in _dialog_handlers(page, tr):
         b = QPushButton(text)
         b.clicked.connect(fn)
         btns.append(b)
     box.layout().addWidget(row(*btns))
-    box.layout().addWidget(hint_label("点击按钮弹出对应的标准对话框。", role="tertiary"))
+    box.layout().addWidget(hint_label(tr("dlg.hint"), role="tertiary"))
     return box
 
 
-def create_page() -> QWidget:
-    page_placeholder = QWidget()  # 仅用于对话框 parent 占位（运行时为窗口）
+def create_page(i18n: Optional[ILocalizationFacade] = None) -> QWidget:
+    tr = bind_tr(i18n, "basic_widgets")
     sections = [
-        _buttons_section(),
-        _text_inputs_section(),
-        _number_date_section(),
-        _combo_section(),
-        _slider_dial_section(),
-        _display_section(),
-        _container_section(),
-        _views_section(),
-        _window_parts_section(),
+        _buttons_section(tr),
+        _text_inputs_section(tr),
+        _number_date_section(tr),
+        _combo_section(tr),
+        _slider_dial_section(tr),
+        _display_section(tr),
+        _container_section(tr),
+        _views_section(tr),
+        _window_parts_section(tr),
     ]
-    page = make_page(
-        "基础控件",
-        "Qt 原生控件在全局 QSS 美化下的全家福：按钮、输入、数字日期、下拉、滑块表盘、"
-        "进度数码、文本显示、容器、数据视图与窗口部件，以及标准对话框触发。",
-        sections)
+    page = make_page(tr("title"), tr("desc"), sections)
     # 对话框 section 需要页面作为 parent，最后追加
     content = page.widget()
     content.layout().insertWidget(
-        content.layout().count() - 1, _dialogs_section(content))
-    page_placeholder.deleteLater()
+        content.layout().count() - 1, _dialogs_section(content, tr))
     return page

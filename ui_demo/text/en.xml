@@ -1,0 +1,1929 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  UI Demo 插件语言文件（en，English）
+  规则：group 名与键名必须与 zh.xml（回退终点）完全一致。
+  校验：.venv\Scripts\python.exe scripts/check_i18n_completeness.py
+-->
+<texts language="en">
+  <!-- Navigation tree: category and page titles (keys derived from NAV registry) -->
+  <group name="nav">
+    <text key="cat.tokens">Design Tokens</text>
+    <text key="cat.layouts">Layout Presets</text>
+    <text key="cat.inputs">Components · Input</text>
+    <text key="cat.display">Components · Display</text>
+    <text key="cat.feedback">Components · Feedback</text>
+    <text key="cat.anim_property">Animation · Property</text>
+    <text key="cat.anim_painted">Animation · Painted</text>
+    <text key="cat.basic_widgets">Basic Widgets</text>
+    <text key="cat.charts">Charts</text>
+    <text key="cat.blueprint">Blueprint</text>
+    <text key="page.tokens">Design Tokens Overview</text>
+    <text key="page.top_nav_bar">Top Nav Bar</text>
+    <text key="page.holy_grail">Holy Grail</text>
+    <text key="page.card_grid">Card Grid</text>
+    <text key="page.single_column">Single Column</text>
+    <text key="page.sidebar_layout">Sidebar Layout</text>
+    <text key="page.master_detail">Master-Detail</text>
+    <text key="page.split_panel">Split Panel</text>
+    <text key="page.dashboard_grid">Dashboard Grid</text>
+    <text key="page.hero_section">Hero Section</text>
+    <text key="page.centered_container">Centered Container</text>
+    <text key="page.waterfall">Waterfall</text>
+    <text key="page.media_left_right">Media Left-Right</text>
+    <text key="page.chat_conversation">Chat Conversation</text>
+    <text key="page.button">Button</text>
+    <text key="page.icon_button">IconButton</text>
+    <text key="page.checkbox">CheckBox</text>
+    <text key="page.radio">RadioButton</text>
+    <text key="page.switch">Switch</text>
+    <text key="page.line_edit">LineEdit</text>
+    <text key="page.text_area">TextArea</text>
+    <text key="page.spin_box">SpinBox</text>
+    <text key="page.combo_box">ComboBox</text>
+    <text key="page.slider">Slider</text>
+    <text key="page.date_picker">DatePicker</text>
+    <text key="page.time_picker">TimePicker</text>
+    <text key="page.rating">Rating</text>
+    <text key="page.color_picker">ColorPicker</text>
+    <text key="page.auto_complete">AutoComplete</text>
+    <text key="page.cascader">Cascader</text>
+    <text key="page.transfer">Transfer</text>
+    <text key="page.upload">UploadWidget</text>
+    <text key="page.segmented">SegmentedControl</text>
+    <text key="page.form">FormLayout</text>
+    <text key="page.avatar">Avatar</text>
+    <text key="page.badge">Badge</text>
+    <text key="page.card">Card</text>
+    <text key="page.descriptions">Descriptions</text>
+    <text key="page.list_view">ListWidget</text>
+    <text key="page.table">Table</text>
+    <text key="page.tree">Tree</text>
+    <text key="page.timeline">Timeline</text>
+    <text key="page.statistic">Statistic</text>
+    <text key="page.calendar">Calendar</text>
+    <text key="page.carousel">Carousel</text>
+    <text key="page.image_view">ImageView</text>
+    <text key="page.qrcode_view">QRCodeView</text>
+    <text key="page.comment">CommentView</text>
+    <text key="page.collapse">Collapse</text>
+    <text key="page.empty">Empty</text>
+    <text key="page.tooltip">Tooltip</text>
+    <text key="page.popover">Popover</text>
+    <text key="page.markdown_view">MarkdownView Markdown</text>
+    <text key="page.tabs">Tabs</text>
+    <text key="page.anchor">Anchor</text>
+    <text key="page.breadcrumb">Breadcrumb</text>
+    <text key="page.dropdown">DropdownButton</text>
+    <text key="page.nav_menu">NavMenu</text>
+    <text key="page.page_header">PageHeader</text>
+    <text key="page.pagination">Pagination</text>
+    <text key="page.steps">Steps</text>
+    <text key="page.alert">Alert</text>
+    <text key="page.dialog">Dialog</text>
+    <text key="page.drawer">Drawer</text>
+    <text key="page.notification">Notification</text>
+    <text key="page.message">Message</text>
+    <text key="page.popconfirm">Popconfirm</text>
+    <text key="page.result">ResultView</text>
+    <text key="page.skeleton">Skeleton</text>
+    <text key="page.spinner">Spinner</text>
+    <text key="page.progress_bar">ProgressBar</text>
+    <text key="page.tour">Tour</text>
+    <text key="page.anim_property">Property Animations (28)</text>
+    <text key="page.anim_painted">Painted Animations (24)</text>
+    <text key="page.basic_widgets">Basic Widgets Gallery</text>
+    <text key="page.charts">Charts (Native Engine)</text>
+    <text key="page.blueprint">Blueprint (Node Graph)</text>
+  </group>
+  <!-- Shared scaffolding -->
+  <group name="common">
+    <text key="usage.title">Usage</text>
+    <text key="demo_card.play">Play</text>
+  </group>
+  <!-- Interactive parameter panel infrastructure -->
+  <group name="playground">
+    <text key="panel.default_title">Parameters</text>
+    <text key="panel.reset">Reset</text>
+    <text key="card.play">Play</text>
+  </group>
+  <!-- Design tokens page -->
+  <group name="tokens">
+    <text key="title">Design Tokens</text>
+    <text key="desc">The single source of truth for the entire UI Kit: color, typography, spacing, radius, shadow, breakpoints and motion. The palette shows every semantic color in light/dark pairs; all other visualizations read live theme tokens.</text>
+    <text key="section.colors">Color Palette (Semantic Colors · Light / Dark)</text>
+    <text key="color_group.bg">Background</text>
+    <text key="color_group.border">Border</text>
+    <text key="color_group.text">Text</text>
+    <text key="color_group.primary">Primary</text>
+    <text key="color_group.success">Success</text>
+    <text key="color_group.warning">Warning</text>
+    <text key="color_group.danger">Danger</text>
+    <text key="color_group.overlay">Overlay</text>
+    <text key="card.hex">Light {light}
+Dark {dark}</text>
+    <text key="section.type">Typography (Scale / Weight)</text>
+    <text key="type.scale_hint">Type scale (each level rendered at its real pixel size)</text>
+    <text key="type.weight_hint">Font weights (rendered with real QFont weights)</text>
+    <text key="type.scale_sample">{label} Design Tokens Typography {px}px</text>
+    <text key="type.weight_sample">{label} Consistent UI by design tokens Typography 0123456789</text>
+    <text key="scale.xs">Tiny xs</text>
+    <text key="scale.sm">Small sm</text>
+    <text key="scale.md">Body md</text>
+    <text key="scale.lg">Large lg</text>
+    <text key="scale.title_sm">Title sm</text>
+    <text key="scale.title_md">Title md</text>
+    <text key="scale.title_lg">Title lg</text>
+    <text key="scale.display">Display</text>
+    <text key="scale.hero">Hero</text>
+    <text key="weight.regular">Regular</text>
+    <text key="weight.medium">Medium</text>
+    <text key="weight.semibold">Semibold</text>
+    <text key="weight.bold">Bold</text>
+    <text key="section.spacing">Spacing / Radius</text>
+    <text key="spacing.hint">Spacing (4pt baseline, px)</text>
+    <text key="radius.hint">Radius (px)</text>
+    <text key="section.shadow">Shadows (shadow.sm / md / lg)</text>
+    <text key="shadow.sm">sm Small</text>
+    <text key="shadow.md">md Medium</text>
+    <text key="shadow.lg">lg Large</text>
+    <text key="section.breakpoint">Breakpoints (window width px)</text>
+    <text key="breakpoint.line">{name}: {range} (threshold {threshold}px)</text>
+    <text key="breakpoint.current">Window width {width}px → breakpoint {bp}</text>
+    <text key="section.motion">Motion (Duration / Easing)</text>
+    <text key="motion.duration_hint">Duration (ms)</text>
+    <text key="motion.easing_hint">Easing curves</text>
+    <text key="motion.easing_item">{name} (QEasingCurve preset)</text>
+  </group>
+  <!-- Layout preset pages (layouts.py) -->
+  <group name="layouts">
+    <text key="preview.title">Live Preview</text>
+    <text key="top_nav_bar.title">Top Nav Bar</text>
+    <text key="top_nav_bar.desc">Window-level top nav with logo + menu + search + avatar.</text>
+    <text key="holy_grail.title">Holy Grail</text>
+    <text key="holy_grail.desc">Header / footer / dual sidebars / main area; drag QSplitter handles to resize.</text>
+    <text key="card_grid.title">Card Grid</text>
+    <text key="card_grid.desc">Card grid adapting to 1 / 2 / 3 / 4 columns by breakpoint.</text>
+    <text key="single_column.title">Single Column</text>
+    <text key="single_column.desc">Single-column vertical rhythm layout, max width 760, centered.</text>
+    <text key="sidebar_layout.title">Sidebar Layout</text>
+    <text key="sidebar_layout.desc">Left nav + right content; collapses to an icon bar.</text>
+    <text key="master_detail.title">Master-Detail</text>
+    <text key="master_detail.desc">List left, detail right; stacks automatically at narrow breakpoints.</text>
+    <text key="split_panel.title">Split Panel</text>
+    <text key="split_panel.desc">QSplitter with 2-3 panes; remembers dragged ratios.</text>
+    <text key="dashboard_grid.title">Dashboard Grid</text>
+    <text key="dashboard_grid.desc">12-column grid; cards span 3 / 4 / 6 / 12 columns.</text>
+    <text key="hero_section.title">Hero Section</text>
+    <text key="hero_section.desc">Big title + subtitle + dual buttons + right illustration placeholder.</text>
+    <text key="centered_container.title">Centered Container</text>
+    <text key="centered_container.desc">Content capped at 960 and centered.</text>
+    <text key="waterfall.title">Waterfall</text>
+    <text key="waterfall.desc">Waterfall of uneven-height cards in 2-4 columns.</text>
+    <text key="media_left_right.title">Media Left-Right</text>
+    <text key="media_left_right.desc">Alternating media-left/text-right and text-left/media-right sections.</text>
+    <text key="chat_conversation.title">Chat Conversation</text>
+    <text key="chat_conversation.desc">AI chat page: Markdown message bubbles + streaming append + bubble action bar + bottom input area.</text>
+  </group>
+  <!-- Layout demo sample data (layout_samples.py) -->
+  <group name="layout_samples">
+    <text key="sidebar.brand">Console</text>
+    <text key="tnb.brand">UI Kit Console</text>
+    <text key="tnb.menu.home">Home</text>
+    <text key="tnb.menu.products">Products</text>
+    <text key="tnb.menu.docs">Docs</text>
+    <text key="tnb.menu.community">Community</text>
+    <text key="tnb.menu.about">About</text>
+    <text key="tnb.search_placeholder">Search docs, components...</text>
+    <text key="tnb.user_text">Me</text>
+    <text key="tnb.title">Welcome to UI Kit</text>
+    <text key="tnb.subtitle">A window-level example of the top nav bar layout preset, with content cards below; colors follow the theme automatically.</text>
+    <text key="tnb.card.1.title">Feature Module 1</text>
+    <text key="tnb.card.1.desc">Demo content card using the primary.subtle token.</text>
+    <text key="tnb.card.2.title">Feature Module 2</text>
+    <text key="tnb.card.2.desc">Demo content card using the success.subtle token.</text>
+    <text key="tnb.card.3.title">Feature Module 3</text>
+    <text key="tnb.card.3.desc">Demo content card using the warning.subtle token.</text>
+    <text key="tnb.card.4.title">Feature Module 4</text>
+    <text key="tnb.card.4.desc">Demo content card using the danger.subtle token.</text>
+    <text key="hg.title">Holy Grail</text>
+    <text key="hg.nav.1">Overview</text>
+    <text key="hg.nav.2">Analytics</text>
+    <text key="hg.nav.3">Reports</text>
+    <text key="hg.nav.4">Members</text>
+    <text key="hg.nav.5">Settings</text>
+    <text key="hg.action.refresh">Refresh</text>
+    <text key="hg.action.settings">Settings</text>
+    <text key="hg.footer_note">Footer: drag the splitter handle to resize the sidebars</text>
+    <text key="hg.status">Ready</text>
+    <text key="hg.center.title">Main Content</text>
+    <text key="hg.center.para.1">The holy grail layout consists of a header, footer, left/right sidebars and a main area; the middle three sit in a QSplitter so you can drag the handles to resize them.</text>
+    <text key="hg.center.para.2">As the window narrows, the right and left sidebars hide in turn by breakpoint, keeping the main content usable.</text>
+    <text key="hg.side.head">Related</text>
+    <text key="hg.side.item.1">Changelog v1.0</text>
+    <text key="hg.side.item.2">Design Spec</text>
+    <text key="hg.side.item.3">Component List</text>
+    <text key="hg.side.item.4">FAQ</text>
+    <text key="cg.card.1.title">Dashboard</text>
+    <text key="cg.card.1.desc">Content card summarizing key metrics, using the primary.subtle token.</text>
+    <text key="cg.card.2.title">Task Center</text>
+    <text key="cg.card.2.desc">Content card for to-dos and progress, using the success.subtle token.</text>
+    <text key="cg.card.3.title">Notifications</text>
+    <text key="cg.card.3.desc">Content card aggregating system messages, using the warning.subtle token.</text>
+    <text key="cg.card.4.title">Risk Alerts</text>
+    <text key="cg.card.4.desc">Content card presenting anomalies, using the danger.subtle token.</text>
+    <text key="cg.card.5.title">Team Activity</text>
+    <text key="cg.card.5.desc">Content card for collaboration activity; follows theme switches automatically.</text>
+    <text key="cg.card.6.title">File Library</text>
+    <text key="cg.card.6.desc">Content card for project files; follows theme switches automatically.</text>
+    <text key="cg.card.7.title">Schedule</text>
+    <text key="cg.card.7.desc">Content card for upcoming events; follows theme switches automatically.</text>
+    <text key="cg.card.8.title">System Settings</text>
+    <text key="cg.card.8.desc">Content card into preferences; follows theme switches automatically.</text>
+    <text key="sc.kicker">Layout Preset · Single Column</text>
+    <text key="sc.title">Organize long-form content with a consistent vertical rhythm</text>
+    <text key="sc.subtitle">The single-column layout funnels the reading flow onto one central axis: all blocks are capped at 760px and centered, with spacing taken entirely from space tokens.</text>
+    <text key="sc.para.1">Single column suits reading-first scenarios such as docs, blogs and announcements. The width cap keeps line lengths comfortable, and the centered whitespace keeps content focused on wide screens.</text>
+    <text key="sc.para.2">The spacing (space.4 paragraphs, space.6 blocks), radius (radius.lg cover) and colors (primary.subtle cover, secondary body) in this example all come from design tokens and follow light/dark theme switches automatically.</text>
+    <text key="sc.para.3">As the window narrows further, this layout does not reflow into tiers; the 760px column simply shrinks linearly with the window, keeping a single reading axis at any width.</text>
+    <text key="sc.quote">"Good layout is quiet: it steps behind the content and speaks with rhythm and whitespace."</text>
+    <text key="sc.action.read">Read More</text>
+    <text key="sc.action.fav">Favorite</text>
+    <text key="sb.nav.home">Home</text>
+    <text key="sb.nav.component">Components</text>
+    <text key="sb.nav.chart">Charts</text>
+    <text key="sb.nav.layout">Layouts</text>
+    <text key="sb.nav.animation">Animation</text>
+    <text key="sb.nav.settings">Settings</text>
+    <text key="sb.crumb">Home / Overview</text>
+    <text key="sb.title">Project Overview</text>
+    <text key="sb.stat.users.title">Visitors</text>
+    <text key="sb.stat.users.note">+8.2% vs last week</text>
+    <text key="sb.stat.projects.title">Active Projects</text>
+    <text key="sb.stat.projects.note">4 new this week</text>
+    <text key="sb.stat.todo.title">To-dos</text>
+    <text key="sb.stat.todo.note">3 due soon</text>
+    <text key="sb.panel.note">Content area: replace with a table, form or chart. The sidebar collapses to an icon bar in narrow windows.</text>
+    <text key="md.item.1.title">Product Weekly · Issue 24</text>
+    <text key="md.item.1.summary">Weekly core metrics review</text>
+    <text key="md.item.1.body">Active users grew 8.2% week over week with 4 new projects; all 3 key follow-ups are on track. The v1.1 canary ships next week.</text>
+    <text key="md.item.2.title">Design Review Notes</text>
+    <text key="md.item.2.summary">Token &amp; theme contract confirmed</text>
+    <text key="md.item.2.body">The review finalized the color, spacing, radius and shadow token values; light/dark themes share the same semantic keys and components reference tokens only, never hard-coded values.</text>
+    <text key="md.item.3.title">Release Checklist</text>
+    <text key="md.item.3.summary">Pre-v1.0 checks</text>
+    <text key="md.item.3.body">The checklist covers token completeness, dual-theme screenshots, offscreen self-test exit codes, and doc/sample sync. Tag only after all pass.</text>
+    <text key="md.item.4.title">User Interview Notes</text>
+    <text key="md.item.4.summary">Feedback from 5 seed users</text>
+    <text key="md.item.4.body">Users praised the responsive sidebar and split panel; they hope for density switching and more chart examples in future releases.</text>
+    <text key="md.item.5.title">Iteration Plan Draft</text>
+    <text key="md.item.5.summary">Draft scope for the next cycle</text>
+    <text key="md.item.5.body">Next iteration focuses on completing the component library, accepting animation presets, and improving Demo navigation. The master-detail layout will power mail and the task center.</text>
+    <text key="md.title">Inbox</text>
+    <text key="md.action.read">Mark Read</text>
+    <text key="md.action.archive">Archive</text>
+    <text key="sp.nav.1">Workspace</text>
+    <text key="sp.nav.2">Projects</text>
+    <text key="sp.nav.3">Data</text>
+    <text key="sp.nav.4">Settings</text>
+    <text key="sp.list.1">Quarterly Summary</text>
+    <text key="sp.list.2">Milestones</text>
+    <text key="sp.list.3">Review Notes</text>
+    <text key="sp.list.4">Release Checklist</text>
+    <text key="sp.list.5">Interview Notes</text>
+    <text key="sp.list.6">Iteration Draft</text>
+    <text key="sp.content.title">Content</text>
+    <text key="sp.content.note">Drag the splitter handles to resize panes; the layout remembers the ratio and reapplies it on window resize. Narrow breakpoints hide the nav and list panes in turn.</text>
+    <text key="db.stat.users.title">Total Users</text>
+    <text key="db.stat.users.note">+8.2% vs last week</text>
+    <text key="db.stat.projects.title">Active Projects</text>
+    <text key="db.stat.projects.note">12 new this week</text>
+    <text key="db.stat.revenue.title">Total Revenue</text>
+    <text key="db.stat.revenue.note">76% of monthly goal</text>
+    <text key="db.stat.alerts.title">Alerts</text>
+    <text key="db.stat.alerts.note">2 pending</text>
+    <text key="db.chart.title">8-Week Visit Trend</text>
+    <text key="db.feed.title">Recent Activity</text>
+    <text key="db.feed.1">Released v1.0 stable</text>
+    <text key="db.feed.2">Merged 6 component branches</text>
+    <text key="db.feed.3">2 new collaborators</text>
+    <text key="db.feed.4">Updated the design spec</text>
+    <text key="db.quota.title">Resource Usage</text>
+    <text key="db.quota.storage">Storage</text>
+    <text key="db.quota.compute">Compute Quota</text>
+    <text key="db.todo.title">This Week's To-dos</text>
+    <text key="db.todo.1">Finish layout library acceptance</text>
+    <text key="db.todo.2">Add dual-theme component screenshots</text>
+    <text key="db.todo.3">Write usage docs</text>
+    <text key="db.banner.title">Announcement</text>
+    <text key="db.banner.text">All 13 layout preset scenarios are covered; column spans reflow by breakpoint and cards stack vertically in narrow windows.</text>
+    <text key="hero.kicker">InstructionX_UIKit · Layout Presets</text>
+    <text key="hero.title">Build responsive UIs
+with tokens and breakpoints</text>
+    <text key="hero.subtitle">Colors, spacing and radii all come from design tokens, with light/dark themes out of the box; the layout adapts to window width and the illustration moves below the copy on narrow screens.</text>
+    <text key="hero.primary">Get Started</text>
+    <text key="hero.secondary">View Docs</text>
+    <text key="hero.hint">No stylesheets needed — dynamic properties + global QSS handle theming.</text>
+    <text key="cc.title">Account Settings</text>
+    <text key="cc.subtitle">Centered container example: content capped at 960px; cards reflow into 3/2/1 columns as the window narrows.</text>
+    <text key="cc.action.save">Save Changes</text>
+    <text key="cc.action.cancel">Cancel</text>
+    <text key="cc.card.1.title">Profile</text>
+    <text key="cc.card.1.desc">Avatar, nickname, signature and other basics.</text>
+    <text key="cc.card.2.title">Security</text>
+    <text key="cc.card.2.desc">Password, two-factor auth and login devices.</text>
+    <text key="cc.card.3.title">Notifications</text>
+    <text key="cc.card.3.desc">Channels and do-not-disturb hours.</text>
+    <text key="cc.card.4.title">Appearance</text>
+    <text key="cc.card.4.desc">Light/dark theme and density.</text>
+    <text key="cc.card.5.title">API Keys</text>
+    <text key="cc.card.5.desc">Access tokens and call quotas.</text>
+    <text key="cc.card.6.title">Billing</text>
+    <text key="cc.card.6.desc">Plan, invoices and payment methods.</text>
+    <text key="cc.note">Tip: the centered container pairs elastic side margins with a max content width, keeping a readable measure even on ultra-wide screens.</text>
+    <text key="wf.item.1">Misty Mountains</text>
+    <text key="wf.item.2">City Night</text>
+    <text key="wf.item.3">Still Life</text>
+    <text key="wf.item.4">Seaside Sunset</text>
+    <text key="wf.item.5">Forest Trail</text>
+    <text key="wf.item.6">Old Street Corner</text>
+    <text key="wf.item.7">Eaves After Rain</text>
+    <text key="wf.item.8">Snowfield Tracks</text>
+    <text key="wf.item.9">Desert Stars</text>
+    <text key="wf.item.10">Lakeside Reflection</text>
+    <text key="wf.item.11">Windowsill Greens</text>
+    <text key="wf.item.12">Alley Cat</text>
+    <text key="wf.meta">Work {n} · Demo</text>
+    <text key="ml.section.1.title">Feature 1: Token-Driven</text>
+    <text key="ml.section.1.body">Colors, spacing and radii all come from unified design tokens. Components and layouts reference semantic keys only—never hard-coded values—so reskinning and branding mean editing a single token table.</text>
+    <text key="ml.section.2.title">Feature 2: Dual Themes Out of the Box</text>
+    <text key="ml.section.2.body">Light and dark themes share one set of semantic keys; switching refreshes the global QSS and painted color blocks together—no app restart and no per-page adaptation.</text>
+    <text key="ml.section.3.title">Feature 3: Responsive Breakpoints</text>
+    <text key="ml.section.3.body">Layouts adapt across five breakpoints (xs to xl) by window width: grid column counts, sidebar collapsing and media stacking all happen in resizeEvent.</text>
+    <text key="ml.link">Learn More</text>
+    <text key="chat.info">InstructionX-Lite</text>
+    <text key="chat.user.1">Which Markdown syntax does this UI Kit's Markdown component support?</text>
+    <text key="chat.assistant.1"><![CDATA[**MarkdownView** is built on the Qt built-in engine and supports:
+
+- Headings, **bold**, *italic*, ~~strikethrough~~
+- Ordered / unordered / task lists
+- `inline code` and code fences
+- Tables, quotes, dividers and links
+
+```python
+from InstructionX_UIKit.components import MarkdownView
+
+view = MarkdownView("# Hello")
+```]]></text>
+    <text key="chat.user.2">Do code blocks get syntax highlighting?</text>
+    <text key="chat.assistant.2"><![CDATA[No. Code text keeps the body text color, distinguished only by the mono font family and background.
+
+| Feature | Status |
+|------|------|
+| Syntax highlighting | Not supported |
+| Mono font family | Supported |
+| Background | `bg.subtle` token |]]></text>
+    <text key="chat.user.3">Can it render math formulas?</text>
+    <text key="chat.assistant.3"><![CDATA[Yes, LaTeX syntax is supported. Inline formulas like $E=mc^2$, and block formulas:
+
+$$\frac{-b \pm \sqrt{b^2-4ac}}{2a}$$
+
+Formulas render asynchronously via matplotlib mathtext and are cached; streaming append hits the cache at zero cost.]]></text>
+    <text key="chat.user.4">Can it draw Mermaid diagrams?</text>
+    <text key="chat.assistant.4"><![CDATA[Yes, rendered by the official mermaid.js engine (WebEngine, bundled, no network) with full diagram types. Diagrams are interactive: **drag to pan, Ctrl+wheel to zoom**, with a toolbar for zoom in / out / reset / fit-width.
+
+```mermaid
+flowchart LR
+    A[User question] --> B{Understand intent}
+    B -- Clear --> C[Search knowledge base]
+    B -- Vague --> D[Ask for clarification]
+    C --> E[Generate answer]
+    D --> E
+```
+
+Sequence diagrams are supported too:
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant A as Assistant
+    U->>A: Send question
+    A->>A: Reason and retrieve
+    A-->>U: Stream the answer
+```]]></text>
+    <text key="chat.user.5">Show me all the remaining formats in one go.</text>
+    <text key="chat.assistant.5"><![CDATA[Sure, here are all the remaining formats.
+
+## Heading Levels
+
+Supports six heading levels from `#` to `######`; paragraphs wrap automatically.
+
+### Quotes and Dividers
+
+> Quote blocks use the secondary text color,
+> and can span multiple lines.
+
+---
+
+### Nested and Task Lists
+
+- Fruits
+  - Apple
+  - Banana
+- [x] Finished item
+- [ ] Pending item
+
+### Links
+
+Project repository: [InstructionX_UIKit](https://github.com/KKPIP-Tech/InstructionX_UIKit); clicking a link emits the `linkActivated` signal.
+
+> Note: footnotes, embedded HTML and network images are not supported.]]></text>
+    <text key="chat.stream_reply"><![CDATA[Sure, this is a **full-format streaming output** demo:
+
+1. The caller invokes `append_to_message(index, chunk)` per token;
+2. The layout grows bubble heights and follows the scroll automatically;
+3. Reading history by scrolling up is never interrupted.
+
+> The layout itself carries no AI logic; message data is fully caller-driven.
+
+Inline formulas like $e^{i\pi}+1=0$ and block formulas render live mid-stream:
+
+$$\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}$$
+
+And tables:
+
+| Stage | Status |
+|------|------|
+| Receiving tokens | In progress |
+| Rendering | Live |
+
+Code fences degrade to plain text until closed, then reflow:
+
+```python
+reply = ""
+for token in stream:
+    reply += token
+    view.append_markdown(token)
+```
+
+Same for Mermaid diagrams—rendered asynchronously once the fence closes:
+
+```mermaid
+flowchart LR
+    T[token stream] --> P[Incremental parsing]
+    P --> R[Live rendering]
+```
+
+Streaming finished, thanks for watching.]]></text>
+    <text key="chat.stream_continue"><![CDATA[**(Continued)** Additional note: copy / delete / edit on the action bar are executed directly by the layout, while regenerate / continue only emit the `regenerateRequested` / `continueRequested` signals—the concrete behavior is entirely up to the caller.]]></text>
+    <text key="chat.status.ready">Last action: none (try sending a message, or hover a bubble for the action bar)</text>
+    <text key="chat.status.submitted">Last action: submitted a new message; AI is streaming a reply</text>
+    <text key="chat.status.deleted">Last action: deleted message #{n} (executed by the layout)</text>
+    <text key="chat.status.edited">Last action: edited message #{n} (executed by the layout)</text>
+    <text key="chat.status.regenerate">Last action: regenerating message #{n} (simulated streaming replay)</text>
+    <text key="chat.status.continue">Last action: continuing message #{n} (appending demo text)</text>
+  </group>
+  <!-- Basic widgets gallery -->
+  <group name="basic_widgets">
+    <text key="title">Basic Widgets</text>
+    <text key="desc">A gallery of stock Qt widgets under the global QSS skin: buttons, inputs, number/date, combos, sliders/dials, progress/LCD, text display, containers, data views and window parts, plus standard dialog triggers.</text>
+    <text key="sec.buttons">Buttons (QPushButton / QToolButton)</text>
+    <text key="btn.default">Default</text>
+    <text key="btn.primary">Primary</text>
+    <text key="btn.danger">Danger</text>
+    <text key="btn.disabled">Disabled</text>
+    <text key="tb.tool">Tool Button</text>
+    <text key="tb.menu">With Menu</text>
+    <text key="sec.text_inputs">Text Input (QLineEdit / QTextEdit / QPlainTextEdit)</text>
+    <text key="le.text">Single-line edit</text>
+    <text key="le.placeholder">placeholder text</text>
+    <text key="te.text">QTextEdit rich text: supports &lt;b&gt;bold&lt;/b&gt; and &lt;i&gt;italic&lt;/i&gt;.</text>
+    <text key="pe.text">QPlainTextEdit plain text:
+second line.</text>
+    <text key="sec.number_date">Number / Date &amp; Time (QSpinBox / QDoubleSpinBox / QDate* / QKeySequenceEdit)</text>
+    <text key="sec.combo">Combo Boxes (QComboBox / QFontComboBox)</text>
+    <text key="cb.item.1">Option One</text>
+    <text key="cb.item.2">Option Two</text>
+    <text key="cb.item.3">Option Three</text>
+    <text key="sec.slider_dial">Slider / Dial / Progress / LCD (QSlider / QDial / QProgressBar / QLCDNumber)</text>
+    <text key="sec.display">Text Display / Calendar (QTextBrowser / QCalendarWidget)</text>
+    <text key="tb.html">&lt;h4&gt;QTextBrowser&lt;/h4&gt;&lt;p&gt;Read-only rich text browser with links and anchors.&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Item One&lt;/li&gt;&lt;li&gt;Item Two&lt;/li&gt;&lt;/ul&gt;</text>
+    <text key="sec.container">Containers (QGroupBox / QTabWidget / QToolBox)</text>
+    <text key="gb.title">Group Box</text>
+    <text key="gb.content">Content inside a QGroupBox</text>
+    <text key="gb.button">Button</text>
+    <text key="tab.1">Tab One</text>
+    <text key="tab.2">Tab Two</text>
+    <text key="tab.3">Tab Three</text>
+    <text key="tab.content">{name} content</text>
+    <text key="drawer.1">Drawer One</text>
+    <text key="drawer.1.content">Drawer one content</text>
+    <text key="drawer.2">Drawer Two</text>
+    <text key="drawer.2.content">Drawer two content</text>
+    <text key="sec.views">Data Views (QListWidget / QTreeWidget / QTableWidget)</text>
+    <text key="lw.item.1">List Item One</text>
+    <text key="lw.item.2">List Item Two</text>
+    <text key="lw.item.3">List Item Three</text>
+    <text key="lw.item.4">List Item Four</text>
+    <text key="tree.header.name">Name</text>
+    <text key="tree.header.value">Value</text>
+    <text key="tree.node">Node {n}</text>
+    <text key="tree.child">Child {n}.1</text>
+    <text key="table.col.1">Column One</text>
+    <text key="table.col.2">Column Two</text>
+    <text key="table.col.3">Column Three</text>
+    <text key="sec.window_parts">Window Parts (QMenuBar / QToolBar / QStatusBar)</text>
+    <text key="menu.file">&amp;File</text>
+    <text key="menu.file.new">New</text>
+    <text key="menu.file.open">Open</text>
+    <text key="menu.edit">&amp;Edit</text>
+    <text key="menu.edit.undo">Undo</text>
+    <text key="toolbar.title">Main Toolbar</text>
+    <text key="toolbar.new">New</text>
+    <text key="toolbar.save">Save</text>
+    <text key="toolbar.help">Help</text>
+    <text key="central">Central Content Area</text>
+    <text key="status.ready">Ready</text>
+    <text key="sec.dialogs">Standard Dialogs (click to trigger)</text>
+    <text key="dlg.msg.text">This is a QMessageBox information dialog.</text>
+    <text key="dlg.file.title">QFileDialog: Choose File</text>
+    <text key="dlg.color.title">QColorDialog: Choose Color</text>
+    <text key="dlg.font.title">QFontDialog: Choose Font</text>
+    <text key="dlg.input.label">Enter text:</text>
+    <text key="dlg.hint">Click a button to open the corresponding standard dialog.</text>
+  </group>
+  <!-- Components · Input pages -->
+  <group name="inputs">
+    <text key="button.title">Button</text>
+    <text key="button.desc">Six variants and three sizes, with loading, block and rounded/circle shapes.</text>
+    <text key="button.sec.variant">Variants</text>
+    <text key="button.variant.primary">Primary</text>
+    <text key="button.variant.default">Default</text>
+    <text key="button.variant.dashed">Dashed</text>
+    <text key="button.variant.text">Text</text>
+    <text key="button.variant.link">Link</text>
+    <text key="button.variant.danger">Danger</text>
+    <text key="button.sec.size">Sizes / States</text>
+    <text key="button.size.sm">Small</text>
+    <text key="button.size.md">Medium</text>
+    <text key="button.size.lg">Large</text>
+    <text key="button.size.loading">Loading</text>
+    <text key="button.size.disabled">Disabled</text>
+    <text key="button.size.block">Block Button</text>
+    <text key="button.sec.shape">Shapes</text>
+    <text key="button.shape.round">Rounded</text>
+    <text key="button.shape.pill">Pill</text>
+    <text key="icon_button.title">IconButton</text>
+    <text key="icon_button.desc">QToolButton wrapper supporting text symbols / QIcon, with variants, sizes and shapes.</text>
+    <text key="icon_button.sec.icons">Icons &amp; Shapes</text>
+    <text key="icon_button.sec.size">Sizes / Disabled</text>
+    <text key="checkbox.title">CheckBox</text>
+    <text key="checkbox.desc">QSS-painted indicator box with tri-state and disabled support.</text>
+    <text key="checkbox.sec.state">States</text>
+    <text key="checkbox.state.unchecked">Unchecked</text>
+    <text key="checkbox.state.checked">Checked</text>
+    <text key="checkbox.state.partial">Partially Checked (tri-state)</text>
+    <text key="checkbox.state.disabled">Disabled</text>
+    <text key="radio.title">RadioButton</text>
+    <text key="radio.desc">RadioGroup manages mutual exclusion by id and supports selecting by label.</text>
+    <text key="radio.sec.group">Radio Group</text>
+    <text key="radio.opt.1">Plan A</text>
+    <text key="radio.opt.2">Plan B</text>
+    <text key="radio.opt.3">Plan C</text>
+    <text key="radio.disabled">Disabled</text>
+    <text key="switch.title">Switch</text>
+    <text key="switch.desc">Painted slider switch with transition animation, in sm / md sizes.</text>
+    <text key="switch.sec">Switch</text>
+    <text key="line_edit.title">LineEdit</text>
+    <text key="line_edit.desc">Prefix/suffix icons, clear button, password toggle and red error border.</text>
+    <text key="line_edit.sec.basic">Basics &amp; Affixes</text>
+    <text key="line_edit.ph.username">Enter username</text>
+    <text key="line_edit.sec.state">Password / Error / Disabled / Sizes</text>
+    <text key="line_edit.err.content">Invalid content</text>
+    <text key="line_edit.disabled">Disabled</text>
+    <text key="line_edit.ph.sm">Small</text>
+    <text key="line_edit.ph.lg">Large</text>
+    <text key="text_area.title">TextArea</text>
+    <text key="text_area.desc">Auto height, max length and character count.</text>
+    <text key="text_area.sec">Auto Height + Character Count</text>
+    <text key="text_area.ph.intro">Introduce yourself (auto height + character count)</text>
+    <text key="text_area.sample">Sample text demonstrating auto height and the character counter in the corner.</text>
+    <text key="text_area.ph.disabled">Disabled</text>
+    <text key="spin_box.title">SpinBox</text>
+    <text key="spin_box.desc">Integer and double spin boxes with unified height and button styling.</text>
+    <text key="spin_box.sec">Spin Boxes</text>
+    <text key="spin_box.suffix">yuan</text>
+    <text key="combo_box.title">ComboBox</text>
+    <text key="combo_box.desc">Dropdown styling, searchable filtering and invalid-input fallback.</text>
+    <text key="combo_box.sec">ComboBox</text>
+    <text key="combo_box.city.beijing">Beijing</text>
+    <text key="combo_box.city.shanghai">Shanghai</text>
+    <text key="combo_box.city.guangzhou">Guangzhou</text>
+    <text key="combo_box.fruit.apple">Apple</text>
+    <text key="combo_box.fruit.banana">Banana</text>
+    <text key="combo_box.fruit.orange">Orange</text>
+    <text key="combo_box.ph.fruit">Search fruits</text>
+    <text key="combo_box.item.disabled">Unavailable</text>
+    <text key="slider.title">Slider</text>
+    <text key="slider.desc">Ticks and value tooltip on a refined QSS track.</text>
+    <text key="slider.sec">Slider</text>
+    <text key="date_picker.title">DatePicker</text>
+    <text key="date_picker.desc">Pops up a custom-styled calendar.</text>
+    <text key="date_picker.sec">Date Picker</text>
+    <text key="time_picker.title">TimePicker</text>
+    <text key="time_picker.desc">Hour / minute / second adjustment.</text>
+    <text key="time_picker.sec">Time Picker</text>
+    <text key="rating.title">Rating</text>
+    <text key="rating.desc">Painted stars with half-star support and a value signal.</text>
+    <text key="rating.sec">Rating</text>
+    <text key="color_picker.title">ColorPicker</text>
+    <text key="color_picker.desc">Swatch button + QColorDialog, with a colorChanged signal.</text>
+    <text key="color_picker.sec">Color Picker</text>
+    <text key="auto_complete.title">AutoComplete</text>
+    <text key="auto_complete.desc">QCompleter wrapper with delayed filtering.</text>
+    <text key="auto_complete.sec">AutoComplete</text>
+    <text key="auto_complete.fruit.apple">Apple</text>
+    <text key="auto_complete.fruit.banana">Banana</text>
+    <text key="auto_complete.fruit.orange">Orange</text>
+    <text key="auto_complete.fruit.apple_pie">Apple Pie</text>
+    <text key="auto_complete.fruit.grape">Grape</text>
+    <text key="auto_complete.ph">Type to search fruits</text>
+    <text key="auto_complete.ph.disabled">Disabled</text>
+    <text key="auto_complete.hint">Candidates filter after a short delay; press Enter to select.</text>
+    <text key="cascader.title">Cascader</text>
+    <text key="cascader.desc">Button + multi-level menus, with a pathChanged signal.</text>
+    <text key="cascader.sec">Cascader</text>
+    <text key="cascader.region.zj">Zhejiang</text>
+    <text key="cascader.region.hz">Hangzhou</text>
+    <text key="cascader.region.nb">Ningbo</text>
+    <text key="cascader.region.gd">Guangdong</text>
+    <text key="cascader.region.gz">Guangzhou</text>
+    <text key="cascader.region.sz">Shenzhen</text>
+    <text key="cascader.none">None</text>
+    <text key="transfer.title">Transfer</text>
+    <text key="transfer.desc">Move items between two lists, with a changed signal.</text>
+    <text key="transfer.sec">Transfer</text>
+    <text key="transfer.fruit.apple">Apple</text>
+    <text key="transfer.fruit.banana">Banana</text>
+    <text key="transfer.fruit.orange">Orange</text>
+    <text key="transfer.fruit.grape">Grape</text>
+    <text key="transfer.fruit.watermelon">Watermelon</text>
+    <text key="upload.title">UploadWidget</text>
+    <text key="upload.desc">Drop zone + file picker, with a filesChanged signal.</text>
+    <text key="upload.sec">Upload</text>
+    <text key="upload.file.report">QuarterlyReport.docx</text>
+    <text key="upload.file.data">DataSummary.csv</text>
+    <text key="upload.file.design">DesignDraft.png</text>
+    <text key="upload.hint">Drag files here or click to choose; the list supports removal.</text>
+    <text key="segmented.title">SegmentedControl</text>
+    <text key="segmented.desc">Painted sliding indicator with a currentChanged signal.</text>
+    <text key="segmented.sec">Segmented Control</text>
+    <text key="segmented.mode.list">List</text>
+    <text key="segmented.mode.card">Card</text>
+    <text key="segmented.mode.disabled">Disabled Item</text>
+    <text key="segmented.period.day">Day</text>
+    <text key="segmented.period.week">Week</text>
+    <text key="segmented.period.month">Month</text>
+    <text key="segmented.period.year">Year</text>
+    <text key="segmented.ab.a">A</text>
+    <text key="segmented.ab.b">B</text>
+    <text key="form.title">FormLayout</text>
+    <text key="form.desc">Required asterisks, inline error messages and whole-form validation.</text>
+    <text key="form.sec">Form Validation</text>
+    <text key="form.label.user">Username</text>
+    <text key="form.label.mail">Email</text>
+    <text key="form.label.note">Notes</text>
+    <text key="form.err.min_len">At least 3 characters</text>
+    <text key="form.err.mail">Invalid email format</text>
+    <text key="form.hint">Required asterisk + inline error row; the email above is intentionally invalid to show the error state.</text>
+  </group>
+  <!-- Components · Display pages -->
+  <group name="display">
+    <text key="avatar.title">Avatar</text>
+    <text key="avatar.desc">Circle / square, image / text / icon fallback, multiple sizes.</text>
+    <text key="avatar.sec">Avatar</text>
+    <text key="avatar.name.1">Amy</text>
+    <text key="avatar.name.2">L</text>
+    <text key="avatar.name.3">Wendy</text>
+    <text key="badge.title">Badge</text>
+    <text key="badge.desc">Wraps any child with a corner badge, standalone dot mode, 99+ cap.</text>
+    <text key="badge.sec">Badge</text>
+    <text key="badge.btn.messages">Messages</text>
+    <text key="badge.btn.notifications">Notifications</text>
+    <text key="badge.btn.dot">Dot</text>
+    <text key="card.title">Card</text>
+    <text key="card.desc">title / extra / footer slots, hoverable and bordered variants.</text>
+    <text key="card.sec">Card</text>
+    <text key="card.order.title">Order Overview</text>
+    <text key="card.order.more">More</text>
+    <text key="card.order.body">1,280 orders this month, up 12.5%.</text>
+    <text key="card.order.footer">Updated 10 minutes ago</text>
+    <text key="card.plain.title">Borderless Card</text>
+    <text key="card.plain.body">hoverable + bordered variant demo.</text>
+    <text key="descriptions.page_title">Descriptions</text>
+    <text key="descriptions.title">User Info</text>
+    <text key="descriptions.desc">Adaptive column count, optional border.</text>
+    <text key="descriptions.sec">Descriptions</text>
+    <text key="descriptions.label.name">Name</text>
+    <text key="descriptions.value.name">Amy</text>
+    <text key="descriptions.label.phone">Phone</text>
+    <text key="descriptions.label.city">City</text>
+    <text key="descriptions.value.city">Shanghai</text>
+    <text key="descriptions.label.mail">Email</text>
+    <text key="descriptions.label.role">Role</text>
+    <text key="descriptions.value.role">Admin</text>
+    <text key="descriptions.label.status">Status</text>
+    <text key="descriptions.value.status">Active</text>
+    <text key="list_view.title">ListWidget</text>
+    <text key="list_view.desc">Uniform item height with hover and selection styling.</text>
+    <text key="list_view.sec">List</text>
+    <text key="list_view.item.inbox">Inbox</text>
+    <text key="list_view.item.starred">Starred</text>
+    <text key="list_view.item.sent">Sent</text>
+    <text key="list_view.item.drafts">Drafts</text>
+    <text key="list_view.item.trash">Trash</text>
+    <text key="table.title">Table</text>
+    <text key="table.desc">Zebra striping, compact rows, sorting and empty-state placeholder.</text>
+    <text key="table.sec">Table</text>
+    <text key="table.header.name">Name</text>
+    <text key="table.header.dept">Department</text>
+    <text key="table.header.sales">Sales</text>
+    <text key="table.name.1">Amy</text>
+    <text key="table.name.2">Ben</text>
+    <text key="table.name.3">Carl</text>
+    <text key="table.name.4">Dana</text>
+    <text key="table.region.east">East</text>
+    <text key="table.region.north">North</text>
+    <text key="table.region.south">South</text>
+    <text key="table.region.southwest">Southwest</text>
+    <text key="table.empty">No matching data</text>
+    <text key="tree.title">Tree</text>
+    <text key="tree.desc">Indent guides and checkbox support.</text>
+    <text key="tree.sec">Tree</text>
+    <text key="tree.fruit">Fruits</text>
+    <text key="tree.apple">Apple</text>
+    <text key="tree.fuji">Fuji</text>
+    <text key="tree.gala">Gala</text>
+    <text key="tree.banana">Banana</text>
+    <text key="tree.veg">Vegetables</text>
+    <text key="tree.cabbage">Cabbage</text>
+    <text key="tree.radish">Radish</text>
+    <text key="timeline.title">Timeline</text>
+    <text key="timeline.desc">Painted node colors / icons with a pending tail. The right panel tunes node color, icon, pending, line style / width, node radius, spacing, axis side and font sizes live.</text>
+    <text key="timeline.sec">Timeline (right panel applies live)</text>
+    <text key="timeline.item.1">Order created</text>
+    <text key="timeline.item.2">Payment succeeded</text>
+    <text key="timeline.item.3">Merchant accepted</text>
+    <text key="timeline.pending_default">Waiting for a rider</text>
+    <text key="timeline.panel_title">Timeline Parameters</text>
+    <text key="timeline.opt.theme">Theme primary</text>
+    <text key="timeline.opt.success">Success</text>
+    <text key="timeline.opt.warning">Warning</text>
+    <text key="timeline.opt.danger">Danger</text>
+    <text key="timeline.opt.dot">Dot</text>
+    <text key="timeline.opt.icon">Icon</text>
+    <text key="timeline.opt.solid">Solid</text>
+    <text key="timeline.opt.dashed">Dashed</text>
+    <text key="timeline.opt.dotted">Dotted</text>
+    <text key="timeline.opt.left">Left</text>
+    <text key="timeline.opt.right">Right</text>
+    <text key="timeline.p.node_color">Node {n} Color</text>
+    <text key="timeline.p.pending_on">Show pending</text>
+    <text key="timeline.p.pending_text">Pending text</text>
+    <text key="timeline.p.icon_mode">Node icon</text>
+    <text key="timeline.p.line_style">Line style</text>
+    <text key="timeline.p.line_width">Line width</text>
+    <text key="timeline.p.dot_radius">Node radius</text>
+    <text key="timeline.p.spacing">Extra spacing</text>
+    <text key="timeline.p.axis_side">Axis side</text>
+    <text key="timeline.p.font_size">Title font size</text>
+    <text key="timeline.p.time_font_size">Time font size</text>
+    <text key="statistic.title">Statistic</text>
+    <text key="statistic.desc">Title + big value + prefix/suffix + trend arrow.</text>
+    <text key="statistic.sec">Statistic</text>
+    <text key="statistic.users">Active Users</text>
+    <text key="statistic.suffix.people">users</text>
+    <text key="statistic.revenue">Revenue</text>
+    <text key="statistic.tickets">Open Tickets</text>
+    <text key="calendar.title">Calendar</text>
+    <text key="calendar.desc">Month view card with today highlighted.</text>
+    <text key="calendar.sec">Calendar</text>
+    <text key="carousel.title">Carousel</text>
+    <text key="carousel.desc">QStackedLayout + indicator dots + arrows, with autoplay.</text>
+    <text key="carousel.sec">Carousel</text>
+    <text key="carousel.page">Page {n}</text>
+    <text key="image_view.title">ImageView</text>
+    <text key="image_view.desc">Rounded image, load-failure placeholder and hover preview overlay.</text>
+    <text key="image_view.sec">Image</text>
+    <text key="image_view.hint">Left: rounded image with hover preview overlay; right: load-failure placeholder.</text>
+    <text key="qrcode_view.title">QRCodeView</text>
+    <text key="qrcode_view.desc">Generated by the qrcode library, with error-correction parameter.</text>
+    <text key="qrcode_view.sec">QR Code</text>
+    <text key="qrcode_view.content">InstructionX_UIKit QR Code</text>
+    <text key="comment.title">CommentView</text>
+    <text key="comment.desc">Avatar + author + time + content + action row, with nested replies.</text>
+    <text key="comment.sec">Comment</text>
+    <text key="comment.author.1">Amy</text>
+    <text key="comment.author.2">Ben</text>
+    <text key="comment.author.3">Carl</text>
+    <text key="comment.body.1">The dark theme of this library is really polished; the table zebra striping is very clear.</text>
+    <text key="comment.body.2">Agreed — looking forward to the charts page.</text>
+    <text key="comment.body.3">The collapse panel animation is silky smooth too.</text>
+    <text key="comment.time.1">2 hours ago</text>
+    <text key="comment.time.2">1 hour ago</text>
+    <text key="comment.time.3">30 minutes ago</text>
+    <text key="comment.action.reply">Reply</text>
+    <text key="comment.action.like">Like</text>
+    <text key="collapse.title">Collapse</text>
+    <text key="collapse.desc">Optional accordion with animated expansion.</text>
+    <text key="collapse.sec">Collapse</text>
+    <text key="collapse.q1">What is InstructionX_UIKit?</text>
+    <text key="collapse.a1">A PySide6 component library built on design tokens and a theme system.</text>
+    <text key="collapse.q2">How do I switch to the dark theme?</text>
+    <text key="collapse.a2">Call ThemeManager.instance().toggle() to switch globally.</text>
+    <text key="collapse.q3">Are custom components supported?</text>
+    <text key="collapse.a3">Yes — every component subclasses stock Qt widgets.</text>
+    <text key="empty.title">Empty</text>
+    <text key="empty.desc">Painted illustration + description + action button slot.</text>
+    <text key="empty.sec">Empty State</text>
+    <text key="empty.text">No results — try a different keyword</text>
+    <text key="empty.action">Clear Filters</text>
+    <text key="tooltip.title">Tooltip</text>
+    <text key="tooltip.desc">set_tooltip(widget, text) — richly styled QToolTip.</text>
+    <text key="tooltip.sec">Tooltip</text>
+    <text key="tooltip.btn.hover">Hover for tooltip</text>
+    <text key="tooltip.tip.rich">This tooltip is styled uniformly by the global QSS.</text>
+    <text key="tooltip.tip.title">Tip</text>
+    <text key="tooltip.btn.plain">Plain Tooltip</text>
+    <text key="tooltip.tip.plain">A body-only tooltip</text>
+    <text key="tooltip.hint">Run the Demo and hover over the buttons to see the styled tooltips.</text>
+    <text key="popover.title">Popover</text>
+    <text key="popover.desc">Anchored popup (QFrame, Popup) with an arrow.</text>
+    <text key="popover.sec">Popover</text>
+    <text key="popover.btn">Click to open popover</text>
+    <text key="popover.pop.title">Quick Filters</text>
+    <text key="popover.pop.body">Filter the list by status, time or assignee.
+Click outside to close.</text>
+    <text key="popover.hint">Click the button to pop an arrowed card relative to the anchor.</text>
+  </group>
+  <!-- MarkdownView demo page (markdown_view.py); Markdown samples kept verbatim via CDATA -->
+  <group name="markdown_view">
+    <text key="title">MarkdownView Markdown Rendering</text>
+    <text key="desc">Native Markdown rendering with the Qt built-in engine, token-based styling, streaming append, LaTeX formulas and Mermaid diagrams.</text>
+    <text key="sec.basic">Basic Rendering</text>
+    <text key="sec.math">Math Formulas (LaTeX)</text>
+    <text key="sec.mermaid">Mermaid Diagrams</text>
+    <text key="sec.mermaid_view">Standalone MermaidView</text>
+    <text key="sec.stream">Streaming Append (simulated AI token output with live LaTeX and Mermaid rendering)</text>
+    <text key="sec.empty">Empty State</text>
+    <text key="replay">Replay</text>
+    <text key="hint.mermaid">Diagrams are interactive: drag to pan, Ctrl+wheel to zoom, and a toolbar at the top right offers zoom in / out / reset / fit-width. The viewer is MermaidView, embedded as an overlay on the diagram slot; when WebEngine is unavailable it falls back to the built-in painted renderer (flowchart / sequenceDiagram / pie subset) with interactions kept.</text>
+    <text key="hint.mermaid_view">MermaidView can also be used without MarkdownView: MermaidView("flowchart LR\n    A[Start] --&gt; B[End]"); syntax errors are reported via the render_failed signal.</text>
+    <text key="sample.basic"><![CDATA[## Rendering Capabilities
+
+Body text supports **bold**, *italic*, ~~strikethrough~~ and `inline code`.
+
+- Unordered list item
+- Task lists are supported:
+- [x] Finished item
+- [ ] Pending item
+
+> Quote blocks use the secondary text color, ideal for quotes and hints.
+
+```python
+def fibonacci(n):
+    a, b = 0, 1
+    for _ in range(n):
+        a, b = b, a + b
+    return a
+```
+
+| Syntax | Support |
+|------|----------|
+| Tables | Supported |
+| Code fences | Supported (mono font + background, no syntax highlighting) |
+
+[Links use the theme primary color](https://github.com/KKPIP-Tech/InstructionX_UIKit)]]></text>
+    <text key="sample.math"><![CDATA[Inline formulas: the mass-energy equation $E=mc^2$, and Euler's identity $e^{i\pi}+1=0$.
+
+Block formula (quadratic formula):
+
+$$\frac{-b \pm \sqrt{b^2-4ac}}{2a}$$
+
+The `\[...\]` and `\begin{equation}` environments are also supported:
+
+\[\int_0^\infty e^{-x^2}\,dx = \frac{\sqrt{\pi}}{2}\]
+
+\begin{equation}
+a^2 + b^2 = c^2
+\end{equation}
+
+Formulas are rendered asynchronously by matplotlib mathtext on a background
+thread and cached; the source is shown as a placeholder while rendering.
+`$...$` inside code fences or inline code is never treated as a formula.]]></text>
+    <text key="sample.mermaid"><![CDATA[Mermaid fences render as interactive diagrams (official mermaid.js engine,
+bundled with the package, no network), with full official diagram types and
+theme-token colors:
+
+```mermaid
+flowchart LR
+    A[User question] --> B{Understand intent}
+    B -- Clear --> C[Search knowledge base]
+    B -- Vague --> D[Ask for clarification]
+    C --> E[Generate answer]
+    D --> E
+```
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant A as Assistant
+    U->>A: Send question
+    A->>A: Reason and retrieve
+    A-->>U: Stream the answer
+```
+
+```mermaid
+pie title Time Distribution This Week
+    "Coding": 40
+    "Reading docs": 25
+    "Design discussion": 20
+    "Others": 15
+```
+
+An unclosed mermaid fence during streaming falls back to a code block and is
+reflowed into a diagram once closed; syntax errors show a failure placeholder.]]></text>
+    <text key="sample.stream"><![CDATA[## Streaming Rendering Demo
+
+This content is generated by **token-by-token appending**, covering the main
+Markdown and LaTeX rendering capabilities.
+
+### Inline Formulas
+
+Mass-energy equation $E=mc^2$ and Euler's identity $e^{i\pi}+1=0$.
+
+### Block Formulas
+
+Quadratic formula:
+
+$$
+\frac{-b \pm \sqrt{b^2-4ac}}{2a}
+$$
+
+### Tables and Code
+
+| Syntax | Form |
+|------|------|
+| Inline formula | `$...$` |
+| Block formula | `$$...$$` / `\[...\]` |
+
+```python
+view = MarkdownView()
+for token in stream:       # tokens arrive one by one
+    view.append_markdown(token)
+```
+
+Mermaid fences render asynchronously once closed:
+
+```mermaid
+flowchart LR
+    T[token stream] --> P[Incremental parsing]
+    P --> R[Live rendering]
+```
+
+> Formulas render asynchronously via matplotlib mathtext; LRU cache hits cost nothing.]]></text>
+    <text key="sample.standalone"><![CDATA[flowchart LR
+    A[Start] --> B[Process]
+    B --> C[End]]]></text>
+  </group>
+  <group name="feedback">
+    <text key="tabs.sec">Three Variants</text>
+    <text key="tabs.tab.1">Overview</text>
+    <text key="tabs.tab.2">Details</text>
+    <text key="tabs.tab.3">Settings</text>
+    <text key="tabs.content">{variant} - {page} content</text>
+    <text key="tabs.title">Tabs</text>
+    <text key="tabs.desc">Three variants: line / card / segmented.</text>
+    <text key="anchor.sec">Anchor Linking</text>
+    <text key="anchor.sec.1">Basic Info</text>
+    <text key="anchor.sec.2">Security</text>
+    <text key="anchor.sec.3">Notifications</text>
+    <text key="anchor.sec.4">About</text>
+    <text key="anchor.body">Sample configuration item text</text>
+    <text key="anchor.title">Anchor</text>
+    <text key="anchor.desc">Highlights the current section with a QScrollArea; click to scroll.</text>
+    <text key="breadcrumb.sec">Breadcrumb</text>
+    <text key="breadcrumb.first.1">Home</text>
+    <text key="breadcrumb.first.2">Components</text>
+    <text key="breadcrumb.first.3">Navigation</text>
+    <text key="breadcrumb.first.4">Breadcrumb</text>
+    <text key="breadcrumb.second.1">Dashboard</text>
+    <text key="breadcrumb.second.2">Live Data</text>
+    <text key="breadcrumb.second.3">Node Details</text>
+    <text key="breadcrumb.title">Breadcrumb</text>
+    <text key="breadcrumb.desc">Configurable separator, bold last level, clickable.</text>
+    <text key="dropdown.sec">Dropdown Button</text>
+    <text key="dropdown.btn">More Actions</text>
+    <text key="dropdown.item.edit">Edit</text>
+    <text key="dropdown.item.share">Share</text>
+    <text key="dropdown.item.disabled">Disabled Item</text>
+    <text key="dropdown.item.delete">Delete</text>
+    <text key="dropdown.hint">Menu items support icons / shortcuts / danger items.</text>
+    <text key="dropdown.title">DropdownButton</text>
+    <text key="dropdown.desc">QMenu wrapper; items with icons / shortcuts / danger style.</text>
+    <text key="nav_menu.sec">Side Navigation Menu</text>
+    <text key="nav_menu.group.1">Overview</text>
+    <text key="nav_menu.group.2">System</text>
+    <text key="nav_menu.item.dashboard">Dashboard</text>
+    <text key="nav_menu.item.monitor">Monitoring</text>
+    <text key="nav_menu.item.users">Users</text>
+    <text key="nav_menu.item.roles">Roles</text>
+    <text key="nav_menu.item.settings">Preferences</text>
+    <text key="nav_menu.title">NavMenu</text>
+    <text key="nav_menu.desc">Groups, collapsing, and selection indicator.</text>
+    <text key="page_header.sec">Page Header</text>
+    <text key="page_header.order.title">Order Details</text>
+    <text key="page_header.order.sub">No. SO-20240601-008, created 2024-06-01</text>
+    <text key="page_header.order.bc.1">Orders</text>
+    <text key="page_header.order.bc.2">Order List</text>
+    <text key="page_header.order.bc.3">Order Details</text>
+    <text key="page_header.action.export">Export</text>
+    <text key="page_header.action.edit">Edit Order</text>
+    <text key="page_header.settings.title">System Settings</text>
+    <text key="page_header.settings.sub">Global parameters and preferences</text>
+    <text key="page_header.title">PageHeader</text>
+    <text key="page_header.desc">Back button, title, subtitle, breadcrumb slot, action area.</text>
+    <text key="pagination.sec">Pagination</text>
+    <text key="pagination.title">Pagination</text>
+    <text key="pagination.desc">Page ellipsis, jump input, page size.</text>
+    <text key="steps.sec">Steps (right panel applies live)</text>
+    <text key="steps.pool.1.title">Fill Info</text>
+    <text key="steps.pool.1.desc">Required validation</text>
+    <text key="steps.pool.2.title">Confirm Order</text>
+    <text key="steps.pool.2.desc">Check amount</text>
+    <text key="steps.pool.3.title">Payment</text>
+    <text key="steps.pool.3.desc">Secured transaction</text>
+    <text key="steps.pool.4.title">Shipping</text>
+    <text key="steps.pool.4.desc">Within 48 hours</text>
+    <text key="steps.pool.5.title">Done</text>
+    <text key="steps.pool.5.desc"></text>
+    <text key="steps.panel_title">Steps Parameters</text>
+    <text key="steps.p.orientation">Orientation</text>
+    <text key="steps.p.current">Current Step</text>
+    <text key="steps.p.count">Step Count</text>
+    <text key="steps.p.status2">Step 2 Status</text>
+    <text key="steps.p.status3">Step 3 Status</text>
+    <text key="steps.p.node_radius">Node Radius</text>
+    <text key="steps.p.link_style">Link Style</text>
+    <text key="steps.p.link_width">Link Width</text>
+    <text key="steps.p.clickable">Click to Switch Step</text>
+    <text key="steps.opt.horizontal">Horizontal</text>
+    <text key="steps.opt.vertical">Vertical</text>
+    <text key="steps.opt.auto">Auto</text>
+    <text key="steps.opt.wait">wait</text>
+    <text key="steps.opt.process">process</text>
+    <text key="steps.opt.finish">finish</text>
+    <text key="steps.opt.error">error</text>
+    <text key="steps.opt.solid">Solid</text>
+    <text key="steps.opt.dashed">Dashed</text>
+    <text key="steps.opt.dotted">Dotted</text>
+    <text key="steps.title">Steps</text>
+    <text key="steps.desc">Horizontal / vertical, wait / process / finish / error statuses. The right panel adjusts orientation, current step, step count, explicit statuses, node radius, link style / width live, and enables click-to-switch-step.</text>
+    <text key="alert.sec">Alerts</text>
+    <text key="alert.info.title">System Upgrade Notice</text>
+    <text key="alert.info.body">Routine maintenance Saturday 02:00 - 04:00.</text>
+    <text key="alert.success.title">Saved</text>
+    <text key="alert.success.body">All settings have been written to the config file.</text>
+    <text key="alert.warning.title">Low Disk Space</text>
+    <text key="alert.warning.body">Free space below 10%. Please clean up soon.</text>
+    <text key="alert.warning.action">Clean Up</text>
+    <text key="alert.error.title">Task Failed</text>
+    <text key="alert.error.body">Subtask 3 timed out and exited.</text>
+    <text key="alert.error.action">View Logs</text>
+    <text key="alert.title">Alert</text>
+    <text key="alert.desc">info / success / warning / error, closable, with actions.</text>
+    <text key="dialog.sec">Unified Dialogs</text>
+    <text key="dialog.btn.confirm">Open Confirm Dialog</text>
+    <text key="dialog.btn.info">Open Info Dialog</text>
+    <text key="dialog.confirm.title">Confirm Deletion</text>
+    <text key="dialog.confirm.body">This cannot be undone. Continue?</text>
+    <text key="dialog.info.title">Done</text>
+    <text key="dialog.info.body">Data sync completed.</text>
+    <text key="dialog.hint">Dialog.confirm() / Dialog.info() static helpers.</text>
+    <text key="dialog.title">Dialog</text>
+    <text key="dialog.desc">Unified title bar and button area; confirm() / info() static methods.</text>
+    <text key="drawer.sec">Drawer</text>
+    <text key="drawer.btn">{pos} Drawer</text>
+    <text key="drawer.content">Drawer content sliding in from the {pos} edge.</text>
+    <text key="drawer.hint">Slides in from four edges; width is draggable.</text>
+    <text key="drawer.title">Drawer</text>
+    <text key="drawer.desc">Slides in from four edges; width is draggable.</text>
+    <text key="notification.sec">Notifications</text>
+    <text key="notification.btn.success">Success</text>
+    <text key="notification.btn.error">Error</text>
+    <text key="notification.btn.info">Info</text>
+    <text key="notification.btn.warning">Warning</text>
+    <text key="notification.msg_title">{kind} title</text>
+    <text key="notification.body">This is the notification body content.</text>
+    <text key="notification.hint">Stacked popups at top-right, auto-dismiss, with progress bar.</text>
+    <text key="notification.title">Notification</text>
+    <text key="notification.desc">Stacked popups at top-right, auto-dismiss, progress bar.</text>
+    <text key="message.sec">Global Messages</text>
+    <text key="message.btn.success">Success</text>
+    <text key="message.btn.warning">Warning</text>
+    <text key="message.btn.info">Info</text>
+    <text key="message.btn.error">Error</text>
+    <text key="message.text">This is a {kind} message</text>
+    <text key="message.hint">Top-center messages: info / success / warning / error.</text>
+    <text key="message.title">Message</text>
+    <text key="message.desc">Top-center messages, four types.</text>
+    <text key="popconfirm.sec">Popconfirm</text>
+    <text key="popconfirm.btn">Delete File</text>
+    <text key="popconfirm.text">Delete this file? This cannot be undone.</text>
+    <text key="popconfirm.hint">Click the button to show a popconfirm; confirm / cancel.</text>
+    <text key="popconfirm.title">Popconfirm</text>
+    <text key="popconfirm.desc">Popover-style confirmation box.</text>
+    <text key="result.sec">Result Pages</text>
+    <text key="result.success.title">Submitted</text>
+    <text key="result.success.sub">We received your application and will process it within 2 business days.</text>
+    <text key="result.notfound.title">Page Not Found</text>
+    <text key="result.notfound.sub">Check the address, or go back home.</text>
+    <text key="result.error.title">Failed</text>
+    <text key="result.error.sub">Server busy. Please retry later.</text>
+    <text key="result.action.home">Back Home</text>
+    <text key="result.action.detail">View Details</text>
+    <text key="result.title">ResultView</text>
+    <text key="result.desc">success / error / info / 404 self-drawn icon + title + actions.</text>
+    <text key="skeleton.sec">Skeleton</text>
+    <text key="skeleton.hint">Title / paragraph / avatar / button shapes, shimmer animation.</text>
+    <text key="skeleton.title">Skeleton</text>
+    <text key="skeleton.desc">Title / paragraph / avatar / button shapes, shimmer animation.</text>
+    <text key="spinner.sec">Loading</text>
+    <text key="spinner.tip.loading">Loading</text>
+    <text key="spinner.tip.wait">Please wait...</text>
+    <text key="spinner.title">Spinner</text>
+    <text key="spinner.desc">Spinning arc, size and tip text.</text>
+    <text key="progress_bar.sec">Progress</text>
+    <text key="progress_bar.title">ProgressBar</text>
+    <text key="progress_bar.desc">Line / circle progress with status colors.</text>
+    <text key="tour.sec">Tour Guide</text>
+    <text key="tour.target.a">Target Button A</text>
+    <text key="tour.target.b">Target Button B</text>
+    <text key="tour.btn.start">Start Tour</text>
+    <text key="tour.step.1.title">Step 1</text>
+    <text key="tour.step.1.body">Guide text for target button A.</text>
+    <text key="tour.step.2.title">Step 2</text>
+    <text key="tour.step.2.body">Guide text for target button B.</text>
+    <text key="tour.hint">Highlights target widgets + step bubbles, prev / next / skip.</text>
+    <text key="tour.title">Tour</text>
+    <text key="tour.desc">Highlights target widgets + step bubbles.</text>
+  </group>
+  <group name="anim_property">
+    <text key="fade_in.title">fade_in Fade In</text>
+    <text key="fade_out.title">fade_out Fade Out</text>
+    <text key="slide_in.title">slide_in Slide In</text>
+    <text key="zoom_in.title">zoom_in Zoom In</text>
+    <text key="spring_pop.title">spring_pop Spring Pop</text>
+    <text key="badge_pop.title">badge_pop Badge Pop</text>
+    <text key="stagger_in.title">stagger_in Stagger In</text>
+    <text key="blur_in.title">blur_in Blur In</text>
+    <text key="mask_reveal.title">mask_reveal Mask Reveal</text>
+    <text key="hover_lift.title">hover_lift Hover Lift</text>
+    <text key="morph.title">button_morph_loading Button Morph</text>
+    <text key="ripple.title">ripple Ripple</text>
+    <text key="switch.title">switch_toggle Switch Toggle</text>
+    <text key="pulse.title">pulse Pulse</text>
+    <text key="bounce.title">bounce Bounce</text>
+    <text key="swing.title">swing Swing</text>
+    <text key="shake.title">shake Shake</text>
+    <text key="flash.title">flash_highlight Flash Highlight</text>
+    <text key="float_loop.title">float_loop Float Loop</text>
+    <text key="pulse_glow.title">pulse_glow Pulse Glow</text>
+    <text key="breathing.title">breathing Breathing</text>
+    <text key="gflow.title">gradient_flow Gradient Flow</text>
+    <text key="gtext.title">gradient_text_flow Text Gradient</text>
+    <text key="cross_fade.title">cross_fade Cross Fade</text>
+    <text key="page_trans.title">page_transition Page Transition</text>
+    <text key="slide_trans.title">slide_transition Slide Transition</text>
+    <text key="container_morph.title">container_morph Container Morph</text>
+    <text key="shared_element.title">shared_element Shared Element</text>
+    <text key="fade_in.hint">Opacity 0 → 1</text>
+    <text key="fade_out.hint">Fades out until hidden (auto-restores shortly after)</text>
+    <text key="slide_in.hint">Slides in with an offset from the given direction</text>
+    <text key="zoom_in.hint">Grows from small to full size</text>
+    <text key="spring_pop.hint">Pops in with a spring rebound</text>
+    <text key="badge_pop.hint">Badge enters with a spring</text>
+    <text key="stagger_in.hint">Children fade in and move up one by one</text>
+    <text key="blur_in.hint">Blur radius → 0</text>
+    <text key="mask_reveal.hint">Frame-by-frame clip reveal</text>
+    <text key="hover_lift.hint">Lifts on mouse hover (hover after installing)</text>
+    <text key="morph.hint">Click toggles between loading and restored</text>
+    <text key="ripple.hint">Material click ripple</text>
+    <text key="switch.hint">Press rebound + state switch</text>
+    <text key="pulse.hint">Scaling heartbeat emphasis</text>
+    <text key="bounce.hint">Moves up then lands with a bounce</text>
+    <text key="swing.hint">Swings left and right</text>
+    <text key="shake.hint">Horizontal shaking</text>
+    <text key="flash.hint">Theme-color overlay fading out</text>
+    <text key="float_loop.hint">Floats up and down in place (loop)</text>
+    <text key="pulse_glow.hint">Shadow radius breathing (loop)</text>
+    <text key="breathing.hint">Opacity breathing (loop)</text>
+    <text key="gflow.hint">Gradient band flowing (loop)</text>
+    <text key="gtext.hint">Per-character hue flowing (loop)</text>
+    <text key="cross_fade.hint">Cross fade between pages A/B</text>
+    <text key="page_trans.hint">QStackedWidget page switching</text>
+    <text key="slide_trans.hint">Source slides out / target slides in</text>
+    <text key="container_morph.hint">Size / corner morph ↔ restore</text>
+    <text key="shared_element.hint">Widget geometry shuttling A→B</text>
+    <text key="fade_in.block">Fade In</text>
+    <text key="fade_out.block">Fade Out</text>
+    <text key="slide_in.block">Slide In</text>
+    <text key="zoom_in.block">Zoom</text>
+    <text key="spring_pop.block">Spring</text>
+    <text key="blur_in.block">Blur</text>
+    <text key="mask_reveal.block">Reveal</text>
+    <text key="hover_lift.block">Hover Me</text>
+    <text key="morph.block">Submit</text>
+    <text key="ripple.block">Click for Ripple</text>
+    <text key="pulse.block">Pulse</text>
+    <text key="bounce.block">Bounce</text>
+    <text key="swing.block">Swing</text>
+    <text key="shake.block">Shake</text>
+    <text key="flash.block">Flash</text>
+    <text key="float_loop.block">Float</text>
+    <text key="pulse_glow.block">Glow</text>
+    <text key="breathing.block">Breathing</text>
+    <text key="gtext.block">Gradient flowing text</text>
+    <text key="cross_fade.block_a">Page A</text>
+    <text key="cross_fade.block_b">Page B</text>
+    <text key="page_trans.block_a">Page One</text>
+    <text key="page_trans.block_b">Page Two</text>
+    <text key="slide_trans.block_a">Alpha</text>
+    <text key="slide_trans.block_b">Beta</text>
+    <text key="fade_in.p.duration">Duration</text>
+    <text key="fade_in.p.easing">Easing</text>
+    <text key="fade_in.p.opacity">Start Opacity</text>
+    <text key="fade_out.p.duration">Duration</text>
+    <text key="fade_out.p.easing">Easing</text>
+    <text key="slide_in.p.direction">Direction</text>
+    <text key="slide_in.p.distance">Distance</text>
+    <text key="slide_in.p.fade">Fade Together</text>
+    <text key="slide_in.p.duration">Duration</text>
+    <text key="zoom_in.p.scale">Start Scale</text>
+    <text key="zoom_in.p.fade">Fade Together</text>
+    <text key="zoom_in.p.duration">Duration</text>
+    <text key="spring_pop.p.scale">Start Scale</text>
+    <text key="spring_pop.p.duration">Duration</text>
+    <text key="badge_pop.p.duration">Duration</text>
+    <text key="badge_pop.p.easing">Easing</text>
+    <text key="stagger_in.p.interval">Interval</text>
+    <text key="stagger_in.p.offset">Start Offset</text>
+    <text key="stagger_in.p.duration">Duration</text>
+    <text key="blur_in.p.radius">Blur Radius</text>
+    <text key="blur_in.p.duration">Duration</text>
+    <text key="mask_reveal.p.direction">Direction</text>
+    <text key="mask_reveal.p.duration">Duration</text>
+    <text key="hover_lift.p.dy">Lift Distance</text>
+    <text key="hover_lift.p.shadow">Shadow Toggle</text>
+    <text key="hover_lift.p.duration">Duration</text>
+    <text key="morph.p.duration">Morph Duration</text>
+    <text key="morph.p.pulse">Pulse Period</text>
+    <text key="ripple.p.opacity">Start Opacity</text>
+    <text key="ripple.p.duration">Duration</text>
+    <text key="switch.p.duration">Duration</text>
+    <text key="switch.p.easing">Easing</text>
+    <text key="pulse.p.peak">Peak Scale</text>
+    <text key="pulse.p.loops">Loops</text>
+    <text key="pulse.p.duration">Duration</text>
+    <text key="bounce.p.height">Bounce Height</text>
+    <text key="bounce.p.loops">Loops</text>
+    <text key="bounce.p.duration">Duration</text>
+    <text key="swing.p.angle">Swing Angle (deg)</text>
+    <text key="swing.p.loops">Loops</text>
+    <text key="swing.p.duration">Duration</text>
+    <text key="shake.p.amplitude">Amplitude</text>
+    <text key="shake.p.loops">Loops</text>
+    <text key="shake.p.duration">Duration</text>
+    <text key="flash.p.times">Flash Times</text>
+    <text key="flash.p.opacity">Opacity</text>
+    <text key="flash.p.color">Highlight Color</text>
+    <text key="flash.p.duration">Duration</text>
+    <text key="float_loop.p.dy">Amplitude</text>
+    <text key="float_loop.p.duration">Period</text>
+    <text key="float_loop.p.loops">Loops</text>
+    <text key="float_loop.p.unlimited">Infinite</text>
+    <text key="pulse_glow.p.min_blur">Min Radius</text>
+    <text key="pulse_glow.p.max_blur">Max Radius</text>
+    <text key="pulse_glow.p.duration">Period</text>
+    <text key="breathing.p.opacity">Min Opacity</text>
+    <text key="breathing.p.duration">Period</text>
+    <text key="gflow.p.palette">Palette</text>
+    <text key="gflow.p.direction">Direction</text>
+    <text key="gflow.p.duration">Period</text>
+    <text key="gflow.palette.theme">Theme Blue→Green</text>
+    <text key="gflow.palette.warm">Warm Orange→Red</text>
+    <text key="gflow.palette.violet">Violet→Pink</text>
+    <text key="gtext.p.text">Text</text>
+    <text key="gtext.p.duration">Period</text>
+    <text key="cross_fade.p.duration">Duration</text>
+    <text key="cross_fade.p.easing">Easing</text>
+    <text key="page_trans.p.kind">Mode</text>
+    <text key="page_trans.p.direction">Direction</text>
+    <text key="page_trans.p.duration">Duration</text>
+    <text key="slide_trans.p.direction">Direction</text>
+    <text key="slide_trans.p.duration">Duration</text>
+    <text key="slide_trans.p.hide_source">Hide Source When Done</text>
+    <text key="container_morph.p.radius">Target Radius</text>
+    <text key="container_morph.p.duration">Duration</text>
+    <text key="shared_element.p.duration">Duration</text>
+    <text key="shared_element.p.easing">Easing</text>
+    <text key="shared_element.p.fade">Fade Together</text>
+    <text key="sec">Property Animations (28 presets · adjust params then click Play to replay)</text>
+    <text key="title">Animation · Property</text>
+    <text key="desc">28 property animation presets based on QPropertyAnimation / QVariantAnimation / animation groups. Each card has 2-4 parameters (duration / easing / direction / amplitude / loops, etc.); adjust them and click Play to replay with the new parameters. Looping animations restart instantly on parameter change.</text>
+  </group>
+  <group name="anim_painted">
+    <text key="spinner.title">SpinnerArc</text>
+    <text key="dots.title">BouncingDots</text>
+    <text key="check.title">CheckDraw</text>
+    <text key="like.title">LikeBurstButton</text>
+    <text key="magnet.title">MagneticButton</text>
+    <text key="skeleton.title">SkeletonShimmer</text>
+    <text key="shimmer.title">Shimmer</text>
+    <text key="striped.title">ProgressStriped</text>
+    <text key="parallax.title">ParallaxArea</text>
+    <text key="reveal.title">ScrollReveal</text>
+    <text key="strip.title">HorizontalScrollStrip</text>
+    <text key="sticky.title">StickyHeader</text>
+    <text key="progress.title">ScrollProgressBar</text>
+    <text key="story.title">ScrollStoryArea</text>
+    <text key="marquee.title">MarqueeLabel</text>
+    <text key="fluid.title">FluidBackground</text>
+    <text key="typewriter.title">TypewriterLabel</text>
+    <text key="decode.title">TextDecodeLabel</text>
+    <text key="number.title">NumberRollLabel</text>
+    <text key="letters.title">LetterStaggerLabel</text>
+    <text key="tilt.title">CardTilt</text>
+    <text key="cube.title">CubeRotator</text>
+    <text key="flip.title">FlipCard</text>
+    <text key="cover.title">CoverFlow</text>
+    <text key="spinner.hint">Auto-rotating loading arc</text>
+    <text key="dots.hint">Bouncing dots while loading</text>
+    <text key="check.hint">Check-mark path drawing</text>
+    <text key="like.hint">Heart + particle burst</text>
+    <text key="magnet.hint">Button follows the mouse (move the mouse to see)</text>
+    <text key="skeleton.hint">Shimmer sweeping over skeleton</text>
+    <text key="shimmer.hint">Shimmer sweeping over any area</text>
+    <text key="striped.hint">Flowing stripes + progress animation</text>
+    <text key="parallax.hint">Play-scroll to see the parallax</text>
+    <text key="reveal.hint">Play-scroll to reveal content blocks</text>
+    <text key="strip.hint">Auto horizontal scrolling</text>
+    <text key="sticky.hint">Play-scroll to stick / release</text>
+    <text key="progress.hint">Play-scroll drives the top progress bar</text>
+    <text key="story.hint">Play-scroll advances the story timeline</text>
+    <text key="marquee.hint">Long text scrolling in a loop</text>
+    <text key="fluid.hint">Fluid gradient from stacked sine waves</text>
+    <text key="typewriter.hint">Character-by-character output + cursor</text>
+    <text key="decode.hint">Scrambled text decoding step by step</text>
+    <text key="number.hint">Count-up number rolling (Play resets to 0 then rolls to target)</text>
+    <text key="letters.hint">Letters rise in one by one</text>
+    <text key="tilt.hint">Move the mouse to see 3D tilt</text>
+    <text key="cube.hint">Two-face 3D cube rotation</text>
+    <text key="flip.hint">Click the card or Play to flip front/back</text>
+    <text key="cover.hint">3-7 item perspective stacked carousel</text>
+    <text key="spinner.p.size">Size</text>
+    <text key="spinner.p.line_width">Line Width</text>
+    <text key="spinner.p.speed">Speed (deg/frame)</text>
+    <text key="dots.p.count">Dot Count</text>
+    <text key="dots.p.diameter">Diameter</text>
+    <text key="dots.p.amplitude">Amplitude</text>
+    <text key="dots.p.period">Period</text>
+    <text key="check.p.size">Size</text>
+    <text key="check.p.duration">Duration</text>
+    <text key="like.p.size">Size</text>
+    <text key="like.p.particle_count">Particles</text>
+    <text key="magnet.p.text">Text</text>
+    <text key="magnet.p.max_offset">Max Offset</text>
+    <text key="magnet.p.magnet_range">Magnet Range</text>
+    <text key="skeleton.p.period">Period</text>
+    <text key="skeleton.p.interval">Frame Interval</text>
+    <text key="shimmer.p.period">Period</text>
+    <text key="shimmer.p.band">Band Width</text>
+    <text key="striped.p.height">Height</text>
+    <text key="striped.p.stripe">Stripe Width</text>
+    <text key="striped.p.target">Target</text>
+    <text key="parallax.p.layers">Layers</text>
+    <text key="parallax.p.layer_height">Layer Height</text>
+    <text key="reveal.p.blocks">Blocks</text>
+    <text key="reveal.p.threshold">Reveal Threshold</text>
+    <text key="strip.p.step">Step Speed</text>
+    <text key="strip.p.interval">Frame Interval</text>
+    <text key="strip.p.autoplay">Autoplay</text>
+    <text key="sticky.p.rows">Body Rows</text>
+    <text key="sticky.p.cover_height">Cover Height</text>
+    <text key="progress.p.height">Bar Height</text>
+    <text key="progress.p.rows">Content Rows</text>
+    <text key="story.p.steps">Steps</text>
+    <text key="story.p.delta">Play Delta</text>
+    <text key="marquee.p.text">Text</text>
+    <text key="marquee.p.speed">Speed</text>
+    <text key="marquee.p.gap">Gap</text>
+    <text key="marquee.p.pause">Pause</text>
+    <text key="fluid.p.blobs">Blobs</text>
+    <text key="fluid.p.speed">Speed</text>
+    <text key="fluid.p.fps">FPS</text>
+    <text key="typewriter.p.text">Text</text>
+    <text key="typewriter.p.interval">Char Interval</text>
+    <text key="typewriter.p.cursor">Show Cursor</text>
+    <text key="decode.p.text">Text</text>
+    <text key="decode.p.step">Step</text>
+    <text key="decode.p.span">Scramble Span</text>
+    <text key="number.p.decimals">Decimals</text>
+    <text key="number.p.prefix">Prefix</text>
+    <text key="number.p.target">Target</text>
+    <text key="number.p.duration">Duration</text>
+    <text key="letters.p.text">Text</text>
+    <text key="letters.p.stagger">Stagger</text>
+    <text key="letters.p.rise">Rise Height</text>
+    <text key="tilt.p.max_angle">Max Angle</text>
+    <text key="tilt.p.persp">Perspective</text>
+    <text key="cube.p.persp">Perspective</text>
+    <text key="cube.p.auto">Auto Rotate</text>
+    <text key="flip.p.front">Front Text</text>
+    <text key="flip.p.back">Back Text</text>
+    <text key="flip.p.persp">Perspective</text>
+    <text key="cover.p.items">Items</text>
+    <text key="cover.p.persp">Perspective</text>
+    <text key="magnet.default">Magnetic Button</text>
+    <text key="parallax.layer">Parallax layer {n} (factor={f})</text>
+    <text key="reveal.block">Content block {n}</text>
+    <text key="strip.1">Design</text>
+    <text key="strip.2">Tokens</text>
+    <text key="strip.3">Components</text>
+    <text key="strip.4">Animation</text>
+    <text key="strip.5">Layout</text>
+    <text key="strip.6">Theme</text>
+    <text key="strip.7">Gallery</text>
+    <text key="strip.8">Charts</text>
+    <text key="sticky.header">Sticky Section Header</text>
+    <text key="sticky.row">Body row {n}</text>
+    <text key="progress.row">Row {n}</text>
+    <text key="story.step">Step {n}</text>
+    <text key="story.body">This is the detailed description of the step, </text>
+    <text key="marquee.default">Marquee: this is a very long announcement text that scrolls in a loop</text>
+    <text key="typewriter.default">Typewriter effect: character-by-character output.</text>
+    <text key="decode.default">The decoded target text</text>
+    <text key="letters.default">Letter stagger effect</text>
+    <text key="tilt.content">Cover Content</text>
+    <text key="cube.face_a">Front A</text>
+    <text key="cube.face_b">Side B</text>
+    <text key="flip.default.front">Question</text>
+    <text key="flip.default.back">Answer</text>
+    <text key="cover.1">Design</text>
+    <text key="cover.2">Components</text>
+    <text key="cover.3">Animation</text>
+    <text key="cover.4">Layout</text>
+    <text key="cover.5">Theme</text>
+    <text key="cover.6">Tokens</text>
+    <text key="cover.7">Charts</text>
+    <text key="sec">Painted / Timer Animations (24 presets · params rebuild on change, click Play to replay)</text>
+    <text key="title">Animation · Painted</text>
+    <text key="desc">24 painted animation presets based on QTimer + paintEvent. Each card has 2-4 constructor parameters (size / speed / count / period / text, etc.); changing a parameter rebuilds the demo widget: continuous ones restart automatically, triggered ones replay on Play, scroll-based ones drive a scroll demo on Play.</text>
+  </group>
+  <group name="charts">
+    <text key="bar.title">bar · Monthly Sales</text>
+    <text key="pictorial.title">pictorialBar · City Rainfall</text>
+    <text key="line.title">line · Monthly Avg Temperature</text>
+    <text key="scatter.title">scatter · Temp × Humidity</text>
+    <text key="effect_scatter.title">effectScatter · Top Check-in Cities</text>
+    <text key="candlestick.title">candlestick · Sample Stock Price</text>
+    <text key="boxplot.title">boxplot · Overtime Distribution</text>
+    <text key="heatmap_grid.title">heatmap (grid) · Hour × Weekday Traffic</text>
+    <text key="heatmap_calendar.title">heatmap (calendar) · Code Commits</text>
+    <text key="parallel.title">parallel · Student Scores</text>
+    <text key="themeriver.title">themeRiver · Topic Heat</text>
+    <text key="pie.title">pie · Department Budget</text>
+    <text key="radar.title">radar · Product Evaluation</text>
+    <text key="gauge.title">gauge · Goal Completion</text>
+    <text key="funnel.title">funnel · Signup Conversion</text>
+    <text key="sunburst.title">sunburst · Revenue Breakdown</text>
+    <text key="treemap.title">treemap · Storage Usage</text>
+    <text key="tree.title">tree · Org Chart</text>
+    <text key="sankey.title">sankey · Energy Flow</text>
+    <text key="graph.title">graph · Knowledge Graph</text>
+    <text key="lines.title">lines · Popular Routes</text>
+    <text key="grid_mix.title">grid · Bar/Line/Scatter Mix</text>
+    <text key="polar.title">polar · Wind Frequency Line</text>
+    <text key="single_axis.title">singleAxis · Score Distribution</text>
+    <text key="calendar_coord.title">calendar · Daily Steps Heatmap</text>
+    <text key="map.title">map · Regional Sales (demo data)</text>
+    <text key="bar.hint">stack / barWidth / barBorderRadius; auto-horizontal when yAxis is category</text>
+    <text key="pictorial.hint">symbol / symbolRepeat / symbolSize</text>
+    <text key="line.hint">smooth / areaStyle / step / showSymbol (step overrides smooth)</text>
+    <text key="scatter.hint">symbolSize fixed or mapped from the third dimension (AQI) to 6~24px</text>
+    <text key="effect_scatter.hint">rippleEffect: {period, scale} (QTimer-driven expanding rings)</text>
+    <text key="candlestick.hint">OHLC data; red-up green-down (colorUp / colorDown overridable)</text>
+    <text key="boxplot.hint">Data [min, Q1, median, Q3, max]</text>
+    <text key="heatmap_grid.hint">With top-level visualMap (inRange.colors) or default theme ramp</text>
+    <text key="heatmap_calendar.hint">coordinateSystem: calendar; calendar: {year, cellSize}</text>
+    <text key="parallel.hint">parallelAxis defines dimensions; each row is a polyline across axes</text>
+    <text key="themeriver.hint">Data [time, value, series name]; smooth bands + centered baseline</text>
+    <text key="pie.hint">radius: [inner,outer] donut / roseType nightingale / label.position</text>
+    <text key="radar.hint">indicator: [{name, max}]; one polygon per series</text>
+    <text key="gauge.hint">min/max / progress / axisLine segments / pointer / detail</text>
+    <text key="funnel.hint">sort / gap / label.position</text>
+    <text key="sunburst.hint">Hierarchical data: [{name, value, children}]; radius inner/outer</text>
+    <text key="treemap.hint">Squarified layout; breadcrumb / gapWidth / label</text>
+    <text key="tree.hint">orient: LR/TB; edge: polyline/curve</text>
+    <text key="sankey.hint">nodes/links; layoutIterations reduces band crossings</text>
+    <text key="graph.hint">layout: force (deterministic random seed) / circular</text>
+    <text key="lines.hint">data: [{coords: [[x1,y1],[x2,y2]]}]; trailEffect animation</text>
+    <text key="grid_mix.hint">xAxis/yAxis + bar/line/scatter multi-series mix</text>
+    <text key="polar.hint">polar/angleAxis/radiusAxis + line(coordinateSystem=polar)</text>
+    <text key="single_axis.hint">singleAxis + scatter(coordinateSystem=singleAxis)</text>
+    <text key="calendar_coord.hint">calendar: {year, cellSize} + heatmap(coordinateSystem=calendar)</text>
+    <text key="map.hint">map: "demo" built-in 7-region schematic map; customize polygons via geo.regions</text>
+    <text key="data.month.1">Jan</text>
+    <text key="data.month.2">Feb</text>
+    <text key="data.month.3">Mar</text>
+    <text key="data.month.4">Apr</text>
+    <text key="data.month.5">May</text>
+    <text key="data.month.6">Jun</text>
+    <text key="data.month.7">Jul</text>
+    <text key="data.month.8">Aug</text>
+    <text key="data.month.9">Sep</text>
+    <text key="data.month.10">Oct</text>
+    <text key="data.month.11">Nov</text>
+    <text key="data.month.12">Dec</text>
+    <text key="data.weekday.1">Mon</text>
+    <text key="data.weekday.2">Tue</text>
+    <text key="data.weekday.3">Wed</text>
+    <text key="data.weekday.4">Thu</text>
+    <text key="data.weekday.5">Fri</text>
+    <text key="data.weekday.6">Sat</text>
+    <text key="data.weekday.7">Sun</text>
+    <text key="data.city.beijing">Beijing</text>
+    <text key="data.city.shanghai">Shanghai</text>
+    <text key="data.city.guangzhou">Guangzhou</text>
+    <text key="data.city.shenzhen">Shenzhen</text>
+    <text key="data.city.hangzhou">Hangzhou</text>
+    <text key="data.city.chengdu">Chengdu</text>
+    <text key="data.city.xian">Xi'an</text>
+    <text key="data.city.wuhan">Wuhan</text>
+    <text key="data.city.kunming">Kunming</text>
+    <text key="data.day">Day {n}</text>
+    <text key="data.group">Group {c}</text>
+    <text key="data.hour">{h}:00</text>
+    <text key="data.unit.piece">pcs</text>
+    <text key="data.unit.yuan">CNY</text>
+    <text key="data.unit.hour">h</text>
+    <text key="data.unit.amount">Qty</text>
+    <text key="data.axis.temp">Temp ℃</text>
+    <text key="data.axis.humidity">Humidity %</text>
+    <text key="data.axis.longitude">Longitude</text>
+    <text key="data.axis.latitude">Latitude</text>
+    <text key="data.axis.score">Score</text>
+    <text key="data.series.offline">Offline Stores</text>
+    <text key="data.series.online">Online Mall</text>
+    <text key="data.series.total">Total</text>
+    <text key="data.series.rainfall">Annual Rainfall</text>
+    <text key="data.series.weather">City Weather Samples</text>
+    <text key="data.series.checkin">Top Check-in Cities</text>
+    <text key="data.series.stock">Sample Stock Price</text>
+    <text key="data.series.overtime">Overtime Hours</text>
+    <text key="data.series.traffic">Foot Traffic</text>
+    <text key="data.series.commits">Code Commits</text>
+    <text key="data.series.scores">Student Scores</text>
+    <text key="data.series.topic_heat">Topic Heat</text>
+    <text key="data.series.budget">Department Budget</text>
+    <text key="data.series.eval">Product Evaluation</text>
+    <text key="data.series.quarter_cur">This Quarter</text>
+    <text key="data.series.quarter_prev">Last Quarter</text>
+    <text key="data.series.goal">Quarterly Goal Completion</text>
+    <text key="data.series.rate">Completion</text>
+    <text key="data.series.conversion">Signup Conversion</text>
+    <text key="data.series.revenue">Revenue Breakdown</text>
+    <text key="data.series.storage">Storage Usage</text>
+    <text key="data.series.org">Org Chart</text>
+    <text key="data.series.energy">Energy Flow</text>
+    <text key="data.series.kg">Knowledge Graph</text>
+    <text key="data.series.routes">Popular Routes</text>
+    <text key="data.series.sales">Sales</text>
+    <text key="data.series.price">Avg Price</text>
+    <text key="data.series.promo">Promo Points</text>
+    <text key="data.series.wind">Wind Frequency</text>
+    <text key="data.series.scores_dist">Final Score Distribution</text>
+    <text key="data.series.steps">Daily Steps (k)</text>
+    <text key="data.series.region_sales">Regional Sales</text>
+    <text key="data.series.month_sales">Monthly Sales</text>
+    <text key="data.series.month_price">Monthly Avg Price</text>
+    <text key="data.dept.rd">R&amp;D</text>
+    <text key="data.dept.marketing">Marketing</text>
+    <text key="data.dept.ops">Operations</text>
+    <text key="data.dept.design">Design</text>
+    <text key="data.dept.admin">Admin</text>
+    <text key="data.sun.hardware">Hardware</text>
+    <text key="data.sun.phone">Phones</text>
+    <text key="data.sun.tablet">Tablets</text>
+    <text key="data.sun.wearable">Wearables</text>
+    <text key="data.sun.software">Software</text>
+    <text key="data.sun.cloud">Cloud Services</text>
+    <text key="data.sun.appstore">App Store</text>
+    <text key="data.sun.content">Content</text>
+    <text key="data.sun.video">Video</text>
+    <text key="data.sun.music">Music</text>
+    <text key="data.sun.reading">Reading</text>
+    <text key="data.tm.video">Videos</text>
+    <text key="data.tm.movie">Movies</text>
+    <text key="data.tm.series">TV Series</text>
+    <text key="data.tm.photo">Photos</text>
+    <text key="data.tm.camera">Camera Roll</text>
+    <text key="data.tm.screenshot">Screenshots</text>
+    <text key="data.tm.app">Apps</text>
+    <text key="data.tm.doc">Documents</text>
+    <text key="data.tm.system">System</text>
+    <text key="data.org.ceo">General Manager</text>
+    <text key="data.org.tech">Tech Center</text>
+    <text key="data.org.frontend">Frontend</text>
+    <text key="data.org.backend">Backend</text>
+    <text key="data.org.algorithm">Algorithms</text>
+    <text key="data.org.product">Product Center</text>
+    <text key="data.org.product_group">Product</text>
+    <text key="data.org.design_group">Design</text>
+    <text key="data.org.operation">Operations Center</text>
+    <text key="data.org.market_group">Marketing</text>
+    <text key="data.org.service_group">Support</text>
+    <text key="data.energy.coal">Coal</text>
+    <text key="data.energy.hydro">Hydro</text>
+    <text key="data.energy.wind">Wind</text>
+    <text key="data.energy.solar">Solar</text>
+    <text key="data.energy.industry">Industry</text>
+    <text key="data.energy.residential">Residential</text>
+    <text key="data.energy.transport">Transport</text>
+    <text key="data.energy.loss">Loss</text>
+    <text key="data.graph.chip">Chip</text>
+    <text key="data.graph.phone">Phone</text>
+    <text key="data.graph.car">Car</text>
+    <text key="data.graph.appliance">Appliances</text>
+    <text key="data.graph.os">OS</text>
+    <text key="data.graph.ecosystem">App Ecosystem</text>
+    <text key="data.graph.cloud">Cloud</text>
+    <text key="data.graph.ai">AI</text>
+    <text key="data.dir.1">N</text>
+    <text key="data.dir.2">NE</text>
+    <text key="data.dir.3">E</text>
+    <text key="data.dir.4">SE</text>
+    <text key="data.dir.5">S</text>
+    <text key="data.dir.6">SW</text>
+    <text key="data.dir.7">W</text>
+    <text key="data.dir.8">NW</text>
+    <text key="data.region.1">North China</text>
+    <text key="data.region.2">Northeast</text>
+    <text key="data.region.3">East China</text>
+    <text key="data.region.4">South China</text>
+    <text key="data.region.5">Central China</text>
+    <text key="data.region.6">Southwest</text>
+    <text key="data.region.7">Northwest</text>
+    <text key="data.subject.1">Chinese</text>
+    <text key="data.subject.2">Math</text>
+    <text key="data.subject.3">English</text>
+    <text key="data.subject.4">Physics</text>
+    <text key="data.subject.5">Chemistry</text>
+    <text key="data.topic.1">Product Launch</text>
+    <text key="data.topic.2">System Updates</text>
+    <text key="data.topic.3">After-sales</text>
+    <text key="data.topic.4">Offline Events</text>
+    <text key="data.topic.5">Collaboration</text>
+    <text key="data.funnel.1">Visit Landing Page</text>
+    <text key="data.funnel.2">Click Sign Up</text>
+    <text key="data.funnel.3">Fill Profile</text>
+    <text key="data.funnel.4">Verify</text>
+    <text key="data.funnel.5">First Payment</text>
+    <text key="data.dim.1">Features</text>
+    <text key="data.dim.2">Performance</text>
+    <text key="data.dim.3">Usability</text>
+    <text key="data.dim.4">Stability</text>
+    <text key="data.dim.5">Ecosystem</text>
+    <text key="data.dim.6">Service</text>
+    <text key="data.mark.average">Average</text>
+    <text key="data.mark.max">Peak</text>
+    <text key="data.mark.threshold">Threshold</text>
+    <text key="opt.symbol.rect">Rectangle</text>
+    <text key="opt.symbol.circle">Circle</text>
+    <text key="opt.symbol.pin">Pin</text>
+    <text key="opt.step.none">None</text>
+    <text key="opt.step.start">Start</text>
+    <text key="opt.step.middle">Middle</text>
+    <text key="opt.step.end">End</text>
+    <text key="opt.ramp.blue">Theme Blue</text>
+    <text key="opt.ramp.warm">Warm</text>
+    <text key="opt.cell.auto">Auto</text>
+    <text key="opt.cell.s">Small 10</text>
+    <text key="opt.cell.m">Medium 14</text>
+    <text key="opt.cell.l">Large 18</text>
+    <text key="opt.year.2024">2024</text>
+    <text key="opt.year.2025">2025</text>
+    <text key="opt.year.2026">2026</text>
+    <text key="opt.rose.none">None</text>
+    <text key="opt.rose.radius">Radius</text>
+    <text key="opt.rose.area">Area</text>
+    <text key="opt.label_pos.outside">Outside</text>
+    <text key="opt.label_pos.inside">Inside</text>
+    <text key="opt.label_pos.center">Center</text>
+    <text key="opt.shape.polygon">Polygon</text>
+    <text key="opt.shape.circle">Circle</text>
+    <text key="opt.sort.descending">Descending</text>
+    <text key="opt.sort.ascending">Ascending</text>
+    <text key="opt.sort.none">Original</text>
+    <text key="opt.funnel_label.outer">Outer</text>
+    <text key="opt.funnel_label.inside">Inside</text>
+    <text key="opt.orient.lr">Left-Right</text>
+    <text key="opt.orient.tb">Top-Bottom</text>
+    <text key="opt.edge.polyline">Polyline</text>
+    <text key="opt.edge.curve">Curve</text>
+    <text key="opt.layout.force">Force</text>
+    <text key="opt.layout.circular">Circular</text>
+    <text key="opt.map_orient.vertical">Vertical</text>
+    <text key="opt.map_orient.horizontal">Horizontal</text>
+    <text key="opt.mark_line.average">Average Line</text>
+    <text key="opt.mark_line.max">Max Line</text>
+    <text key="opt.mark_line.threshold">Threshold 300</text>
+    <text key="bar.p.stack">Stack</text>
+    <text key="bar.p.bar_width">Bar Width Ratio</text>
+    <text key="bar.p.radius">Radius</text>
+    <text key="bar.p.horizontal">Horizontal</text>
+    <text key="pictorial.p.symbol">Symbol</text>
+    <text key="pictorial.p.repeat">Repeat</text>
+    <text key="pictorial.p.size">Symbol Size</text>
+    <text key="line.p.smooth">Smooth</text>
+    <text key="line.p.area">Area Fill</text>
+    <text key="line.p.step">Step</text>
+    <text key="line.p.symbol">Data Points</text>
+    <text key="scatter.p.n">Samples</text>
+    <text key="scatter.p.zmap">3rd Dim → Size</text>
+    <text key="scatter.p.size">Fixed Size</text>
+    <text key="effect_scatter.p.period">Ripple Period (s)</text>
+    <text key="effect_scatter.p.scale">Spread Scale</text>
+    <text key="effect_scatter.p.size">Dot Size</text>
+    <text key="candlestick.p.n">Trading Days</text>
+    <text key="candlestick.p.width">Body Width (0=auto)</text>
+    <text key="boxplot.p.groups">Groups</text>
+    <text key="boxplot.p.width">Box Width (0=auto)</text>
+    <text key="heatmap_grid.p.visual_map">Visual Map</text>
+    <text key="heatmap_grid.p.ramp">Color Ramp</text>
+    <text key="heatmap_calendar.p.year">Year</text>
+    <text key="heatmap_calendar.p.cell">Cell Size</text>
+    <text key="heatmap_calendar.p.visual_map">Visual Map</text>
+    <text key="parallel.p.dims">Dimensions</text>
+    <text key="parallel.p.n">Students</text>
+    <text key="themeriver.p.series">Topics</text>
+    <text key="themeriver.p.months">Months</text>
+    <text key="pie.p.donut">Donut</text>
+    <text key="pie.p.rose">Rose</text>
+    <text key="pie.p.label_pos">Label Position</text>
+    <text key="radar.p.shape">Shape</text>
+    <text key="radar.p.area">Area Fill</text>
+    <text key="radar.p.split">Split Number</text>
+    <text key="gauge.p.value">Target (%)</text>
+    <text key="gauge.p.progress">Progress Arc</text>
+    <text key="gauge.p.segments">Color Segments</text>
+    <text key="funnel.p.sort">Sort</text>
+    <text key="funnel.p.gap">Gap</text>
+    <text key="funnel.p.label_pos">Label</text>
+    <text key="sunburst.p.labels">Rotated Labels</text>
+    <text key="sunburst.p.min_angle">Label Min Angle</text>
+    <text key="treemap.p.crumb">Breadcrumb</text>
+    <text key="treemap.p.gap">Gap</text>
+    <text key="treemap.p.labels">Name Labels</text>
+    <text key="tree.p.orient">Orient</text>
+    <text key="tree.p.edge">Edge Style</text>
+    <text key="tree.p.size">Node Size</text>
+    <text key="sankey.p.node_width">Node Width</text>
+    <text key="sankey.p.node_gap">Node Gap</text>
+    <text key="sankey.p.iters">Layout Iterations</text>
+    <text key="graph.p.layout">Layout</text>
+    <text key="graph.p.repulsion">Repulsion</text>
+    <text key="graph.p.size">Node Size</text>
+    <text key="lines.p.curveness">Curveness</text>
+    <text key="lines.p.trail">Trail</text>
+    <text key="lines.p.width">Line Width</text>
+    <text key="grid_mix.p.smooth">Line Smooth</text>
+    <text key="grid_mix.p.area">Area Fill</text>
+    <text key="grid_mix.p.scatter">Overlay Scatter</text>
+    <text key="polar.p.shape">Shape</text>
+    <text key="polar.p.area">Area Fill</text>
+    <text key="polar.p.smooth">Smooth</text>
+    <text key="single_axis.p.n">Samples</text>
+    <text key="single_axis.p.size">Dot Size</text>
+    <text key="calendar_coord.p.year">Year</text>
+    <text key="calendar_coord.p.cell">Cell Size</text>
+    <text key="map.p.visual_map">Visual Map</text>
+    <text key="map.p.ramp">Color Ramp</text>
+    <text key="map.p.orient">Map Bar Orient</text>
+    <text key="comp.p.mark_line">Mark Line</text>
+    <text key="comp.p.mark_area">Mark Area (Mar~May)</text>
+    <text key="comp.p.visual_map">Visual Map</text>
+    <text key="comp.p.zoom_end">Zoom Window (%)</text>
+    <text key="sec.cartesian">Cartesian Series (11 types · grid / parallel / calendar)</text>
+    <text key="sec.hierarchy">Hierarchy &amp; Proportion Series (6 types)</text>
+    <text key="sec.relation">Relation &amp; Flow Series (4 types)</text>
+    <text key="sec.coord">Coordinate Systems &amp; Map (4 coordinate systems + map series)</text>
+    <text key="comp.sec">Comprehensive Demo (markers / visualMap / zoom / brush / toolbox / timeline)</text>
+    <text key="comp.card_title">Annual Sales Overview · Comprehensive</text>
+    <text key="comp.panel_title">Demo Parameters</text>
+    <text key="comp.keys_note">Option keys involved: series.markPoint / series.markLine / series.markArea / visualMap / dataZoom(slider+inside) / brush / toolbox / timeline(+options, 3 frames). Interactive: wheel zoom, slider window, rect brush, toolbox buttons, timeline playback.</text>
+    <text key="comp.chart_title">Annual Sales Overview</text>
+    <text key="comp.chart_sub">Drag the timeline to switch years</text>
+    <text key="title">Charts</text>
+    <text key="desc">InstructionX_UIKit.charts native chart engine (pure QPainter, no WebView): ECharts-style set_option / update_option API with theme-aware live re-skinning. 21 series each with a demo card (1-3 column responsive layout), plus four coordinate systems, map and a comprehensive demo (full-row chart). Parameter changes rebuild the chart with the new option.</text>
+  </group>
+  <group name="blueprint">
+    <text key="title">Blueprint (Node Graph)</text>
+    <text key="hint">A UE5 Blueprint / ComfyUI-style node graph editor. Right-click empty space to create nodes, drag from pins to connect, Delete to remove selection. Run / Step are pure UI simulation: they only drive the ExecutionController status indication, with no business logic.</text>
+    <text key="toolbar.run">Run</text>
+    <text key="toolbar.step">Step</text>
+    <text key="toolbar.reset">Reset</text>
+    <text key="toolbar.fit">Fit View</text>
+    <text key="toolbar.save">Save JSON</text>
+    <text key="toolbar.load">Load JSON</text>
+    <text key="status.ready">Ready</text>
+    <text key="status.running">Running {cur}/{total} …</text>
+    <text key="backend.label">Render backend: {backend} (controllable via the UIKIT_BLUEPRINT_GL env var)</text>
+    <text key="backend.gl">OpenGL (GPU-accelerated)</text>
+    <text key="backend.software">Software (CPU)</text>
+    <text key="status.done">Simulation done: {count} nodes · total {ms} ms (pure simulation, no business logic)</text>
+    <text key="status.save_fail">Save failed: {error}</text>
+    <text key="status.saved">Saved: {path}</text>
+    <text key="status.load_fail">Load failed: {error}</text>
+    <text key="status.loaded">Loaded: {path} ({nodes} nodes / {edges} edges)</text>
+    <text key="panel.title">Properties</text>
+    <text key="panel.empty_hint">Select a node on the canvas to view / edit its properties.</text>
+    <text key="panel.no_props">This node has no editable properties.</text>
+    <text key="info.title">Title: {title}</text>
+    <text key="info.type">Type: {type}    ID: {id}</text>
+    <text key="info.status">Status: {status}</text>
+    <text key="info.status_elapsed">Elapsed: {ms} ms</text>
+    <text key="preset.pre">Preprocess (Normalize)</text>
+    <text key="preset.infer">Model Inference (CNN)</text>
+    <text key="preset.post">Post-process (Edge Detect)</text>
+    <text key="dlg.save">Save Blueprint JSON</text>
+    <text key="dlg.load">Load Blueprint JSON</text>
+    <text key="dlg.filter">JSON Files (*.json)</text>
+    <text key="node.cat.input">Input</text>
+    <text key="node.cat.process">Process</text>
+    <text key="node.cat.model">Model</text>
+    <text key="node.cat.output">Output</text>
+    <text key="node.cat.util">Utility</text>
+    <text key="node.load_image.name">Load Image</text>
+    <text key="node.load_image.desc">Loads an image from disk (image output)</text>
+    <text key="node.noise.name">Random Noise</text>
+    <text key="node.noise.desc">Generates a random noise tensor (tensor output)</text>
+    <text key="node.resize.name">Resize</text>
+    <text key="node.resize.desc">Resizes the image (width / height / interpolation editable)</text>
+    <text key="node.normalize.name">Normalize</text>
+    <text key="node.normalize.desc">Normalizes the image into a tensor (preprocessing)</text>
+    <text key="node.gaussian_blur.name">Gaussian Blur</text>
+    <text key="node.gaussian_blur.desc">Gaussian blur (radius adjustable via Slider)</text>
+    <text key="node.edge_detect.name">Edge Detect</text>
+    <text key="node.edge_detect.desc">Extracts edges from the tensor (post-processing)</text>
+    <text key="node.cnn.name">CNN Module</text>
+    <text key="node.cnn.desc">Convolutional backbone (layers / channels editable)</text>
+    <text key="node.transformer.name">Transformer Module</text>
+    <text key="node.transformer.desc">Attention module (layers / heads editable)</text>
+    <text key="node.fusion.name">Fusion</text>
+    <text key="node.fusion.desc">Weighted fusion of two tensor inputs</text>
+    <text key="node.save_result.name">Save Result</text>
+    <text key="node.save_result.desc">Writes the result to disk</text>
+    <text key="node.log_output.name">Log Output</text>
+    <text key="node.log_output.desc">Prints any data to the log</text>
+    <text key="node.perf_probe.name">Perf Probe</text>
+    <text key="node.perf_probe.desc">Measures upstream elapsed time and passes data through</text>
+    <text key="body.width">W</text>
+    <text key="body.height">H</text>
+    <text key="body.interpolation">Interp</text>
+    <text key="body.layers">Layers</text>
+    <text key="body.channels">Channels</text>
+    <text key="body.radius">Radius</text>
+    <text key="body.heads">Heads</text>
+    <text key="prop.file_path">File Path</text>
+    <text key="prop.mode">Color Mode</text>
+    <text key="prop.seed">Seed</text>
+    <text key="prop.shape">Shape</text>
+    <text key="prop.width">Width</text>
+    <text key="prop.height">Height</text>
+    <text key="prop.interpolation">Interpolation</text>
+    <text key="prop.mean">Mean</text>
+    <text key="prop.std">Std Dev</text>
+    <text key="prop.radius">Radius</text>
+    <text key="prop.method">Method</text>
+    <text key="prop.threshold">Threshold</text>
+    <text key="prop.layers">Layers</text>
+    <text key="prop.channels">Channels</text>
+    <text key="prop.heads">Attention Heads</text>
+    <text key="prop.weight">Fusion Weight</text>
+    <text key="prop.output_path">Output Path</text>
+    <text key="prop.format">Format</text>
+    <text key="prop.level">Level</text>
+    <text key="prop.warn_ms">Warn Threshold ms</text>
+    <text key="prop.enabled">Enabled</text>
+  </group>
+</texts>

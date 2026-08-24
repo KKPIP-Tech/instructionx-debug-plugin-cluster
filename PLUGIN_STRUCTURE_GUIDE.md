@@ -10,13 +10,16 @@ plugin/                                    # 官方插件集根目录
 ├── PLUGIN_STRUCTURE_GUIDE.md             # 本文件
 ├── README.md                             # 插件集说明
 └── <plugin-name>/                        # 单个插件目录
-    ├── ixplugin.json                     # 插件描述文件
+    ├── IXPlugin.json                     # 插件描述文件（文件名大小写敏感，必须为 IXPlugin.json）
     ├── __init__.py                       # Python 包标识
     ├── entrance.py                       # 插件入口（胶水层）
     ├── service.py                        # 接口层（仅暴露 API）
     ├── information.py                    # 元数据（继承 IPluginInfo）
     ├── config/                           # 配置文件
     │   └── default.json
+    ├── text/                             # 语言包目录（可选）：<语言代码>.xml，一个语言一个文件
+    │   ├── zh.xml                        # 默认语言文件（必须覆盖全部键）
+    │   └── en.xml
     ├── ui/                               # UI 组件层
     │   ├── __init__.py
     │   └── main_widget.py                # 主控件
@@ -42,6 +45,7 @@ plugin/                                    # 官方插件集根目录
 | `ui/` | UI 层：所有 Qt 控件相关代码 | 写业务逻辑 |
 | `information.py` | 元数据：版本、作者、描述、service_api | 写运行时逻辑 |
 | `config/` | 配置：所有可配置项，禁止魔法数 | — |
+| `text/` | 语言包：用户可见文案按 `<语言代码>.xml` 组织，经 `services.localization` 取词；框架加载时自动扫描注册 | 在代码中硬编码用户可见文案 |
 
 ## 导入规范
 
@@ -61,35 +65,25 @@ from ..service import Service
 
 ## 配置规范
 
-`config/default.json` 必须包含插件的所有可配置项：
+`config/default.json` 必须集中承载插件的所有可配置项（禁止魔法数散落在代码中）。内部结构按插件业务分组组织，不做固定 schema 限定，例如：
 
 ```json
 {
-    "plugin_id": "plugin-id",
-    "plugin_name": "Plugin Name",
-    "defaults": {
-        "key": "value"
-    }
+    "graph": {"max_nodes": 64},
+    "preview": {"max_width": 640, "max_height": 480},
+    "panel": {"right_panel_width": 360}
 }
 ```
 
+配置项必须在代码中真实接线读取；删除某个配置项时同步移除读取方，新增可配置数值时优先进配置而非硬编码常量。
+
 ## 文档规范
 
-### PRD.md
+### PRD 与 SPEC（docs/req/）
 
-每个插件必须包含 `docs/PRD.md`，内容：
-1. 概述 — 解决的问题和核心价值
-2. 用户故事 — 目标用户和使用场景
-3. 功能需求 — 编号列表
-4. 插件类型和 ID
-5. 目录结构（tree 图形）
-6. 架构图（mermaid）
+需求文档存放在 `docs/req/<YYYY-MM-DD>/` 下，按日期分文件夹；文件命名 `PRD-<需求名>-<YYYYMMDD>.md` 与 `SPEC-<需求名>-<YYYYMMDD>.md`，文首注明创建日期与修改日期（与 `AGENTS-for-PLUGIN-DEV.md` 的开发流程一致）。
 
-### IMPLEMENTATION_core.md
+- **PRD 内容**：概述（解决的问题与核心价值）、用户故事、功能需求（编号列表）、非功能需求、插件类型与 ID、描述文件清单；
+- **SPEC 内容**：技术方案与设计决策（Why）、目录结构与模块划分、数据流向（mermaid）、类与接口关系（mermaid 类图）、状态机设计（如适用）、涉及修改的描述文件与配置项。
 
-每个插件必须包含 `docs/IMPLEMENTATION_core.md`，内容：
-1. 功能概述
-2. 设计决策
-3. 实现细节
-4. 代码引用
-5. mermaid 流程图和类图
+> 历史说明：`framework_api_demo/docs/` 下保留的旧式 `PRD.md` / `IMPLEMENTATION_core.md` 为规范演进前的文档形态，仅作溯源参考，新增需求一律采用 `docs/req/` 规范。

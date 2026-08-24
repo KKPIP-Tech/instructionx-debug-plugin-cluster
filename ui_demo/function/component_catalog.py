@@ -4,6 +4,13 @@
 目录内容与 ``ui/pages/__init__.py`` 的 ``NAV`` 注册表一一对应
 （分类标题 + 页面标题），供服务层在不导入 UI 模块的前提下
 对外提供「可演示组件清单」。新增/调整演示页时必须同步更新本文件。
+
+.. 为何不从 NAV 派生::
+
+    NAV 的页面工厂需导入 PySide6，而本文件被 ``function/services`` 服务层
+    在无 Qt 环境下消费；从 NAV 派生会破坏「纯数据」约束，反向派生又需
+    引入「键结构 + i18n 取词」的新耦合，代价大于双份维护（决策见
+    ``docs/req/2026-08-25/SPEC-ui-demo-hardening-20260825.md``）。
 """
 
 #: [(分类标题, [页面标题, ...]), ...]，顺序与 ui.pages.NAV 一致
@@ -14,7 +21,7 @@ COMPONENT_CATALOG = [
     ("布局预设", [
         "顶部导航栏", "圣杯布局", "卡片网格", "单列堆叠", "侧边栏布局",
         "列表-详情", "分栏面板", "仪表盘网格", "英雄区", "居中容器",
-        "瀑布流", "图文左右",
+        "瀑布流", "图文左右", "流式对话",
     ]),
     ("组件 · 输入", [
         "Button 按钮", "IconButton 图标按钮", "CheckBox 复选框",
@@ -31,7 +38,7 @@ COMPONENT_CATALOG = [
         "Statistic 统计数值", "Calendar 日历", "Carousel 走马灯",
         "ImageView 图片", "QRCodeView 二维码", "CommentView 评论",
         "Collapse 折叠面板", "Empty 空状态", "Tooltip 工具提示",
-        "Popover 气泡卡片",
+        "Popover 气泡卡片", "MarkdownView Markdown 渲染",
     ]),
     ("组件 · 反馈", [
         "Tabs 标签页", "Anchor 锚点", "Breadcrumb 面包屑",
